@@ -1,0 +1,101 @@
+STEP 1️⃣
+Backend calls Razorpay Create Order API
+
+Your code:
+
+order = Razorpay::Order.create(
+  amount: 50000,
+  currency: 'INR'
+)
+
+What Razorpay returns (ACTUAL RESPONSE)
+
+Razorpay responds with a JSON object like this 👇
+
+{
+  "id": "order_Lk8XwP9abc123",
+  "entity": "order",
+  "amount": 50000,
+  "amount_paid": 0,
+  "amount_due": 50000,
+  "currency": "INR",
+  "receipt": null,
+  "status": "created",
+  "attempts": 0,
+  "created_at": 1700000000
+}
+
+
+👉 Important fields right now
+
+id → Razorpay order id
+
+status → "created"
+
+amount_paid → 0
+
+💡 No payment has happened yet.
+
+What backend should do NEXT (still STEP 1)
+✅ Save order in YOUR database
+
+At this moment:
+
+You ONLY know that an order is created
+
+You DO NOT know payment_id
+
+You DO NOT know success / failure
+
+So you save minimal information.
+
+DB insert 👇
+Order.create!(
+  razorpay_order_id: order.id,
+  amount: order.amount,
+  status: 'created'
+)
+
+Your DB after STEP 1
+id	razorpay_order_id	razorpay_payment_id	amount	status
+1	order_Lk8XwP9abc123	NULL	50000	created
+
+📌 razorpay_payment_id is NULL
+📌 status is created
+
+What backend returns to frontend
+{
+  "order_id": "order_Lk8XwP9abc123",
+  "key": "rzp_test_xxxxx"
+}
+
+
+👉 This is used by Razorpay Checkout
+
+Interview-grade explanation (STEP 1)
+
+At this stage, we only create an order on Razorpay and store the Razorpay order ID in our database with status created. No payment has occurred yet.
+
+❗ VERY IMPORTANT (Don’t skip this)
+❓ Why do we save order before payment?
+
+Because:
+
+User may abandon payment
+
+Payment may fail
+
+Browser may crash
+
+We still need:
+
+A record of intent
+
+A reference to reconcile later via webhooks
+
+STOP HERE ✋
+
+We have completed STEP 1 only.
+
+If you’re clear, say “Next step”
+Then we’ll go to STEP 2: Razorpay Checkout + payment attempt

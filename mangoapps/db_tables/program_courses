@@ -1,0 +1,86 @@
+❓ Where do we store course_id → program relationship?
+✅ Correct design
+
+NOT in courses table.
+
+You store it in a join table:
+
+program_courses
+
+📦 Tables involved
+programs
+  id
+  name
+
+courses
+  id
+  title
+
+program_courses
+  id
+  program_id
+  course_id
+  position / order (optional)
+  mandatory (optional)
+
+🧠 Why not program_id in courses?
+
+Because:
+
+1️⃣ One course can belong to multiple programs
+
+If you put program_id in courses, you force:
+
+❌ 1 course → 1 program (wrong)
+
+❌ duplication of courses
+
+2️⃣ Programs are compositions, not ownership
+
+A program is a collection of courses, not the owner of the course.
+
+This line sounds very architect-level 👇
+
+“Programs compose courses; they don’t own them.”
+
+3️⃣ You often need metadata on the relationship
+
+Examples:
+
+Order of course in program
+
+Mandatory vs optional course
+
+Unlock rules (course B after course A)
+
+That data belongs to the relationship, not to course or program.
+
+🎯 Interview-ready answer (say this)
+
+“Courses and programs had a many-to-many relationship, so we modeled it using a join table like program_courses.
+This allowed a course to be reused across multiple programs and also gave us flexibility to store program-specific metadata like course order or mandatory flags.”
+
+This is a perfect answer.
+
+🔍 Follow-up they may ask
+“Why not just infer program completion from course enrollments?”
+
+Answer:
+
+“Program completion has its own rules—like mandatory courses or minimum completion criteria—so program enrollment and progress were tracked independently from individual course enrollments.”
+
+“What happens if a course is removed from a program?”
+
+Answer:
+
+“Existing enrollments were preserved for audit and progress consistency, while new enrollments reflected the updated structure.”
+
+💡 That shows maturity.
+
+🧠 Quick mental model (important)
+Relationship	Table
+User ↔ Course	course_enrollments
+User ↔ Program	program_enrollments
+Program ↔ Course	program_courses
+
+If you say this table clearly in an interview, architects relax 😄

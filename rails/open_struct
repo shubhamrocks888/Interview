@@ -1,0 +1,98 @@
+OpenStruct is another pure Ruby class (not Rails-specific) that creates flexible data objects — even more dynamic than Struct.
+
+Think of it as:
+👉 “a hash that behaves like an object”
+
+Basic example
+require "ostruct"
+
+user = OpenStruct.new
+user.name = "Shubham"
+user.role = "Backend Engineer"
+user.experience = 6
+
+user.name        # => "Shubham"
+user.role        # => "Backend Engineer"
+
+
+You don’t define attributes upfront — you can add anything, anytime.
+
+Initialize with a hash
+user = OpenStruct.new(
+  name: "Shubham",
+  city: "Delhi"
+)
+
+How it works internally
+
+OpenStruct stores everything in a hash and uses method_missing to fake attribute methods.
+
+That’s why it’s:
+
+✅ Very flexible
+❌ Slower than Struct
+
+Struct vs OpenStruct (VERY important)
+
+| Feature                    | Struct | OpenStruct |
+| -------------------------- | ------ | ---------- |
+| Attributes defined upfront | ✅ Yes  | ❌ No       |
+| Performance                | ⚡ Fast | 🐌 Slower  |
+| Memory efficient           | ✅      | ❌          |
+| Typos caught early         | ✅      | ❌          |
+| Dynamic fields             | ❌      | ✅          |
+
+
+
+Example typo bug
+user = OpenStruct.new(name: "Shubham")
+user.nmae = "Oops"   # silently creates a new field 😬
+
+
+With Struct, this would raise an error.
+
+Rails usage (where you’ll see it)
+1️⃣ Parsing API responses
+response = OpenStruct.new(JSON.parse(api_response))
+response.data.user.name
+
+2️⃣ Quick prototypes / scripts
+3️⃣ Legacy Rails code (older apps use it a lot)
+Why modern Rails avoids OpenStruct
+
+Rails core team discourages it because:
+
+Slower
+
+Hides bugs
+
+Harder to refactor
+
+Poor memory usage
+
+Rails prefers:
+
+Struct
+
+POROs (Plain Old Ruby Objects)
+
+Dry::Struct (in big apps)
+
+Better alternative (Rails style)
+UserDTO = Struct.new(:name, :email, keyword_init: true)
+
+
+or plain Ruby class:
+
+class UserDTO
+  attr_reader :name, :email
+
+  def initialize(name:, email:)
+    @name = name
+    @email = email
+  end
+end
+
+Interview-ready one-liner
+
+“OpenStruct allows dynamic attributes at runtime, but it’s slower and error-prone. In Rails, Struct or POROs are preferred for predictable data objects.”

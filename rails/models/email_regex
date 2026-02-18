@@ -1,0 +1,88 @@
+What is URI::MailTo::EMAIL_REGEXP? ✅
+URI::MailTo::EMAIL_REGEXP
+
+
+➡ It is a predefined regular expression provided by Ruby’s standard library
+➡ Used to validate email address format
+
+It lives in:
+
+URI::MailTo
+
+
+module (part of Ruby’s uri library)
+
+Is it Rails or Ruby? 🤔
+
+It is Ruby standard library, not Rails-specific
+
+Rails simply uses and recommends it.
+
+So the correct wording is:
+
+“It’s a Ruby standard library regex commonly used in Rails apps.”
+
+Why does it exist?
+
+Email RFC rules are complex
+
+Writing a perfect regex is risky
+
+Ruby provides a well-tested, maintained solution
+
+Rails encourages reuse instead of custom regex
+
+What problem does it solve?
+
+It validates:
+
+Presence of @
+
+Valid local and domain parts
+
+No illegal characters
+
+Common real-world email formats
+
+But it does NOT:
+
+Check if email exists
+
+Send verification
+
+Guarantee RFC perfection
+
+How it’s used in Rails models
+class User < ApplicationRecord
+  validates :email,
+    presence: true,
+    format: { with: URI::MailTo::EMAIL_REGEXP }
+end
+
+Why interviewers prefer this answer ⭐
+
+Saying this shows:
+
+You know Rails conventions
+
+You trust standard libraries
+
+You avoid over-engineering
+
+You understand limitations
+
+Interview-ready explanation (perfect)
+
+“URI::MailTo::EMAIL_REGEXP is a regular expression provided by Ruby’s standard library for validating email format. Rails apps commonly use it instead of custom regex because email standards are complex and this solution is well-tested.”
+
+Quick comparison (to lock it in)
+
+| Option                      | Verdict            |
+| --------------------------- | ------------------ |
+| Custom email regex          | ❌ Risky            |
+| `/\A[^@\s]+@[^@\s]+\z/`     | ⚠️ Too basic       |
+| `URI::MailTo::EMAIL_REGEXP` | ✅ Production-ready |
+
+One-liner summary ⭐
+
+“It’s a Ruby built-in email regex from the URI module that Rails commonly uses for safe email format validation.”

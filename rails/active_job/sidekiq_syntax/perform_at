@@ -1,0 +1,87 @@
+🕒 What is a Unix timestamp?
+
+A Unix timestamp is:
+
+The number of seconds elapsed since
+January 1, 1970, 00:00:00 UTC
+
+This moment is called the Unix Epoch.
+
+📌 Example timestamps
+Date & Time (UTC)	Unix timestamp
+Jan 1, 1970 00:00:00	0
+Jan 1, 1970 00:05:00	300
+Jan 1, 2026 10:00:00	1700000000 (approx)
+
+So when Sidekiq sees a number, it assumes:
+
+“This is a Unix timestamp”
+
+🔍 Now connect it to perform_at(5.minutes)
+5.minutes
+# => 300
+
+
+So this code:
+
+perform_at(5.minutes)
+
+
+is interpreted as:
+
+perform_at(300)
+
+
+Meaning:
+
+Run this job at Unix time = 300
+→ Jan 1, 1970, 00:05:00 UTC
+
+That time is decades in the past ⏪
+
+🚨 What does Sidekiq do with a past timestamp?
+
+Sidekiq logic is roughly:
+
+if run_at <= Time.now
+  run_now
+end
+
+
+So:
+
+Timestamp is in the past
+
+Job is immediately eligible
+
+Job executes right away
+
+❌ Not 5 minutes later
+❌ Very sneaky bug
+
+✅ Correct ways to use perform_at
+perform_at(Time.now + 5.minutes)
+perform_at(5.minutes.from_now)
+
+
+Both pass an absolute time, not a duration.
+
+🧠 Mental shortcut to remember
+
+If you pass a number to perform_at, Sidekiq assumes it is seconds since 1970.
+
+🎯 Interview one-liner
+
+A Unix timestamp is the number of seconds since Jan 1, 1970 UTC, and Sidekiq interprets numeric arguments to perform_at as absolute timestamps.
+
+TL;DR
+
+Unix timestamp = seconds since 1970
+
+5.minutes = 300
+
+perform_at(300) = Jan 1, 1970
+
+Job runs immediately ❌
+
+Use perform_in or perform_at(Time)

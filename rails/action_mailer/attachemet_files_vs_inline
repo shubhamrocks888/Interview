@@ -1,0 +1,115 @@
+Nice one 👌 — this is a Rails Mailer classic, and interviewers love this comparison.
+
+Both lines attach files to an email, but they behave very differently.
+
+1️⃣ attachments["filename"] = File.read(path)
+📌 What it does
+
+Adds a regular file attachment to the email.
+
+attachments["invoice.pdf"] = File.read("/tmp/invoice.pdf")
+
+📬 How it appears to user
+
+Shows up as a downloadable attachment
+
+User must click to open/download
+
+Not displayed inside email body
+
+🧠 Use cases
+
+PDFs
+
+CSVs
+
+Reports
+
+Invoices
+
+Any downloadable file
+
+💡 Mental model
+
+“This file is sent with the email”
+
+2️⃣ attachments.inline["logo.png"] = File.read("app/assets/images/logo.png")
+📌 What it does
+
+Adds an inline attachment that can be rendered inside the email body.
+
+attachments.inline["logo.png"] =
+  File.read(Rails.root.join("app/assets/images/logo.png"))
+
+📬 How it appears to user
+
+Does NOT appear as a normal attachment
+
+Can be embedded in HTML email:
+
+<img src="cid:logo.png">
+
+🧠 Use cases
+
+Logos
+
+Banners
+
+Icons
+
+Email branding images
+
+💡 Mental model
+
+“This file is part of the email HTML”
+
+🔥 Side-by-side comparison (easy to remember)
+
+| Feature              | attachments | attachments.inline |
+| -------------------- | ----------- | ------------------ |
+| Downloadable         | ✅ Yes       | ❌ No               |
+| Display inside email | ❌ No        | ✅ Yes              |
+| Used with `<img>`    | ❌           | ✅                  |
+| Common use           | PDFs, files | Logos, images      |
+| Requires `cid:`      | ❌           | ✅                  |
+
+🧠 Why cid: is needed for inline
+
+Inline attachments are referenced by Content-ID:
+
+<img src="cid:logo.png">
+
+
+Rails maps:
+
+attachments.inline["logo.png"]
+
+
+→ cid:logo.png
+
+🚫 Common mistake (very common)
+<img src="/assets/logo.png"> ❌
+
+
+This won’t work in emails because:
+
+Email clients don’t know your server
+
+Assets pipeline is unavailable
+
+✅ Always use cid: for inline images.
+
+💎 Interview-ready answer (memorize this)
+
+“attachments sends files as downloadable attachments, while
+attachments.inline embeds files inside the email body using Content-ID,
+commonly for images like logos.”
+
+⚡ Pro tip (senior-level)
+
+Always use absolute paths:
+
+Rails.root.join("app/assets/images/logo.png")
+
+
+Avoid hardcoded relative paths.

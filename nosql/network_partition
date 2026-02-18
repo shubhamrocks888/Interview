@@ -1,0 +1,143 @@
+A network partition means nodes in a distributed system cannot communicate with each other.
+
+What causes a network partition?
+
+Network outage
+
+Data center issue
+
+Router/switch failure
+
+Cloud AZ connectivity problem
+
+Example:
+
+Node A  ❌──────❌  Node B
+Node C  ❌──────❌  Node D
+
+
+Nodes are alive, but can’t talk to each other.
+
+Why this matters in CAP theorem
+
+When a partition happens, the system must choose:
+
+Consistency → reject some requests
+
+Availability → serve requests with possible stale data
+
+You cannot avoid this choice.
+
+One-line interview answer (perfect)
+
+“A network partition occurs when nodes in a distributed system are unable to communicate with each other due to network failures.”
+
+
+
+#################
+
+
+First: quick correction (important)
+
+❌ “primary node not working”
+❌ “secondary node not working”
+
+In network partition, nodes may be working, but cannot communicate.
+
+So the real question is:
+👉 Does the node receiving the write have majority or not?
+
+Assume a 3-node MongoDB replica set
+Node A — Primary
+Node B — Secondary
+Node C — Secondary
+Majority = 2 nodes
+
+Case 1️⃣ Primary is isolated (no majority)
+Primary (A) ❌ isolated
+Secondary (B) ✅
+Secondary (C) ✅
+
+What happens?
+
+Primary loses majority
+
+MongoDB steps down the primary
+
+❌ Writes are rejected
+
+A new primary is elected from B or C
+
+Result:
+
+❌ Write request fails (temporarily)
+
+✅ Consistency preserved
+
+❌ Availability sacrificed
+
+👉 MongoDB chooses Consistency
+
+Case 2️⃣ One secondary is down / unreachable
+Primary (A) ✅
+Secondary (B) ❌
+Secondary (C) ✅
+
+What happens?
+
+Majority still exists (A + C)
+
+Primary remains primary
+
+✅ Writes succeed
+
+Secondary B catches up later
+
+Result:
+
+✅ Write request succeeds
+
+✅ Availability maintained
+
+✅ Consistency maintained
+
+Case 3️⃣ Write request hits a secondary
+Important rule:
+
+MongoDB never allows writes on secondaries
+
+What happens?
+
+Secondary rejects write
+
+Client is redirected to primary
+
+Result:
+
+❌ Write not accepted by secondary
+
+✅ Correct behavior
+
+Case 4️⃣ Partition splits cluster evenly (dangerous case)
+A + B  |  C
+
+
+A+B = majority → primary exists → writes succeed
+
+C alone → no primary → writes rejected
+
+👉 Prevents split-brain
+
+Summary Table (Interview Gold)
+Situation	Majority?	Write allowed?	Reason
+Primary isolated	❌	❌	Prevent inconsistency
+Secondary isolated	✅	✅	Majority exists
+Write to secondary	—	❌	Writes only on primary
+Majority side	✅	✅	Safe writes
+One-line interview answer (memorize)
+
+“In MongoDB, writes are only accepted by the primary and only when it has majority. If the primary loses majority during a network partition, writes are blocked to preserve consistency.”
+
+Ultra-short mental model
+
+No majority = no writes

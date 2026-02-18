@@ -1,0 +1,206 @@
+1️⃣ What is Regex? (Interview definition)
+
+Regex (Regular Expression) is a pattern used to search, match, or validate text.
+
+In Rails:
+
+Validate emails
+
+Validate phone numbers
+
+Parse strings
+
+Sanitize inputs
+
+2️⃣ Regex structure (VERY IMPORTANT)
+/pattern/modifiers
+
+
+Example:
+
+/\Aabc\z/
+
+
+/ / → regex literal
+
+pattern → matching rules
+
+\A \z → anchors (start & end)
+
+3️⃣ Anchors (ALWAYS asked)
+
+| Symbol | Meaning                           |
+| ------ | --------------------------------- |
+| `^`    | Start of line                     |
+| `$`    | End of line                       |
+| `\A`   | Start of string (Rails preferred) |
+| `\z`   | End of string                     |
+
+Interview tip ⭐
+
+👉 Rails prefers \A and \z, not ^ and $.
+
+/\Aabc\z/   # EXACT match
+
+4️⃣ Character classes (core concept)
+Literal characters
+/cat/
+
+
+Matches: cat inside any string
+
+Character sets [ ]
+/[abc]/
+
+
+Matches: a OR b OR c
+
+/[a-z]/
+
+
+Matches: lowercase letters
+
+Negated set [^ ]
+/[^a-z]/
+
+
+Matches: anything NOT a–z
+
+5️⃣ Shorthand classes (must know)
+
+| Regex | Meaning                      |
+| ----- | ---------------------------- |
+| `\d`  | Digit (0–9)                  |
+| `\w`  | Word (a–z, A–Z, 0–9, _)      |
+| `\s`  | Whitespace                   |
+| `.`   | Any character except newline |
+
+6️⃣ Quantifiers (VERY commonly asked)
+
+| Symbol  | Meaning         |
+| ------- | --------------- |
+| `+`     | One or more     |
+| `*`     | Zero or more    |
+| `?`     | Zero or one     |
+| `{n}`   | Exactly n       |
+| `{n,}`  | At least n      |
+| `{n,m}` | Between n and m |
+
+Example
+/\d+/      # one or more digits
+/\d{10}/   # exactly 10 digits
+
+7️⃣ Grouping & alternation
+Grouping ( )
+/(abc)+/
+
+
+Matches:
+
+abc
+
+abcabc
+
+OR operator |
+/(cat|dog)/
+
+
+Matches:
+
+cat
+
+dog
+
+8️⃣ Common Rails validation examples
+🔹 Numeric only
+/\A\d+\z/
+
+🔹 Username (letters + numbers)
+/\A[a-zA-Z0-9]+\z/
+
+🔹 Phone number (10 digits)
+/\A\d{10}\z/
+
+9️⃣ Email regex (connect to what you learned)
+Basic
+/\A[^@\s]+@[^@\s]+\z/
+
+
+Uses:
+
+[^ ] → negation
+
++ → at least one char
+
+\A \z → exact match
+
+🔟 Why regex interviews are tricky ⚠️
+
+Interviewers are NOT looking for:
+❌ RFC-complete email regex
+❌ Memorized patterns
+
+They want:
+✅ Anchors
+✅ Character classes
+✅ Quantifiers
+✅ Readability
+
+11️⃣ Regex explanation technique (VERY IMPORTANT)
+
+If asked:
+
+“Explain this regex”
+
+Do left to right:
+
+/\A\d{10}\z/
+
+
+Say:
+
+“Start of string, exactly 10 digits, end of string.”
+
+12️⃣ One-line interview definition ⭐
+
+“Regex is a pattern-matching language used to validate or search strings using character classes, quantifiers, and anchors.”
+
+13️⃣ What to practice next (recommended)
+
+Read regex left → right
+
+Explain in English
+
+Don’t overcomplicate
+
+Prefer clarity over cleverness
+
+If you want next:
+
+Deep dive on ^ vs \A
+
+Practice interview questions
+
+Build regex step-by-step
+
+Rails form validation examples
+
+Just say 👍
+
+ChatGPT can make mistakes. Check important info. See Cookie Preferences.
+
+
+
+What does \s match? 🧠
+
+\s matches:
+
+space " "
+
+tab \t
+
+newline \n
+
+carriage return \r
+
+form feed, etc.

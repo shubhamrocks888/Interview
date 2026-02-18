@@ -1,0 +1,210 @@
+🧭 High-level answer (say this first)
+
+“Once the file is generated in the temp directory, we securely persist it, generate controlled access for the user, notify them, and ensure cleanup and auditing.”
+
+Now let’s go line by line.
+
+1️⃣ Step 1: Verify file integrity (quick but important)
+
+Before doing anything else:
+
+raise "Empty report" if File.size(file_path) == 0
+
+
+Why:
+
+Catch silent failures
+
+Avoid sending broken files
+
+🎯 Interviewer phrase:
+
+“We add a sanity check before exposing the file.”
+
+2️⃣ Step 2: Upload file to secure storage (S3 / GCS / Azure)
+
+You never serve files directly from /tmp.
+
+Why?
+
+App servers are ephemeral
+
+/tmp is not shared
+
+Security risk
+
+Upload step
+storage_key = "reports/#{user.id}/enrollments_#{timestamp}.csv"
+
+s3.put_object(
+  bucket: REPORT_BUCKET,
+  key: storage_key,
+  body: File.open(file_path),
+  content_type: "text/csv"
+)
+
+
+For XLS:
+
+content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+🎯 Interviewer phrase:
+
+“We move the file from ephemeral storage to durable, private object storage.”
+
+3️⃣ Step 3: Mark file as private (SECURITY CRITICAL)
+
+Bucket is not public
+
+No direct object access
+
+acl: "private"
+
+
+Why:
+
+Security reports = sensitive data
+
+Access only via signed URLs
+
+4️⃣ Step 4: Create a report record in DB
+
+You track exports.
+
+ReportExport.create!(
+  user_id: user.id,
+  file_key: storage_key,
+  format: format,
+  status: "completed"
+)
+
+
+Why this matters:
+
+Auditing
+
+Support debugging
+
+Download history
+
+🎯 Interviewer keyword:
+
+“We persist metadata for traceability.”
+
+5️⃣ Step 5: Generate a signed / pre-signed download URL
+download_url = s3.presigned_url(
+  :get_object,
+  bucket: REPORT_BUCKET,
+  key: storage_key,
+  expires_in: 10.minutes
+)
+
+
+Security benefits:
+
+Time-bound access
+
+No authentication bypass
+
+URL auto-expires
+
+6️⃣ Step 6: Notify user (UX layer)
+Options:
+
+UI notification
+
+Email
+
+WebSocket / polling
+
+Example:
+
+ReportMailer.ready(user, download_url).deliver_later
+
+
+Or frontend polls:
+
+GET /api/reports/:id/status
+
+
+🎯 Interviewer phrase:
+
+“The user never waits on the request; they’re notified when the report is ready.”
+
+7️⃣ Step 7: Enforce session & ownership checks on download
+
+Even with signed URLs:
+
+Validate:
+
+user owns the report
+
+session still valid (optional but strong)
+
+raise Unauthorized unless report.user_id == current_user.id
+
+
+This prevents:
+
+URL leakage
+
+Privilege escalation
+
+8️⃣ Step 8: Auto-cleanup temp files (VERY IMPORTANT)
+ensure
+  File.delete(file_path) if File.exist?(file_path)
+end
+
+
+Why:
+
+Disk fills up fast
+
+Containers crash otherwise
+
+🎯 Interviewer phrase:
+
+“Temp files are always cleaned up in an ensure block.”
+
+9️⃣ Step 9: Auto-expire stored reports (COST + SECURITY)
+
+Scheduled job:
+
+ReportExport.where("created_at < ?", 7.days.ago).find_each do |report|
+  s3.delete_object(key: report.file_key)
+end
+
+
+Why:
+
+Sensitive data retention
+
+Storage cost control
+
+Compliance
+
+🔟 Step 10: Audit logging (SECURITY GOLD)
+AuditLog.create!(
+  user_id: user.id,
+  action: "report_downloaded",
+  report_id: report.id
+)
+
+
+This is huge for security interviews.
+
+🧠 Final end-to-end flow (say this smoothly)
+Generate file in /tmp
+→ Validate file
+→ Upload to private object storage
+→ Store metadata in DB
+→ Generate expiring download link
+→ Notify user
+→ Clean temp files
+→ Auto-expire old reports
+→ Audit every access
+
+🎯 One-paragraph interviewer answer (memorize)
+
+“After generating the CSV or XLS in the temp directory, we validate the file, upload it to private object storage, persist export metadata, and generate a short-lived signed URL for secure access. The user is notified once the report is ready, temp files are cleaned up immediately, and old reports are automatically expired. Every export and download is audited to maintain security and traceability.”

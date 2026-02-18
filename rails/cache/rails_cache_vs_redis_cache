@@ -1,0 +1,187 @@
+1️⃣ Namespacing
+	What it is
+
+	Rails prefixes cache keys so different apps / environments don’t clash in the same Redis.
+
+	Example actual Redis key:
+
+	myapp:production:views/users/index:abc123
+
+	Why needed
+
+	Without namespacing:
+
+	Two apps using the same Redis
+
+	Same key "users_count"
+	👉 They overwrite each other ❌
+
+	How Rails does it
+
+	App name
+
+	Rails environment
+
+	Optional custom namespace
+
+	config.cache_store = :redis_cache_store,
+	  url: ENV["REDIS_URL"],
+	  namespace: "my_app"
+
+
+	Then:
+
+	Rails.cache.write("users_count", 10)
+
+
+	Redis stores:
+
+	my_app:users_count
+
+	📌 You never worry about collisions
+
+
+2️⃣ Expiration handling
+
+	What it is
+
+	Rails automatically manages TTL (time-to-live) for cache entries.
+	Rails.cache.write("users_count", 10, expires_in: 5.minutes)
+
+	What happens
+
+	Rails converts expires_in → Redis EXPIRE
+	After 5 minutes → key auto-deleted
+
+	Why needed
+
+	Prevent stale data
+	Control memory usage
+	Allow safe eviction
+
+	Bonus: fetch
+	Rails.cache.fetch("users_count", expires_in: 5.minutes) do
+	  User.count
+	end
+
+
+	Miss → block runs
+
+	Hit → block skipped
+
+	📌 No manual TTL logic
+
+3️⃣ Serialization
+	What it is
+
+	Rails automatically converts Ruby objects ↔ bytes.
+
+	Rails.cache.write("user", User.first)
+	user = Rails.cache.read("user")
+
+
+	Works without you calling .to_json.
+
+	Behind the scenes
+
+	Uses Marshal / JSON / MessagePack (store-dependent)
+
+	Handles:
+		Arrays
+		Hashes
+		ActiveRecord objects (attributes)
+
+
+	Why needed
+
+	Redis only understands:
+		String / Integer / Bytes
+
+
+	Rails bridges that gap.
+
+	📌 Direct Redis requires manual serialization
+
+	redis.set("user", user.to_json) # you do it
+
+4️⃣ Instrumentation
+	What it is
+
+	Rails emits ActiveSupport notifications for cache operations.
+
+	Events like:
+
+	cache_read.active_support
+	cache_write.active_support
+	cache_fetch_hit.active_support
+	cache_fetch_miss.active_support
+
+	Why needed
+
+	Monitoring
+	Debugging
+	Performance analysis
+
+	Example:
+		ActiveSupport::Notifications.subscribe("cache_fetch_hit.active_support") do |*args|
+		  event = ActiveSupport::Notifications::Event.new(*args)
+		  Rails.logger.info "Cache HIT: #{event.payload[:key]}"
+		end
+
+
+	📌 Tools like New Relic / Datadog rely on this.
+
+
+5️⃣ Race-condition protection ⭐ (VERY IMPORTANT)
+		The problem (cache stampede)
+
+		Scenario:
+
+		Cache expires
+
+		100 requests hit simultaneously
+
+		All recompute expensive query ❌
+
+		Rails solution: race_condition_ttl
+		Rails.cache.fetch("users_count",
+		  expires_in: 5.minutes,
+		  race_condition_ttl: 10.seconds
+		) do
+		  expensive_query
+		end
+
+
+
+		How it works
+
+		Cache expires at T=0
+		Rails allows one request to recompute
+
+		Other requests:
+
+		Serve stale value
+		Wait for recomputation
+
+		Result
+
+		❌ No DB flood
+		❌ No API storm
+		✅ Smooth traffic
+
+		📌 This feature does not exist in raw Redis.
+
+Summary table (memorize this)
+
+| Feature            | What Rails adds     | Why it matters |
+| ------------------ | ------------------- | -------------- |
+| Namespacing        | Key isolation       | No collisions  |
+| Expiration         | TTL handling        | Fresh data     |
+| Serialization      | Ruby ↔ bytes        | Store objects  |
+| Instrumentation    | Events              | Monitoring     |
+| Race-condition TTL | Stampede protection | Stability      |
+
+
+Interview killer one-liner
+
+Rails.cache adds a higher-level caching layer over Redis by handling key namespacing, expiration, object serialization, instrumentation, and race-condition protection, which raw Redis does not provide.

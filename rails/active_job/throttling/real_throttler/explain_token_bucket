@@ -1,0 +1,286 @@
+class TokenBucket
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity
+    @refill_rate = refill_rate # tokens per second
+    @tokens = capacity
+    @last_refill = Time.now
+  end
+
+  def allow?
+    refill_tokens
+
+    if @tokens >= 1
+      @tokens -= 1
+      true
+    else
+      false
+    end
+  end
+
+  private
+
+  def refill_tokens
+    now = Time.now
+    elapsed = now - @last_refill
+
+    new_tokens = elapsed * @refill_rate
+    @tokens = [@capacity, @tokens + new_tokens].min
+
+    @last_refill = now if new_tokens > 0
+  end
+end
+
+#########
+
+Perfect — this is exactly the right moment to go slow and literal.
+I’ll explain every single line, no hand-waving.
+
+Keep this mental picture while reading 👇
+🪣 A bucket of tokens
+⏱ Time refills tokens
+🚪 Each request spends 1 token
+
+Class definition
+class TokenBucket
+
+
+We are defining a class called TokenBucket.
+One object = one bucket (usually per user / IP / API key).
+
+initialize method
+def initialize(capacity:, refill_rate:)
+
+
+This method runs once, when the bucket is created.
+
+It takes keyword arguments:
+
+capacity: → maximum tokens bucket can hold
+
+refill_rate: → how fast tokens come back (tokens per second)
+
+@capacity = capacity
+
+
+Instance variable.
+
+👉 Maximum number of tokens allowed in the bucket
+Example: capacity = 10
+
+@refill_rate = refill_rate # tokens per second
+
+
+How fast tokens refill.
+
+Example:
+
+refill_rate = 1
+
+means 1 token added every second
+
+@tokens = capacity
+
+
+Start with a full bucket.
+
+If capacity = 10 → initially 10 tokens available
+This allows burst traffic at the beginning.
+
+@last_refill = Time.now
+
+
+Store the current time.
+
+This timestamp is used later to calculate:
+
+“How much time passed since last refill?”
+
+allow? method
+def allow?
+
+
+This method is called for every request.
+
+Question it answers:
+
+“Can this request go through?”
+
+Returns:
+
+true → allow request
+
+false → throttle request
+
+refill_tokens
+
+
+Before deciding, we refill tokens based on time passed.
+
+⚠️ Important:
+Tokens are not refilled continuously, only when a request arrives.
+
+if @tokens >= 1
+
+
+Check:
+
+Do we have at least 1 token?
+
+Why 1?
+👉 One request costs one token.
+
+@tokens -= 1
+
+
+Spend one token.
+
+This represents:
+
+“This request consumed capacity.”
+
+true
+
+
+Return true → request is allowed.
+
+else
+  false
+
+
+No tokens left → request is rejected (throttled).
+
+refill_tokens method
+private
+
+
+Everything below this is internal logic
+(not meant to be called from outside).
+
+def refill_tokens
+
+
+This method:
+
+Adds tokens based on how much time has passed.
+
+now = Time.now
+
+
+Get current time.
+
+elapsed = now - @last_refill
+
+
+Calculate:
+
+“How many seconds passed since last refill?”
+
+Example:
+
+last refill at 12:00:00
+
+now is 12:00:03
+
+elapsed = 3 seconds
+
+new_tokens = elapsed * @refill_rate
+
+
+Calculate how many tokens to add.
+
+Example:
+
+elapsed = 3 seconds
+
+refill_rate = 2 tokens/sec
+
+new_tokens = 6
+
+@tokens = [@capacity, @tokens + new_tokens].min
+
+
+This line does two things:
+
+Add new tokens
+@tokens + new_tokens
+
+Cap at maximum capacity
+min(@capacity)
+
+So bucket never overflows.
+
+Example:
+
+capacity = 10
+
+current tokens = 8
+
+new_tokens = 5
+
+result = min(10, 13) → 10
+
+@last_refill = now if new_tokens > 0
+
+
+Update last refill time only if tokens were added.
+
+Why?
+
+Prevents resetting time on every request
+
+Keeps math accurate
+
+Full request lifecycle example 🧠
+Setup
+bucket = TokenBucket.new(capacity: 5, refill_rate: 1)
+
+
+Start:
+
+tokens = 5
+
+5 quick requests
+tokens → 4 → 3 → 2 → 1 → 0
+
+
+All allowed.
+
+6th request immediately
+tokens = 0
+→ reject
+
+Wait 3 seconds
+elapsed = 3
+new_tokens = 3
+tokens = 3
+
+
+Now 3 requests allowed again.
+
+Why this is called “real throttling”
+
+Because:
+
+Allows bursts
+
+Smoothly refills over time
+
+Enforces average rate
+
+No hard window reset
+
+Important limitation ⚠️
+
+This version is:
+
+❌ Not thread-safe
+
+❌ Not multi-process safe
+
+❌ Not Redis-safe
+
+But it’s perfect for understanding the algorithm.
+
+Interview-ready one-liner 🎯
+
+“Each request consumes a token; tokens refill over time based on elapsed time, allowing bursts while enforcing an average rate.”

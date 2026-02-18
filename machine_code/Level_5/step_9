@@ -1,0 +1,98 @@
+🚀 Next Part (Real-World Upgrade)
+
+Let’s now move from “Book My Show Lite” to something more realistic.
+
+🎯 Next Feature: Seat-Level Booking (Instead of seat count)
+
+Right now we book:
+
+seats_booked = 3
+
+
+But real systems don’t book “3 random seats”.
+
+They book:
+
+["A1", "A2", "A3"]
+
+Why This Is Important
+
+Your current system:
+
+Only tracks available_seats
+
+Does NOT track which exact seats are booked
+
+Cannot prevent two users booking the same seat number
+
+That’s not how real booking systems work.
+
+🎬 Real Upgrade Design
+
+We introduce a new model:
+
+Seat Model
+
+Fields:
+
+show_id
+
+seat_number (A1, A2, B5, etc.)
+
+status (available / booked)
+
+Relationships:
+
+Show has_many seats
+
+Seat belongs_to show
+
+Booking has_many seats (optional advanced)
+
+Booking Flow Changes
+
+Instead of:
+
+Book 3 seats
+
+
+We do:
+
+Book seats: ["A1", "A2"]
+
+
+New flow:
+
+Lock selected seats
+
+Check if all seats are available
+
+Create booking
+
+Mark seats as booked
+
+Commit transaction
+
+🔥 Interview-Level Question
+
+Why is seat-level locking better than just decrementing available_seats?
+
+Because:
+
+Prevents double booking of same seat
+
+Allows seat map UI
+
+More realistic design
+
+Better concurrency control
+
+Your Turn
+
+Do you want to:
+
+1️⃣ Design Seat model first
+OR
+2️⃣ Modify existing booking logic to support seat numbers
+OR
+3️⃣ Discuss system design level (like how BookMyShow handles 1 lakh users concurrently)

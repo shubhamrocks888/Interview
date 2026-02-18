@@ -1,0 +1,175 @@
+Why your current code is NOT production-ready
+The core problem ❌
+
+This part is not atomic:
+
+data = Rails.cache.read(...)
+# math
+Rails.cache.write(...)
+
+
+Under concurrency:
+
+two requests read the same state
+
+both think tokens are available
+
+both write back
+➡️ double spending tokens
+
+This is a classic read–modify–write race condition.
+
+The ONLY correct fix in Redis
+✅ Use a Redis Lua script
+
+Redis guarantees:
+
+Lua scripts execute atomically
+
+No other command runs in between
+
+Perfect for token bucket logic
+
+This is how API gateways, Nginx, Envoy do it.
+
+✅ Production-ready Redis Token Bucket (Atomic)
+Ruby class
+class RedisTokenBucket
+  LUA_SCRIPT = <<~LUA
+    local key = KEYS[1]
+    local capacity = tonumber(ARGV[1])
+    local refill_rate = tonumber(ARGV[2])
+    local now = tonumber(ARGV[3])
+    local ttl = tonumber(ARGV[4])
+
+    local data = redis.call("HMGET", key, "tokens", "last_refill")
+    local tokens = tonumber(data[1])
+    local last_refill = tonumber(data[2])
+
+    if tokens == nil then
+      tokens = capacity
+      last_refill = now
+    end
+
+    local elapsed = now - last_refill
+    local refill = elapsed * refill_rate
+    tokens = math.min(capacity, tokens + refill)
+
+    local allowed = 0
+    if tokens >= 1 then
+      tokens = tokens - 1
+      allowed = 1
+    end
+
+    redis.call("HMSET", key, "tokens", tokens, "last_refill", now)
+    redis.call("EXPIRE", key, ttl)
+
+    return allowed
+  LUA
+
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity
+    @refill_rate = refill_rate
+    @redis = Rails.cache.redis
+    @script_sha = @redis.script(:load, LUA_SCRIPT)
+  end
+
+  def allow?(key)
+    now = Time.now.to_f
+    ttl = (@capacity / @refill_rate).ceil
+
+    result = @redis.evalsha(
+      @script_sha,
+      keys: [bucket_key(key)],
+      argv: [@capacity, @refill_rate, now, ttl]
+    )
+
+    result == 1
+  end
+
+  private
+
+  def bucket_key(key)
+    "token_bucket:#{key}"
+  end
+end
+
+Why this version IS production-ready
+✅ Atomic
+
+Entire token calculation happens inside Redis
+
+No race conditions
+
+No lost updates
+
+✅ Distributed-safe
+
+Works across multiple app servers
+
+Shared Redis state
+
+✅ High performance
+
+Single Redis call
+
+No round trips
+
+Lua runs in Redis VM
+
+✅ Correct TTL handling
+
+Bucket expires automatically when idle
+
+No memory leaks
+
+What bugs were fixed compared to your version
+Issue	Old code	New code
+Race condition	❌	✅
+Atomicity	❌	✅
+Multi-server safety	❌	✅
+Token double-spend	❌	✅
+Redis best practice	❌	✅
+Interview-level explanation 🎯
+
+You can say:
+
+“Token bucket requires atomic read–modify–write. In Redis, this must be implemented using Lua scripts to avoid race conditions under concurrency.”
+
+That sentence alone screams senior backend.
+
+One important honesty note ⚠️
+
+Rails.cache alone is not enough for:
+
+token bucket
+
+sliding window
+
+leaky bucket
+
+You must drop to Redis primitives or Lua.
+
+If you say this in an interview → instant respect.
+
+Final takeaway 🧠
+
+Your instinct was correct
+
+Race condition was real
+
+Lua is the right fix
+
+This is how production systems do it
+
+If you want next:
+
+add delay instead of reject
+
+compare with Rack::Attack internals
+
+implement sliding window log
+
+talk about Redis failure modes
+
+Say the word 🔥

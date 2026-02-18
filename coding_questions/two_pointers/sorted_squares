@@ -1,0 +1,124 @@
+Perfect — Squares of a Sorted Array is another classic two-pointer problem, and it’s subtle because squaring can change order. Let’s break it down carefully.
+
+Problem: Squares of a Sorted Array — what it means
+
+Typical wording:
+
+“Given a non-decreasing sorted array of integers nums, return a new array containing the squares of each number, sorted in non-decreasing order.”
+
+Key points hidden in the wording
+1️⃣ Array is sorted
+
+Input is sorted, e.g. [-4,-1,0,3,10]
+
+Important because negatives become positives when squared
+
+2️⃣ Squaring can change order
+
+Example:
+
+Input: [-4, -1, 0, 3, 10]
+Squares: [16, 1, 0, 9, 100]
+
+
+Naive squaring then sorting → works, but O(n log n)
+
+Two-pointer solution → O(n) without sorting
+
+3️⃣ Output array is sorted
+
+You cannot just square blindly
+
+Must maintain non-decreasing order
+
+Why two pointers are perfect
+
+Observation:
+
+Largest squared number will come from either end of the array:
+
+Far left (most negative)
+
+Far right (most positive)
+
+Idea: fill output array from the end (largest → smallest)
+
+Two-pointer approach:
+
+left = 0, right = arr.length - 1
+
+pos = arr.length - 1 (fill from end)
+
+Compare abs(arr[left]) and abs(arr[right])
+
+Place the larger one at pos
+
+Move pointer inward
+
+Decrement pos
+
+Example walk-through
+
+Input: [-4, -1, 0, 3, 10]
+
+Pointers:
+
+left	right	compare	square	pos	array after step
+-4	10	10>4	100	4	[,,,,100]
+-4	3	4>3	16	3	[,,_,16,100]
+-1	3	3>1	9	2	[,,9,16,100]
+-1	0	1>0	1	1	[_,1,9,16,100]
+0	0	0=0	0	0	[0,1,9,16,100]
+
+✅ Output is [0,1,9,16,100]
+
+Why interviewers like this question
+
+Tests two-pointer thinking on sorted array + transformation
+
+Tests ability to handle negative numbers
+
+Can do O(n) time, O(n) space, in-place optional
+
+Shows you can handle array manipulation elegantly
+
+Interview-ready explanation
+
+“Because squaring negative numbers can produce large values at the start of the array, I use two pointers at both ends. At each step, I compare absolute values and place the larger square at the end of the result array, moving pointers inward. This fills the result array in sorted order in one pass.”
+
+
+
+
+
+
+
+
+########## 
+
+def sorted_squares(nums)
+  n = nums.length
+  result = Array.new(n)
+  left = 0
+  right = n - 1
+  pos = n - 1
+
+  while left <= right
+    if nums[left].abs > nums[right].abs
+      result[pos] = nums[left]**2
+      left += 1
+    else
+      result[pos] = nums[right]**2
+      right -= 1
+    end
+    pos -= 1
+  end
+
+  result
+end
+
+# Example usage
+arr = [-4, -1, 0, 3, 10]
+p sorted_squares(arr)  # => [0, 1, 9, 16, 100]
+
+arr2 = [-7, -3, 2, 3, 11]
+p sorted_squares(arr2) # => [4, 9, 9, 49, 121]

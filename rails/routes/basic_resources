@@ -1,0 +1,61 @@
+resources :users do
+  resources :posts
+end
+It generates all RESTful routes for posts nested under users.
+
+
+
+| HTTP Verb | Path            | Controller#Action |
+| --------- | --------------- | ----------------- |
+| GET       | /users          | users#index       |
+| GET       | /users/new      | users#new         |
+| POST      | /users          | users#create      |
+| GET       | /users/:id      | users#show        |
+| GET       | /users/:id/edit | users#edit        |
+| PATCH/PUT | /users/:id      | users#update      |
+| DELETE    | /users/:id      | users#destroy     |
+
+
+
+| HTTP Verb | Path                           | Controller#Action |
+| --------- | ------------------------------ | ----------------- |
+| GET       | /users/:user_id/posts          | posts#index       |
+| GET       | /users/:user_id/posts/new      | posts#new         |
+| POST      | /users/:user_id/posts          | posts#create      |
+| GET       | /users/:user_id/posts/:id      | posts#show        |
+| GET       | /users/:user_id/posts/:id/edit | posts#edit        |
+| PATCH/PUT | /users/:user_id/posts/:id      | posts#update      |
+| DELETE    | /users/:user_id/posts/:id      | posts#destroy     |
+
+
+resources :users do
+  resources :posts, shallow: true
+end
+
+
+| Verb      | Path            | Action        |
+| --------- | --------------- | ------------- |
+| GET       | /users          | users#index   |
+| GET       | /users/new      | users#new     |
+| POST      | /users          | users#create  |
+| GET       | /users/:id      | users#show    |
+| GET       | /users/:id/edit | users#edit    |
+| PATCH/PUT | /users/:id      | users#update  |
+| DELETE    | /users/:id      | users#destroy |
+
+
+
+| Verb | Path                      | Action       |
+| ---- | ------------------------- | ------------ |
+| GET  | /users/:user_id/posts     | posts#index  |
+| GET  | /users/:user_id/posts/new | posts#new    |
+| POST | /users/:user_id/posts     | posts#create |
+
+
+
+| Verb      | Path            | Action        |
+| --------- | --------------- | ------------- |
+| GET       | /posts/:id      | posts#show    |
+| GET       | /posts/:id/edit | posts#edit    |
+| PATCH/PUT | /posts/:id      | posts#update  |
+| DELETE    | /posts/:id      | posts#destroy |

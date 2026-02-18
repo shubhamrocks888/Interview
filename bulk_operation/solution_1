@@ -1,0 +1,85 @@
+Problem
+
+We are processing CSV in batches (say 1000 rows per batch).
+
+Each batch ends with User.upsert_all(valid_rows.values) → inserts or updates in the DB.
+
+Issue: If the same email appears in batch 1 and again in batch 3:
+
+Batch 1 writes to DB
+
+Batch 3 sees it as a valid row again
+
+How do we know whether it should be insert or update?
+
+Solution: Use Database Upsert / Conflict Handling
+
+Rails’ upsert_all (Postgres 9.5+ / MySQL 8.0+) handles this automatically.
+
+User.upsert_all(
+  valid_rows.values,
+  unique_by: :email  # or index on email
+)
+
+
+How it works:
+
+DB has a unique index on email.
+
+If a row with that email exists: update it
+
+If it doesn’t exist: insert it
+
+✅ This solves the cross-batch problem automatically — you don’t need to keep all emails in memory.
+
+Step-by-Step Behavior
+
+Batch 1:
+
+Email user1@example.com appears → inserted in DB
+
+Batch 3:
+
+Email user1@example.com appears again → DB sees conflict on unique index → row is updated
+
+Result:
+
+Latest valid data in CSV always overwrites previous rows in DB
+
+Optional Enhancements
+
+Keep Track of CSV email duplicates (optional):
+
+Use a Set to track all emails seen across batches if you want to log duplicate emails in CSV, instead of silently updating.
+
+seen_emails = Set.new
+
+CSV.foreach(file_path, headers: true).each_slice(batch_size) do |rows|
+  rows.each do |row|
+    email = row['email']
+    next if email.blank?
+
+    if seen_emails.include?(email)
+      # log duplicate for auditing
+      duplicate_log << email
+    else
+      seen_emails.add(email)
+      # process row normally
+    end
+  end
+end
+
+
+Conflict Resolution Strategy:
+
+Decide whether first occurrence wins or last occurrence wins in case of duplicates.
+
+upsert_all + latest batch naturally implements last occurrence wins.
+
+Key Takeaways
+
+No need to keep all valid emails in memory for millions of rows.
+
+Database upsert with unique index handles insert vs update across batches.
+
+Optional: track duplicates with a Set if you want auditing.

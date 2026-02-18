@@ -1,0 +1,36 @@
+Rate Limiting
+Option 1: Using Sidekiq Enterprise (built-in)
+class ApiWorker
+  include Sidekiq::Worker
+  sidekiq_options rate: { name: "api_requests", limit: 10, period: 1.minute }
+
+  def perform(user_id)
+    # call external API
+  end
+end
+
+
+limit: 10 → max 10 jobs in the period
+
+period: 1.minute → time window
+
+Jobs beyond limit → delayed automatically
+
+
+Option 2: Using sidekiq-rate-limiter gem (open-source)
+class EmailWorker
+  include Sidekiq::Worker
+  sidekiq_options queue: :mailers
+
+  sidekiq_rate_limiter :user_id, threshold: 5, period: 60
+  # max 5 emails per user per 60 seconds
+
+  def perform(user_id, mail_id)
+    # send email
+  end
+end
+
+
+Enforces per-key throttling
+
+Prevents spamming per user

@@ -1,0 +1,116 @@
+🚫 Problem: User drags seek bar to the end
+
+If we naïvely trust:
+
+player.currentTime
+
+
+User can:
+
+Drag to 99%
+
+Send heartbeat
+
+Mark video completed
+
+❌ Not acceptable for LMS.
+
+✅ Correct mindset (say this first)
+
+“We never trust absolute seek position.
+We track continuous playback on the backend.”
+
+🟢 Solution 1: Track progressive time, not jumps (MOST IMPORTANT)
+Backend logic
+MAX_INCREMENT = 15 # seconds per heartbeat
+
+delta = current_time - progress.last_watched_second
+
+if delta > 0 && delta <= MAX_INCREMENT
+  progress.last_watched_second = current_time
+end
+
+
+What this does:
+
+Allows natural forward playback
+
+Rejects large jumps
+
+Seek to end ≠ progress
+
+Interview line:
+
+“Progress only advances within expected playback bounds.”
+
+🟢 Solution 2: Use player events (frontend assist)
+
+Frontend listens to:
+
+play
+
+pause
+
+seeking
+
+seeked
+
+If seeking detected:
+
+Temporarily pause progress updates
+
+Resume only after continuous playback
+
+This helps but backend still enforces rules.
+
+🟢 Solution 3: Minimum watch time rule
+
+Example:
+
+Must watch ≥ 90% duration
+AND
+Must watch continuously ≥ X seconds
+
+
+So even if they jump:
+
+They still need actual playback time
+
+🟢 Solution 4: Segment-level validation (advanced)
+
+Because HLS plays small .ts segments:
+
+Backend can track segment sequence numbers
+
+Only count segments fetched in order
+
+This is advanced but very strong.
+
+Interview phrasing:
+
+“We can validate playback continuity at segment level for high-trust environments.”
+
+🟢 Solution 5: Cap progress per heartbeat
+
+Even if frontend lies:
+
+progress.last_watched_second += HEARTBEAT_INTERVAL
+
+
+Instead of trusting currentTime.
+
+This makes cheating mathematically impossible.
+
+🧠 What NOT to say
+
+❌ “We disable seek bar”
+(Users hate it, accessibility issues)
+
+❌ “Frontend handles it”
+(Frontend is untrusted)
+
+🧠 One-paragraph interview answer (memorize)
+
+“To prevent users from skipping videos, we don’t trust absolute seek positions.
+We track progressive playback using heartbeat updates and only allow progress to advance within expected bounds.
+Large jumps are ignored, and completion is determined by continuous watch time rather than final position.”

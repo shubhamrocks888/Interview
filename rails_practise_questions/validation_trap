@@ -1,0 +1,16 @@
+Validation + DB Trap
+class User < ApplicationRecord
+  validates :email, uniqueness: true
+end
+
+❌ Bugs
+
+Race condition
+
+No DB-level guarantee
+
+✅ Expected Answer
+
+Add unique DB index
+
+Validation alone is not enough

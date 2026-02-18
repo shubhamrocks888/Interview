@@ -1,0 +1,31 @@
+class Throttler
+    
+    def initialize(limit, period)
+        @limit = limit
+        @period = period
+        @requests = {}
+        @mutex = Mutex.new
+    end
+    
+    def allow?(user_id)
+        @mutex.synchronize do
+            @requests[user_id] ||= []
+            
+            now = Time.now.to_i
+            
+            @requests[user_id].reject! { |timestamp| timestamp <= now - @period }
+            
+            if @requests[user_id].length < @limit
+                @requests[user_id] << now
+                true
+            else
+                false
+            end
+        end
+    end
+end
+
+throttler = Throttler.new(3, 10)
+
+3.times { puts throttler.allow?(1) }
+puts throttler.allow?(1)

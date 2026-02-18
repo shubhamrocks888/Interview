@@ -1,0 +1,100 @@
+1️⃣ Encoding a JWT Token
+
+Purpose: Create a token after login that the client can use.
+
+# app/controllers/auth_controller.rb
+require 'jwt'
+
+SECRET_KEY = Rails.application.secrets.secret_key_base.to_s
+
+payload = {
+  user_id: user.id,            # user identifier
+  exp: 24.hours.from_now.to_i  # token expiry time
+}
+
+# Encode the token
+token = JWT.encode(payload, SECRET_KEY, 'HS256')
+
+# Send token to client
+render json: { token: token }
+
+Syntax breakdown:
+JWT.encode(payload, secret, algorithm)
+
+
+payload → hash containing your data (user_id, role, exp, etc.)
+
+secret → server secret key used to sign token
+
+algorithm → usually 'HS256' (HMAC SHA256)
+
+✅ This generates a string token like:
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MDAwMDAwMDB9.Lwz7j...
+
+2️⃣ Decoding a JWT Token
+
+Purpose: Verify token on every request and extract the payload.
+
+# app/controllers/application_controller.rb
+def authorize_request
+  header = request.headers['Authorization']
+  token = header.split(' ').last if header
+
+  begin
+    decoded = JWT.decode(token, SECRET_KEY, true, algorithm: 'HS256')[0]
+    # decoded is a hash: { "user_id" => 1, "exp" => 1700000000 }
+    @current_user_id = decoded['user_id']
+  rescue JWT::ExpiredSignature
+    render json: { error: 'Token expired' }, status: :unauthorized
+  rescue JWT::DecodeError
+    render json: { error: 'Invalid token' }, status: :unauthorized
+  end
+end
+
+Syntax breakdown:
+decoded = JWT.decode(token, secret, verify=true, algorithm: 'HS256')[0]
+
+
+token → JWT string from client
+
+secret → same secret used for encoding
+
+verify=true → ensures signature is validated
+
+algorithm → must match encoding algorithm
+
+[0] → JWT.decode returns an array [payload, header], so [0] is the payload
+
+3️⃣ Optional: Using Roles or Extra Claims
+
+Encoding with roles:
+
+payload = { user_id: user.id, role: user.role, exp: 24.hours.from_now.to_i }
+token = JWT.encode(payload, SECRET_KEY, 'HS256')
+
+
+Decoding and checking role:
+
+decoded = JWT.decode(token, SECRET_KEY, true, algorithm: 'HS256')[0]
+if decoded['role'] != 'admin'
+  render json: { error: 'Forbidden' }, status: :forbidden
+end
+
+4️⃣ Quick 1-Minute Flow
+# Encoding (login)
+JWT.encode(payload, secret, 'HS256')  => token string
+
+# Decoding (request)
+JWT.decode(token, secret, true, algorithm: 'HS256')[0] => payload hash
+
+
+💡 Interview Tip: Always mention:
+
+Secret key signs token
+
+Token is stateless
+
+[0] gives payload, [1] gives header
+
+Expiry is checked manually via exp or rescue JWT::ExpiredSignature

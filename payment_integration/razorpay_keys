@@ -1,0 +1,35 @@
+1️⃣ Creating a Razorpay account
+
+You (or your company) sign up on Razorpay
+ and choose a plan (there’s a free plan too).
+
+Once the account is active, Razorpay provides API credentials in the dashboard.
+
+2️⃣ The credentials
+
+In your Razorpay dashboard → Settings → API Keys, you get:
+
+Credential	Purpose
+RAZORPAY_KEY_ID	Public key — used in frontend or client-side for checkout (exposed safely)
+RAZORPAY_SECRET	Secret key — used in your backend/server to authenticate API calls (like creating orders, issuing refunds)
+
+Important: Never expose RAZORPAY_SECRET in frontend code. Always keep it on your server.
+
+3️⃣ Relation to subscription/payment
+
+You don’t get these keys only after subscribing.
+
+Keys are part of your Razorpay account. Paying for a subscription plan just unlocks advanced features like higher limits, access to subscriptions API, etc.
+
+For basic order/payment APIs, you already get test/live keys on account creation.
+
+4️⃣ How it’s used in Rails
+# config/initializers/razorpay.rb
+Razorpay.setup(ENV['RAZORPAY_KEY_ID'], ENV['RAZORPAY_SECRET'])
+
+
+RAZORPAY_KEY_ID → frontend checkout
+
+RAZORPAY_SECRET → backend API calls
+
+Then you can create orders, capture payments, or issue refunds securely.

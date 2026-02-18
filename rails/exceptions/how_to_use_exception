@@ -1,0 +1,124 @@
+Ah! Now we’re hitting a classic Rails API trap — this is exactly what interviewers love to ask. Let’s go step by step.
+
+You’re talking about code like this:
+
+begin
+  # api_code
+rescue
+  # everything
+  render json: { error: e.message }
+end
+
+❌ Problems with this code
+1️⃣ rescue without specifying the exception
+rescue
+
+
+Rescues all StandardError (or worse, depending on context)
+
+Hides programmer mistakes (NoMethodError, NameError, ArgumentError)
+
+Silent failures → debug nightmare
+
+Interviewer trap: “You’re swallowing unexpected bugs.”
+
+2️⃣ e is undefined
+render json: { error: e.message }
+
+
+rescue alone does not define e
+
+This will raise NameError: undefined local variable or method 'e'
+
+Correct way:
+
+rescue => e
+
+3️⃣ Swallowing exceptions
+
+No logging
+
+No monitoring (Sentry, Honeybadger)
+
+Hard to track errors in production
+
+Interviewer trap: “You never see production failures until the customer reports them.”
+
+4️⃣ Blocks too big
+begin
+  ### api_code
+rescue => e
+
+
+If you rescue everything inside a huge block, you catch unrelated errors
+
+Makes it hard to know what failed
+
+Interviewer trap: “Granularity matters.”
+
+5️⃣ Returning raw exception messages to clients
+render json: { error: e.message }
+
+
+Exposes internal error details → security risk
+
+Could leak DB structure, API endpoints, or sensitive info
+
+Better: user-friendly messages
+
+✅ Correct API pattern
+begin
+  # api_code
+rescue SpecificError => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+  render json: { error: "Something went wrong" }, status: :unprocessable_entity
+end
+
+Key improvements:
+
+Rescue specific exceptions, not everything
+
+Use rescue => e if you really need to capture StandardError
+
+Log & report, don’t silently swallow
+
+Return user-friendly error, not raw message
+
+🔥 Bonus Rails API pattern (Best Practice)
+class Api::V1::BaseController < ActionController::API
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from Payment::Failed, with: :payment_failed
+  rescue_from StandardError, with: :internal_error
+
+  private
+
+  def record_not_found
+    render json: { error: "Resource not found" }, status: :not_found
+  end
+
+  def payment_failed(e)
+    Rails.logger.error(e.message)
+    Sentry.capture_exception(e)
+    render json: { error: "Payment failed" }, status: :payment_required
+  end
+
+  def internal_error(e)
+    Rails.logger.error(e.message)
+    Sentry.capture_exception(e)
+    render json: { error: "Internal server error" }, status: :internal_server_error
+  end
+end
+
+
+Keeps controllers clean
+
+Handles exceptions centrally
+
+Safe for production
+
+Avoids leaking internal messages
+
+🧠 Interviewer Answer (30 sec)
+
+“Rescuing everything blindly in an API is bad. It hides bugs, may break monitoring, exposes internal messages to clients, and e is undefined if you don’t capture it. Always rescue specific exceptions, log/report errors, and return user-friendly responses.”

@@ -1,0 +1,62 @@
+Here’s a production-ready version of RideCompletionJob with the two-threshold system you described:
+
+LIMIT → normal per-minute email limit
+
+MAX_QUEUE → extra jobs allowed to retry later
+
+Jobs beyond LIMIT + MAX_QUEUE are discarded
+
+########
+
+class RideCompletionJob < ApplicationJob
+  queue_as :mailers
+
+  retry_on StandardError, attempts: 5
+
+  LIMIT = 100         # normal rate limit
+  MAX_QUEUE = 50      # extra jobs allowed to retry later
+
+  def perform(ride_id)
+    ride = Ride.find_by(id: ride_id)
+    return unless ride&.completed?
+
+    # Atomic increment with concurrency safety
+    current_count = Rails.cache.increment(
+      email_rate_limit_key,
+      1,
+      initial: 1,
+      expires_in: 1.minute,
+      race_condition_ttl: 1.minute
+    )
+
+    # Decide what to do based on thresholds
+    if current_count <= LIMIT
+      # Safe to send email
+    elsif current_count <= LIMIT + MAX_QUEUE
+      # Slightly over limit → retry later
+      RideCompletionJob.set(wait: 1.minute).perform_later(ride.id)
+      return
+    else
+      # Way over limit → discard job
+      Rails.logger.warn("RideCompletionJob discarded for ride #{ride.id} due to high volume")
+      return
+    end
+
+    # Lock ride for idempotency
+    ride.with_lock do
+      return if ride.completion_email_sent
+
+      # Send email
+      RideMailer.ride_completed(ride).deliver_now
+
+      # Mark as sent
+      ride.update!(completion_email_sent: true)
+    end
+  end
+
+  private
+
+  def email_rate_limit_key
+    "email_rate_limit:#{Time.current.to_i / 60}"
+  end
+end

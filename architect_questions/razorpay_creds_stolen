@@ -1,0 +1,153 @@
+First: acknowledge the incident (important)
+
+Start with this:
+
+“This is a security incident, so the first priority is containment, not optimization.”
+
+That framing matters.
+
+Step-by-step architect answer
+1️⃣ Immediately revoke / rotate credentials (FIRST action)
+
+Disable the compromised Razorpay key/secret
+
+Generate new credentials
+
+Update them in:
+
+Secrets manager
+
+Env vars
+
+CI/CD
+
+Redeploy
+
+Say clearly:
+
+“I’d assume the key is fully compromised.”
+
+2️⃣ Contact Razorpay & block traffic
+
+Inform Razorpay support
+
+Ask for:
+
+Temporary suspension
+
+IP blocking
+
+Usage logs
+
+This limits financial damage.
+
+3️⃣ Audit & blast-radius analysis
+
+Answer like this:
+
+“I’d analyze which APIs were accessed and whether any transactions were created, refunded, or modified.”
+
+Check:
+
+Payments created?
+
+Refunds triggered?
+
+Webhooks abused?
+
+Amount limits crossed?
+
+4️⃣ Identify the leak source (root cause)
+
+Possible causes (name them):
+
+Key committed to GitHub
+
+Logged in plaintext
+
+Frontend exposure
+
+Shared internally
+
+Insecure CI logs
+
+Architects want to hear:
+
+“Post-incident RCA is mandatory.”
+
+Now the PREVENTION part (most important)
+5️⃣ Move credentials to a secure store
+
+Secrets Manager
+
+Vault
+
+Encrypted env vars
+
+❌ Never in code
+❌ Never in frontend
+
+6️⃣ IP whitelisting
+
+Very strong answer:
+
+“Restrict Razorpay API access to only our backend IPs.”
+
+Even if creds leak → attacker can’t use them.
+
+7️⃣ Least privilege keys
+
+If Razorpay supports:
+
+Separate keys for:
+
+read
+
+payments
+
+refunds
+
+Lower limits per key
+
+This limits damage.
+
+8️⃣ Rate limits + anomaly detection
+
+Say this clearly:
+
+“I’d set strict rate limits and alerts for unusual spikes.”
+
+Examples:
+
+Sudden surge in payment creation
+
+Requests from unknown IPs
+
+Amount anomalies
+
+9️⃣ Webhook verification
+
+Validate Razorpay webhook signatures
+
+Prevent fake callbacks
+
+This shows deep payments knowledge.
+
+Final killer answer (30 seconds, memorize)
+
+“First I’d treat it as a security incident: immediately rotate the Razorpay credentials and block further usage. Then I’d audit logs to assess financial impact and identify the leak source. Long-term, I’d enforce IP whitelisting, least-privilege keys, secret management, rate limits, and alerting to ensure compromised credentials cannot be abused again.”
+
+If architect pushes:
+“What if attacker already made payments?”
+
+Answer:
+
+“We reconcile transactions with Razorpay, flag suspicious ones, and follow their dispute and reversal process if applicable.”
+
+Why this answer works
+
+It shows:
+✅ Incident response mindset
+✅ Security hygiene
+✅ Payments domain awareness
+✅ Business impact thinking

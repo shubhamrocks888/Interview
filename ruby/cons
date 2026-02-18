@@ -1,0 +1,66 @@
+❌ Cons of Ruby
+1. Slower Performance
+
+Ruby is interpreted, not compiled.
+
+CPU-bound tasks run slower than languages like Java, C++, Go.
+
+Con: Not ideal for high-performance computing or real-time systems.
+
+2. Memory Usage
+
+Object-oriented design and garbage collection make it memory-heavy.
+
+Large-scale apps need careful optimization.
+
+Con: Can be expensive on large-scale apps if memory not optimized.
+
+3. Concurrency Limitations
+
+GIL (Global Interpreter Lock) in MRI Ruby prevents true parallel threads.
+
+Only one thread executes at a time for CPU-bound tasks.
+
+Con: Multi-threaded performance is limited; need workarounds like JRuby or background jobs.
+
+4. Less Popular for Non-Web Apps
+
+Ruby is mostly used for web apps via Rails.
+
+Not common for mobile, desktop, or systems programming.
+
+Con: Limited opportunities outside web backend development.
+
+5. Slow Boot Time
+
+Ruby programs (especially Rails) can take time to start.
+
+Heavy frameworks and gems increase startup latency.
+
+Con: Not ideal for command-line tools requiring instant startup.
+
+6. Fragmented Implementations
+
+Multiple Ruby interpreters: MRI, JRuby, TruffleRuby.
+
+Some gems or libraries may not work identically across them.
+
+Con: Can cause compatibility headaches in large projects.
+
+💡 Summary Table (Pros vs Cons)
+
+| Pros                     | Cons                          |
+| ------------------------ | ----------------------------- |
+| Elegant, readable syntax | Slower runtime                |
+| Everything is an object  | Memory-heavy                  |
+| Rich standard library    | Concurrency limitations (GIL) |
+| Metaprogramming & DSLs   | Slow boot time                |
+| Mature ecosystem & Rails | Mostly web-focused            |
+| Garbage collected        | Fragmented implementations    |
+| Active community         | –                             |
+
+
+Interview Tip:
+
+Always pair a pro with a real-world example.
+Example: “Ruby’s metaprogramming allows Rails to dynamically define find_by_* methods, which makes querying very flexible.”

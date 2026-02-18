@@ -1,0 +1,137 @@
+Short answer (one-liner)
+
+If a Sidekiq worker crashes mid-job, the job is lost from Redis, but Sidekiq detects the crash and re-enqueues the job, which means the job may run again.
+
+This is called at-least-once execution.
+
+Detailed flow (what actually happens)
+1️⃣ Job is fetched from Redis
+RPOP queue:default
+
+
+Job JSON is removed from Redis queue
+
+Now job exists only in worker memory
+
+⚠️ At this moment, Redis no longer has the job.
+
+2️⃣ Job starts executing
+
+Sidekiq records this for monitoring:
+
+HSET workers <process:thread> <job_json>
+
+
+This is:
+
+Only for Web UI
+
+NOT durable storage
+
+3️⃣ 💥 Worker crashes (mid-job)
+
+Examples:
+
+Ruby process killed (kill -9)
+
+Server crash
+
+Out-of-memory
+
+Deployment restart
+
+Result:
+
+Job never finishes
+
+Job never acknowledges success
+
+Job is not in Redis queue
+
+Job is not in retry set
+
+Job is not completed
+
+At this moment, the job looks lost.
+
+How Sidekiq recovers the job
+4️⃣ Sidekiq heartbeat detects dead worker
+
+Sidekiq keeps:
+
+processes (SET)
+workers (HASH)
+
+
+If heartbeat stops:
+
+Process is considered dead
+
+Sidekiq’s reaper kicks in
+
+5️⃣ Job is resurrected
+
+Sidekiq:
+
+Reads job from workers hash
+
+Pushes it back to the original queue
+
+LPUSH queue:default <job_json>
+
+
+✔️ Job is re-enqueued
+✔️ Same jid
+✔️ Retry count unchanged
+
+Key consequence ⚠️
+🚨 Job can run twice
+
+Scenario:
+
+Job executed 80%
+
+Worker crashes
+
+Job is re-enqueued
+
+New worker runs job again from start
+
+This is by design.
+
+Why Sidekiq accepts this risk
+
+Because guaranteeing exactly-once execution would require:
+
+Distributed locks
+
+Two-phase commits
+
+Huge performance cost
+
+Sidekiq chooses:
+
+Fast + reliable + at-least-once
+
+How failures differ from crashes
+Situation	What happens
+Exception raised	Goes to retry set
+Worker crash	Re-enqueued
+Graceful shutdown	Job finished or re-queued
+Redis crash	Jobs may be lost
+Best practice: Make jobs idempotent ⭐
+
+Your job must be safe to run multiple times.
+
+Example:
+
+def perform(order_id)
+  order = Order.find(order_id)
+  return if order.processed?
+
+  order.process!
+end
+
+Interview-ready explanation 💡
+
+Sidekiq removes the job from Redis before execution. If the worker crashes mid-job, Sidekiq detects the dead process via heartbeats and re-enqueues the job, which can cause the job to execute again. This is why Sidekiq guarantees at-least-once execution and jobs must be idempotent.

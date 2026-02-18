@@ -1,0 +1,158 @@
+🚗 Uber Ride – Coding Round Scope
+
+We’ll implement minimal but correct system.
+
+🎯 What You Should Build
+Models
+User
+
+id
+
+name
+
+role (rider / driver)
+
+DriverProfile
+
+user_id
+
+is_available (boolean)
+
+current_lat
+
+current_lng
+
+Ride
+
+rider_id
+
+driver_id (nullable)
+
+pickup_lat
+
+pickup_lng
+
+drop_lat
+
+drop_lng
+
+status
+
+timestamps
+
+🎯 Required APIs (Minimal Set)
+1️⃣ Request Ride
+
+POST /rides
+
+Only rider can call
+
+Create ride with status: requested
+
+2️⃣ Accept Ride
+
+POST /rides/:id/accept
+
+Only driver can call
+
+Must:
+
+Check driver is available
+
+Lock ride row
+
+Ensure ride status = requested
+
+Assign driver
+
+Change status to accepted
+
+Mark driver unavailable
+
+Concurrency safe.
+
+3️⃣ Start Ride
+
+POST /rides/:id/start
+
+Only assigned driver
+
+Change status to started
+
+4️⃣ Complete Ride
+
+POST /rides/:id/complete
+
+Only assigned driver
+
+Change status to completed
+
+Mark driver available again
+
+5️⃣ Cancel Ride
+
+POST /rides/:id/cancel
+
+Rider can cancel if not completed
+
+If driver assigned → mark driver available again
+
+🔥 Critical Part (Interviewer Checks This)
+
+Inside accept ride:
+
+You MUST:
+
+Use DB transaction
+
+Lock ride row
+
+Re-check status inside lock
+
+If you skip this → fail.
+
+🏗 Clean Structure (Important for Interview)
+
+Controllers:
+
+Only param validation
+
+Call service
+
+Services:
+
+RideRequestService
+
+RideAcceptService
+
+RideStartService
+
+RideCompleteService
+
+Business logic inside service.
+
+🧠 Extra Points
+
+Add:
+
+Enum for ride status
+
+Proper validations
+
+Index on status
+
+Index on driver_id
+
+That shows maturity.
+
+🚀 If Interview Time is Limited
+
+Implement only:
+
+Request ride
+
+Accept ride (with locking)
+
+Complete ride
+
+That’s enough to show strong backend thinking.

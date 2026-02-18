@@ -1,0 +1,142 @@
+class Throttler
+  def initialize(limit:, period:)
+    @limit = limit
+    @period = period
+  end
+
+  def allow?(key)
+    current = Rails.cache.increment(
+      cache_key(key),
+      1,
+      initial: 0,
+      expires_in: @period
+    )
+
+    current <= @limit
+  end
+
+  private
+
+  def cache_key(key)
+    "throttler:#{key}"
+  end
+end
+
+
+#############
+
+
+ou’re right about one thing:
+
+Rails.cache.increment by itself is atomic.
+
+But the race condition is not inside increment.
+It happens between the read and the increment.
+
+🔍 Two different flows (this is the whole confusion)
+✅ Safe flow (what you have now)
+current = Rails.cache.increment(key)
+current <= limit
+
+
+ONE operation
+
+No prior read
+
+Redis does it atomically
+
+✔ No race condition
+
+❌ Unsafe flow (read → then increment)
+count = Rails.cache.read(key)
+
+if count < limit
+  current = Rails.cache.increment(key)
+  allow = true
+else
+  allow = false
+end
+
+
+Here’s the issue 👇
+
+🧨 Where the race happens (step-by-step)
+
+Assume:
+
+limit = 5
+
+key = 4
+
+Timeline
+Request A → read = 4
+Request B → read = 4   (same time)
+
+Request A → increment → 5
+Request B → increment → 6
+
+
+Both requests passed the if count < limit check
+👉 You allowed 2 requests, but only 1 should be allowed.
+
+Yes, increment itself is atomic —
+but the decision to call it was based on stale data.
+
+🧠 Key insight (this clicks once)
+
+Atomic operations don’t help if your decision logic is outside the atomic boundary.
+
+You need:
+
+check + increment
+
+
+to be atomic together.
+
+Your current solution does that by:
+
+always incrementing
+
+deciding based on the returned value
+
+⚖️ Why this design is intentional
+
+“But we’re incrementing even when blocked!”
+
+Correct — and that’s fine because:
+
+Once limit is crossed, all requests are blocked anyway
+
+TTL will reset the counter
+
+Exact number beyond limit doesn’t matter
+
+This keeps:
+
+correctness
+
+simplicity
+
+performance
+
+🧪 Analogy (easy to remember)
+
+Imagine a turnstile 🎡:
+
+❌ Bad:
+
+Look at counter
+
+Decide if you can pass
+
+Then turn it
+
+✔ Good:
+
+Turn the handle
+
+See if it locked or unlocked
+
+🏁 Interview one-liner
+
+“increment is atomic, but read-then-increment isn’t, because the decision is made using stale data.”

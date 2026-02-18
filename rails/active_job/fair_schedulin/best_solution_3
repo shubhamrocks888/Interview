@@ -1,0 +1,133 @@
+what if 1000 reuqests are coming every 10 minutes. how to avoid it in prod
+
+This is the right question to ask for production.
+At this scale, Sidekiq alone is not enough. You must stop the flood before jobs are enqueued.
+
+Let’s go step by step, exactly how this is handled in real systems.
+
+Core principle (memorize this)
+
+Sidekiq controls execution, not ingestion.
+Backpressure must happen before enqueueing.
+
+What goes wrong if you don’t act
+
+If 1000 requests every 10 minutes hit:
+
+All 1000 jobs go into Redis
+
+Rate limiter executes only 5 / 10 minutes
+
+Queue grows forever
+
+Jobs get delayed for hours
+
+Redis memory grows
+
+Users see stale results
+
+This is a design failure, not a Sidekiq bug.
+
+Production-grade solution: layered defense 🛡️
+1️⃣ API-level rate limiting (FIRST LINE OF DEFENSE)
+
+Block requests before job creation.
+
+Examples:
+
+Rack::Attack
+
+Nginx
+
+Cloudflare / API Gateway
+
+Rack::Attack.throttle("reports/ip", limit: 10, period: 10.minutes) do |req|
+  req.ip
+end
+
+
+Result:
+
+990 requests never reach Sidekiq
+
+System stays healthy
+
+2️⃣ Idempotency / deduplication BEFORE enqueue
+
+Most bursts contain duplicates.
+
+return if ReportRequest.exists?(request_id: request_id)
+ReportRequest.create!(request_id: request_id)
+ReportJob.perform_async(user_id)
+
+
+This alone can reduce 1000 → 100.
+
+3️⃣ Per-user enqueue limits
+if Sidekiq::Queue.new(:reports).size > 500
+  raise TooManyRequests
+end
+
+
+Or:
+
+Reject request with 429
+
+Ask client to retry later
+
+4️⃣ Bounded queues (CRITICAL)
+
+Sidekiq queues are unbounded by default.
+
+You must enforce caps manually.
+
+Example policy:
+
+Max queue size = 1000
+
+After that → reject requests
+
+5️⃣ Execution controls (still needed)
+
+Inside Sidekiq:
+
+Global rate limiter
+
+Per-user concurrency limiter
+
+This protects:
+
+DB
+
+External APIs
+
+6️⃣ Scaling (only AFTER limits)
+
+Scale Sidekiq only when:
+
+DB can handle it
+
+Rate limits are in place
+
+Concurrency is controlled
+
+Never scale blindly.
+
+Real-world mental picture
+Client
+  ↓ (API rate limit)
+Rails Controller
+  ↓ (dedupe + queue cap)
+Redis Queue (bounded)
+  ↓ (rate + concurrency limit)
+Sidekiq Workers
+  ↓
+DB / External APIs
+
+Interview-ready answer 🔥
+
+If 1000 requests arrive every 10 minutes, relying on Sidekiq alone causes unbounded queue growth. In production, we apply layered backpressure: API-level rate limiting to stop the flood, deduplication before enqueueing, bounded queues, and controlled job execution using rate and concurrency limiters.
+
+One-line rule to remember forever
+
+Protect ingestion first, execution second.

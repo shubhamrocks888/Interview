@@ -1,0 +1,219 @@
+We’ll do this slowly, one step at a time, exactly how an interviewer expects a senior to understand GenServer — not memorize it.
+
+We will not jump ahead.
+
+STEP 0 — Why GenServer exists (1-minute clarity)
+
+Before syntax, understand WHY.
+
+You already know this:
+
+send(pid, msg)
+receive do
+  msg -> ...
+end
+
+
+Problems:
+
+No structure
+
+Hard to manage state
+
+No restart if process crashes
+
+Every developer writes their own loop
+
+💡 GenServer = a standardized process loop
+
+GenServer is a behaviour that wraps send/receive into a clean, safe, reusable abstraction.
+
+STEP 1 — What a GenServer actually is
+
+A GenServer is:
+
+✅ One process
+✅ With its own mailbox
+✅ With internal state
+✅ That reacts to messages via callbacks
+
+💬 Interview sentence:
+
+“A GenServer is a long-running process that encapsulates state and handles messages in a structured way.”
+
+STEP 2 — Minimal GenServer skeleton (just syntax)
+
+Don’t think logic yet. Just structure.
+
+defmodule MyServer do
+  use GenServer
+end
+
+
+That’s it.
+Nothing else yet.
+
+What use GenServer does
+
+Tells Elixir: this module follows the GenServer behaviour
+
+Expects certain callbacks (init, handle_call, handle_cast)
+
+STEP 3 — Starting a GenServer (VERY IMPORTANT)
+
+A GenServer does nothing until it is started.
+
+Basic start
+GenServer.start_link(MyServer, initial_state)
+
+
+Example:
+
+GenServer.start_link(MyServer, %{})
+
+
+This:
+
+Starts a new process
+
+Calls init/1
+
+Returns {:ok, pid}
+
+STEP 4 — init/1 callback (first real code)
+
+Every GenServer must have init/1.
+
+defmodule MyServer do
+  use GenServer
+
+  def init(state) do
+    {:ok, state}
+  end
+end
+
+What happens:
+
+Process starts
+
+init(state) is called
+
+Returned state becomes process memory
+
+💡 State lives inside the process, not shared.
+
+STEP 5 — Clean client/server separation (BEST PRACTICE)
+
+This is important for interviews.
+
+defmodule MyServer do
+  use GenServer
+
+  ## CLIENT API
+  def start_link(initial_state) do
+    GenServer.start_link(__MODULE__, initial_state)
+  end
+
+  ## SERVER CALLBACK
+  def init(state) do
+    {:ok, state}
+  end
+end
+
+
+Why?
+
+Other modules should not call GenServer.call directly
+
+Encapsulation
+
+🔥 Interview line:
+
+“We expose a client API and keep GenServer callbacks private.”
+
+STEP 6 — Talking to GenServer (NO LOGIC YET)
+
+Two ways (you already know conceptually):
+
+Async — cast
+GenServer.cast(pid, :ping)
+
+Sync — call
+GenServer.call(pid, :ping)
+
+
+⚠️ Don’t handle them yet. Just know the syntax.
+
+STEP 7 — handle_cast (async messages)
+def handle_cast(:ping, state) do
+  IO.puts("Received ping")
+  {:noreply, state}
+end
+
+
+Meaning:
+
+Message arrives
+
+State remains unchanged
+
+No reply sent
+
+💬 Interview:
+
+“handle_cast handles fire-and-forget messages.”
+
+STEP 8 — handle_call (sync messages)
+def handle_call(:ping, _from, state) do
+  {:reply, :pong, state}
+end
+
+
+Meaning:
+
+Caller waits
+
+Reply is returned
+
+State preserved
+
+STEP 9 — Full minimal working GenServer
+defmodule MyServer do
+  use GenServer
+
+  ## Client
+  def start_link(state) do
+    GenServer.start_link(__MODULE__, state)
+  end
+
+  def ping(pid) do
+    GenServer.call(pid, :ping)
+  end
+
+  ## Server
+  def init(state), do: {:ok, state}
+
+  def handle_call(:ping, _from, state) do
+    {:reply, :pong, state}
+  end
+end
+
+
+Run:
+
+{:ok, pid} = MyServer.start_link(%{})
+MyServer.ping(pid)
+# => :pong
+
+STEP 10 — Map this to what you already know
+
+| You learned earlier | GenServer          |
+| ------------------- | ------------------ |
+| spawn               | start_link         |
+| send                | cast / call        |
+| receive             | handle_* callbacks |
+| mailbox             | GenServer mailbox  |
+| state variable      | GenServer state    |
+
+
+🔥 This mapping is interview gold.

@@ -1,0 +1,85 @@
+🔴 Redis vs 🔵 Memcached — Basic Differences
+1️⃣ Core Difference (MOST IMPORTANT)
+
+| Redis                       | Memcached              |
+| --------------------------- | ---------------------- |
+| Data structure store        | Simple key-value store |
+| Supports complex data types | Only string values     |
+
+📌 Interview line:
+
+“Redis supports data structures, Memcached is simple key-value.”
+
+2️⃣ Data Types
+
+| Redis                       | Memcached              |
+| --------------------------- | ---------------------- |
+| Data structure store        | Simple key-value store |
+| Supports complex data types | Only string values     |
+
+📌 Example:
+
+Redis → counters, queues, sessions
+Memcached → plain caching
+
+3️⃣ Persistence
+
+| Redis                           | Memcached            |
+| ------------------------------- | -------------------- |
+| Supports persistence (RDB, AOF) | No persistence       |
+| Data can survive restart        | Data lost on restart |
+
+📌 Interview line:
+
+“Redis can persist data, Memcached cannot.”
+
+4️⃣ Performance
+
+| Redis           | Memcached       |
+| --------------- | --------------- |
+| Slightly slower | Slightly faster |
+| More features   | Lightweight     |
+
+📌 Key point:
+
+“Memcached is faster but limited.”
+
+5️⃣ Memory Management
+
+| Redis                 | Memcached         |
+| --------------------- | ----------------- |
+| Can evict selectively | LRU eviction only |
+| More control          | Simple eviction   |
+
+
+6️⃣ Replication & Scaling
+
+| Redis                    | Memcached                 |
+| ------------------------ | ------------------------- |
+| Replication & clustering | No built-in replication   |
+| High availability        | Simple horizontal scaling |
+
+
+7️⃣ Use Cases (VERY IMPORTANT)
+
+| Use Case      | Preferred |
+| ------------- | --------- |
+| Simple cache  | Memcached |
+| Sessions      | Redis     |
+| Rate limiting | Redis     |
+| Queues        | Redis     |
+| Leaderboards  | Redis     |
+
+📌 Interview line:
+
+“Redis is used beyond caching, Memcached is only for caching.”
+
+⭐ One-Line Interview Answer (MEMORIZE)
+
+“Memcached is a simple in-memory key-value cache with no persistence, while Redis is a data-structure store that supports persistence, replication, and advanced use cases.”
+
+⚠️ Trick Interview Question
+
+Q: Why do most Rails apps prefer Redis?
+
+Because Redis supports persistence, background jobs, session storage, and caching in one system.

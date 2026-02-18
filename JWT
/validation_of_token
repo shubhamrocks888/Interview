@@ -1,0 +1,72 @@
+on client: signature = hash (header+payload+ secret_key) 
+on_server: signature = hash(header_from_token+payload_from_token+secret_key)
+
+
+4️⃣ Mental Picture
+[Server issues token]                        [Server verifies token]
+payload + secret + header → hash → signature   client sends token
+token = header.payload.signature             server extracts header+payload
+                                               recomputes hash(header+payload+secret)
+                                               compares with signature
+1️⃣ JWT Parts Recap
+
+A JWT has 3 parts, separated by two dots:
+
+<Header>.<Payload>.<Signature>
+
+
+Header → metadata, e.g., algorithm
+
+Payload → user info / claims
+
+Signature → proof of integrity
+
+2️⃣ What is encoded vs signed
+Header & Payload
+
+Base64URL encoded (not encrypted)
+
+Meaning: readable if you decode it
+
+Example:
+
+{
+  "user_id": 1,
+  "exp": 1700000000
+}
+
+
+Base64URL → eyJ1c2VyX2lkIjoxLCJleHAiOjE3MDAwMDAwMDB9
+
+Anyone with the token can decode header & payload — that’s normal.
+
+Signature
+
+Cryptographically signed using server secret
+
+Formula (HS256):
+
+signature = HMACSHA256(base64(header) + "." + base64(payload), secret)
+
+
+Signature is not encoded payload; it’s a hash
+
+Ensures payload + header cannot be tampered
+
+3️⃣ Key Clarification
+Part	Encoded?	Secret?	Readable?	Tamper-proof?
+Header	Base64	No	Yes	No
+Payload	Base64	No	Yes	No (without signature)
+Signature	Yes/Hex	Yes	No	Yes
+4️⃣ Mental Model
+[Header + Payload] → Base64 → readable
+[Header + Payload + secret] → HMAC → Signature → verifies integrity
+
+
+You can see user_id/email in token
+
+You cannot change them without invalidating signature
+
+5️⃣ Quick Interview Explanation (30 seconds)
+
+In JWT, Header and Payload are Base64URL encoded so they are readable but not encrypted. The Signature is a hash of header + payload + secret, which ensures the token cannot be tampered. Anyone can read the token, but only the server can verify or issue a valid signature.

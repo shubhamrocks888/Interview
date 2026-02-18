@@ -1,0 +1,156 @@
+Example: Parent passes function to Child
+import React, { useState } from "react";
+
+function Parent() {
+  const [count, setCount] = useState(0);
+
+  // Function defined in Parent
+  const increment = (value) => {
+    setCount(count + value);
+  };
+
+  return (
+    <div>
+      <h2>Parent Count: {count}</h2>
+
+      {/* Child receives function as prop */}
+      <Child label="Add 1" onClick={() => increment(1)} />
+      <Child label="Add 5" onClick={() => increment(5)} />
+    </div>
+  );
+}
+
+function Child({ label, onClick }) {
+  console.log(`${label} rendered`);
+  return <button onClick={onClick}>{label}</button>;
+}
+
+export default Parent;
+
+🔍 What happens here
+
+Parent renders → count = 0
+
+increment is defined in Parent
+
+Two Children receive different inline arrow functions:
+
+() => increment(1)
+() => increment(5)
+
+
+Click “Add 1” → increment(1) runs → updates Parent state → Parent re-renders
+
+Children are recreated because:
+
+Props (onClick) are new function references every render
+
+Console logs show both children re-render every time
+
+✅ Key point
+
+Child needs parent function because state lives in parent
+
+Child cannot modify count directly
+
+Passing a function is how child tells parent to update state
+
+How it looks in console
+"Add 1 rendered"
+"Add 5 rendered"
+
+
+Click a button → console prints both again:
+
+"Add 1 rendered"
+"Add 5 rendered"
+
+
+This happens even though only count changed
+
+Both children re-render unnecessarily
+
+
+
+############# Now with useCallback and React.memo
+
+Step 1: Wrap Child in React.memo
+const Child = React.memo(function Child({ label, onClick }) {
+  console.log(`${label} rendered`);
+  return <button onClick={onClick}>{label}</button>;
+});
+
+
+React.memo tells React:
+
+“Don’t re-render this child unless props change”
+
+Step 2: Memoize parent function using useCallback
+import React, { useState, useCallback } from "react";
+
+function Parent() {
+  const [count, setCount] = useState(0);
+
+  // Memoized increment function
+  const increment = useCallback((value) => {
+    setCount(c => c + value); // use functional update to avoid stale closure
+  }, []); // [] means the function reference never changes
+
+  return (
+    <div>
+      <h2>Parent Count: {count}</h2>
+
+      {/* Pass same function reference to children */}
+      <Child label="Add 1" onClick={() => increment(1)} />
+      <Child label="Add 5" onClick={() => increment(5)} />
+    </div>
+  );
+}
+
+export default Parent;
+
+Step 3: What happens now?
+First render
+"Add 1 rendered"
+"Add 5 rendered"
+
+Click “Add 1”
+
+Parent state updates → Parent re-renders
+
+increment is memoized → same reference
+
+BUT inline arrow functions () => increment(1) and () => increment(5) are new every render
+
+❌ Both children still re-render because inline functions create new references
+
+Step 4: Fix inline functions for true optimization
+<Child label="Add 1" value={1} increment={increment} />
+<Child label="Add 5" value={5} increment={increment} />
+
+
+Then inside Child:
+
+const Child = React.memo(function Child({ label, value, increment }) {
+  console.log(`${label} rendered`);
+  return <button onClick={() => increment(value)}>{label}</button>;
+});
+
+
+✅ Now:
+
+increment reference stable
+
+value prop is primitive → unchanged unless explicitly changed
+
+React.memo prevents unnecessary re-renders
+
+🔑 Key takeaway
+
+Child needs parent function to update state because state lives in parent
+
+Without React.memo + useCallback → children re-render every time parent re-renders
+
+With memoization → children only re-render if props actually change
+
+Inline functions with arguments can break memoization → pass arguments as props instead

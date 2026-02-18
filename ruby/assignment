@@ -1,0 +1,59 @@
+
+You said:
+employees = {
+  john:   { role: "developer", salary: 120000, projects: %w[alpha beta gamma] },
+  jane:   { role: "developer", salary: 110000, projects: %w[alpha gamma] },
+  jack:   { role: "manager",   salary: 150000, projects: %w[alpha beta] },
+  jill:   { role: "manager",   salary: 140000, projects: %w[beta] },
+  bob:    { role: "qa",        salary: 90000,  projects: %w[alpha beta gamma delta] },
+  alice:  { role: "qa",        salary: 95000,  projects: %w[beta gamma] },
+  tom:    { role: "developer", salary: 130000, projects: %w[delta] }
+}
+ 
+ 
+ 
+# {
+#   "developer" => {
+#     highest_salary: 130000,
+#     lowest_salary: 110000,
+#     avg_projects: 2.0
+#   },
+#   "manager" => {
+#     highest_salary: 150000,
+#     lowest_salary: 140000,
+#     avg_projects: 1.5
+#   },
+#   "qa" => {
+#     highest_salary: 95000,
+#     lowest_salary: 90000,
+#     avg_projects: 3.0
+#   }
+# }
+ 
+# # Rules
+# 1. Group employees by role
+# # 2. avg_projects = average number of projects per role
+# # 3. Average must be a float rounded to 1 decimal
+ 
+# puts "Hello, World!"
+
+
+### wants to have ruby data in below format
+
+
+
+result = employees
+  .values
+  .group_by { |emp| emp[:role] }
+  .transform_values do |group|
+    salaries = group.map { |e| e[:salary] }
+    project_counts = group.map { |e| e[:projects].size }
+
+    {
+      highest_salary: salaries.max,
+      lowest_salary: salaries.min,
+      avg_projects: (project_counts.sum.to_f / project_counts.size).round(1)
+    }
+  end
+
+puts result

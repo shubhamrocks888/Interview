@@ -1,0 +1,117 @@
+🚗 Task 1 — Write the Models
+
+You need to create two models only:
+
+User
+
+Ride
+
+Do NOT write controllers yet.
+Do NOT write services yet.
+Only models + associations + validations.
+
+📌 Instructions
+1️⃣ User Model
+Add fields:
+
+name (string)
+
+role (integer → enum)
+
+Requirements:
+
+Use enum for role
+
+rider
+
+driver
+
+Add validation for:
+
+presence of name
+
+presence of role
+
+Association:
+
+A rider should have many rides
+
+Important:
+
+Don’t overcomplicate with scopes.
+
+Keep it clean.
+
+2️⃣ Ride Model
+Add fields:
+
+rider_id (foreign key → users)
+
+pickup_lat (float)
+
+pickup_lng (float)
+
+drop_lat (float)
+
+drop_lng (float)
+
+status (integer → enum)
+
+Requirements:
+
+belongs_to :rider
+
+Use enum for status:
+
+requested
+
+Add validations:
+
+presence of rider
+
+presence of pickup_lat
+
+presence of pickup_lng
+
+presence of drop_lat
+
+presence of drop_lng
+
+presence of status
+
+🧠 Important Constraint
+
+When writing:
+
+Use class_name: "User" for rider association
+
+Don’t forget foreign_key if needed
+
+Default status should be requested
+
+
+
+####
+
+class User < ApplicationRecord
+  has_many :rides, foreign_key: :rider_id, class_name: "Ride"
+
+  enum role: { driver: 0, rider: 1 }
+
+  validates :name, presence: true
+  validates :role, presence: true
+end
+
+
+class Ride < ApplicationRecord
+  belongs_to :rider, class_name: "User", foreign_key: :rider_id
+
+  enum status: { requested: 0, accepted: 1, completed: 2, cancelled: 3 }
+
+  validates :rider, presence: true
+  validates :pickup_lat, presence: true, numericality: true
+  validates :pickup_lng, presence: true, numericality: true
+  validates :drop_lat, presence: true, numericality: true
+  validates :drop_lng, presence: true, numericality: true
+  validates :status, presence: true
+end

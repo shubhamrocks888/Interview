@@ -1,0 +1,148 @@
+This is a killer interview question — and interviewers really care about the reasoning, not just the rule.
+
+Here’s the clean, convincing answer you should give.
+
+❓ Why NOT rescue StandardError blindly?
+❌ Example of bad code
+begin
+  do_something
+rescue StandardError
+end
+
+
+(or even worse)
+
+rescue
+end
+
+🚨 1️⃣ It hides real bugs (BIGGEST reason)
+
+StandardError includes:
+
+NoMethodError
+
+NameError
+
+ArgumentError
+
+TypeError
+
+These are programmer mistakes, not recoverable errors.
+
+What happens?
+
+Bug occurs
+
+Error is silently swallowed
+
+App continues in broken state
+
+No logs, no alerts 😬
+
+🎯 Interview line:
+
+“It hides bugs that should crash loudly.”
+
+🚨 2️⃣ Makes debugging nearly impossible
+
+No stack trace
+
+No error logs
+
+Production issues become ghost bugs
+
+🎯 Interview line:
+
+“Silent failures are harder than crashes.”
+
+🚨 3️⃣ Can corrupt data
+Order.transaction do
+  order.save!
+  payment.charge!
+rescue StandardError
+end
+
+What can happen?
+
+Order partially saved
+
+Payment maybe charged
+
+Transaction may or may not rollback
+
+System enters inconsistent state
+
+🎯 Interview line:
+
+“Swallowing errors can leave data inconsistent.”
+
+🚨 4️⃣ Breaks retry & monitoring systems
+
+Sidekiq retries on raised exceptions
+
+Sentry reports raised exceptions
+
+If you rescue everything:
+
+❌ No retry
+
+❌ No alert
+
+❌ Job marked as successful
+
+🎯 Interview line:
+
+“Rescuing prevents retries and error reporting.”
+
+🚨 5️⃣ Violates fail-fast principle
+
+Good systems:
+
+Fail early
+
+Fail loudly
+
+Fail visibly
+
+Blind rescue does the opposite.
+
+🎯 Interview line:
+
+“Unexpected errors should fail fast.”
+
+✅ When IS it okay to rescue StandardError?
+
+Only if you do ALL of these:
+
+rescue StandardError => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+  raise
+end
+
+
+👉 Log
+👉 Report
+👉 Re-raise
+
+🎯 Interview line:
+
+“If I rescue StandardError, I always re-raise.”
+
+✅ What you SHOULD rescue instead
+
+Rescue specific, expected exceptions:
+
+rescue ActiveRecord::RecordNotFound
+rescue ActiveRecord::RecordInvalid
+rescue Payment::Failed
+rescue Net::ReadTimeout
+
+
+🎯 Interview line:
+
+“I only rescue exceptions I know how to handle.”
+
+🧠 PERFECT INTERVIEW ANSWER (Say this)
+
+“Rescuing StandardError blindly hides real bugs, breaks retries and monitoring, and can leave the system in an inconsistent state. I only rescue specific, expected exceptions and let unexpected ones crash so they can be fixed.”

@@ -1,0 +1,77 @@
+Key clarification
+
+User.find_each does NOT fire a query for every record.
+It fires one query per batch, not per row.
+
+What actually happens
+  ❌ pluck + each
+
+  User.pluck(:id).each { |id| heavy_work(id) }
+
+
+Behavior:
+
+  Executes 1 query
+
+  Loads ALL IDs into memory at once
+
+  Risky for large tables ❌
+
+  SQL
+
+SELECT id FROM users;
+
+✅ find_each
+User.find_each do |user|
+  heavy_work(user.id)
+end
+
+
+Behavior:
+
+  Executes multiple queries
+
+  Each query loads a batch (default: 1000 records)
+
+  Memory efficient ✅
+
+  Safe for background jobs / cron tasks ✅
+
+  SQL (example)
+
+  SELECT * FROM users ORDER BY id ASC LIMIT 1000;
+  SELECT * FROM users WHERE id > 1000 ORDER BY id ASC LIMIT 1000;
+  SELECT * FROM users WHERE id > 2000 ORDER BY id ASC LIMIT 1000;
+
+
+➡️ Query per batch, NOT per record
+
+Control batch size
+User.find_each(batch_size: 500) do |user|
+  heavy_work(user.id)
+end
+
+find_each internals (important interview point)
+
+  Uses primary key ordering
+
+  Ignores:
+    order
+    limit
+
+  Requires primary key
+
+  Wraps find_in_batches
+
+User.find_in_batches(batch_size: 1000) do |users|
+  users.each { |user| heavy_work(user.id) }
+end
+
+When to use what (rule of thumb)
+
+| Use case                      | Use           |
+| ----------------------------- | ------------- |
+| Need raw values (ids, emails) | `pluck`       |
+| Large dataset processing      | `find_each`   |
+| Background jobs               | `find_each`   |
+| One-time small dataset        | `pluck` is OK |

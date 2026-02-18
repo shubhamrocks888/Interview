@@ -1,0 +1,234 @@
+Rails Request Lifecycle (Step-by-Step)
+Example request
+GET /posts/42
+
+1️⃣ Browser → Web Server (Puma)
+
+Browser sends HTTP request
+
+Puma (or Unicorn/Passenger) accepts it
+
+Puma converts the request into a Rack env hash
+
+env = {
+  "REQUEST_METHOD" => "GET",
+  "PATH_INFO" => "/posts/42",
+  "QUERY_STRING" => "",
+  ...
+}
+
+
+➡️ Hands off to Rack
+
+2️⃣ Rack Middleware Stack (Request phase)
+
+Rails now passes the request top → bottom through middleware.
+
+Some important ones:
+
+🔹 Rack::RequestId
+
+Adds X-Request-Id
+
+Used for logging & tracing
+
+🔹 Rack::Runtime
+
+Starts a timer
+
+🔹 ActionDispatch::Cookies
+
+Reads cookies from headers
+
+🔹 ActionDispatch::Session
+
+Loads session data
+
+🔹 Warden (Devise)
+
+Loads current_user
+
+🔹 ActionDispatch::ShowExceptions
+
+Wraps request in error handling
+
+👉 Middleware can:
+
+Modify env
+
+Halt the request and return a response early
+
+3️⃣ Routing (Rails Router)
+
+Rails matches the request:
+
+get "/posts/:id", to: "posts#show"
+
+
+Router decides:
+
+Controller: PostsController
+
+Action: show
+
+Params: { id: "42" }
+
+➡️ If no match → 404
+
+4️⃣ Controller is instantiated
+
+Rails creates controller instance:
+
+PostsController.new
+
+
+Then sets up:
+
+params
+
+request
+
+response
+
+session
+
+cookies
+
+5️⃣ Controller callbacks (before_action)
+before_action :authenticate_user!
+before_action :set_post
+
+
+Execution order:
+
+authenticate_user!
+
+set_post
+
+❌ If a callback renders/redirects → action never runs
+
+6️⃣ Controller action executes
+def show
+  render json: @post
+end
+
+
+Inside the action:
+
+DB queries happen
+
+Business logic runs
+
+Instance variables set
+
+No response yet — just building it.
+
+7️⃣ View rendering / Serialization
+
+Depending on app type:
+
+Rails API
+
+render json: → uses serializers / to_json
+
+Full Rails app
+
+ERB / HAML template rendered
+
+Layout applied
+
+Response object created:
+
+status  = 200
+headers = { "Content-Type" => "application/json" }
+body    = ["{...json...}"]
+
+8️⃣ Middleware Stack (Response phase)
+
+Response now travels bottom → top through middleware again.
+
+Examples:
+
+🔹 Rack::ETag
+
+Adds ETag header
+
+🔹 Rack::ConditionalGet
+
+Handles 304 Not Modified
+
+🔹 Rack::Runtime
+
+Appends request duration
+
+🔹 ActionDispatch::Cookies
+
+Writes cookies
+
+🔹 ActionDispatch::ShowExceptions
+
+Converts exceptions into responses
+
+9️⃣ Web Server → Browser
+
+Puma sends final response
+
+Browser renders JSON / HTML
+
+Request lifecycle ends 🎯
+
+Lifecycle in one diagram
+Browser
+  ↓
+Puma
+  ↓
+Rack Middleware (request)
+  ↓
+Router
+  ↓
+Controller
+  ↓
+Action
+  ↓
+View / Serializer
+  ↓
+Rack Middleware (response)
+  ↓
+Puma
+  ↓
+Browser
+
+Where common things happen (interview cheat sheet)
+
+| Concern            | Where                      |
+| ------------------ | -------------------------- |
+| Authentication     | Middleware / before_action |
+| Sessions & cookies | Middleware                 |
+| Params parsing     | ActionDispatch             |
+| Routing            | Router                     |
+| Business logic     | Controller / Service       |
+| DB queries         | Models                     |
+| Error handling     | Middleware                 |
+| Logging & metrics  | Middleware                 |
+
+Tricky interview questions (with answers)
+❓ Can middleware stop a request?
+
+✅ Yes — it can return a response without hitting controller
+
+❓ Does middleware run for every request?
+
+✅ Yes (assets, health checks, everything)
+
+❓ Where does Devise load current_user?
+
+✅ In Warden middleware, before controllers run
+
+❓ Where do Sidekiq jobs fit?
+
+🚫 They don’t go through middleware
+They run outside the HTTP lifecycle
+
+One-line killer answer
+
+A Rails request flows from the web server through Rack middleware, gets routed to a controller action, renders a response, then travels back through middleware before being sent to the client.

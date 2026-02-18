@@ -1,0 +1,97 @@
+before in RSpec
+Definition
+
+before hooks are blocks of code that run before your examples (it blocks).
+
+They are mainly used to set up test data, stubs, mocks, or any preparation needed for the test.
+
+1️⃣ Syntax
+before(:each) do
+  # runs before each example
+end
+
+before(:all) do
+  # runs once before all examples in the group
+end
+
+2️⃣ Types of before
+Hook type	Runs when?	Common use
+before(:each) or before	Before every example	Reset DB, create test objects, stubs
+before(:all)	Before all examples in the group	Heavy setup that doesn’t change, like seed data
+
+Note: before(:each) is the default when you just write before { ... }.
+
+3️⃣ Example
+RSpec.describe User do
+  before(:each) do
+    @user = User.create(name: "Alice")
+  end
+
+  it "has a name" do
+    expect(@user.name).to eq("Alice")
+  end
+
+  it "can be destroyed" do
+    @user.destroy
+    expect(User.count).to eq(0)
+  end
+end
+
+
+✅ What happens:
+
+@user is created before each test
+
+Each test has a fresh @user
+
+No test affects another
+
+4️⃣ Example with before(:all)
+RSpec.describe User do
+  before(:all) do
+    @user = User.create(name: "Bob")
+  end
+
+  it "has a name" do
+    expect(@user.name).to eq("Bob")
+  end
+
+  it "still exists" do
+    expect(User.find(@user.id)).to eq(@user)
+  end
+end
+
+
+@user is created once before all tests
+
+Faster for heavy objects, but state is shared → can lead to flaky tests if modified
+
+5️⃣ Practical Uses in Rails
+
+Create test records in DB
+
+Stub/mocking objects globally for the group
+
+Reset configurations or environment variables
+
+Set up authenticated user sessions for controller tests
+
+before do
+  allow(current_user).to receive(:admin?).and_return(true)
+end
+
+6️⃣ Combined with let or let!
+let!(:user) { create(:user) }
+
+before do
+  user.update(name: "Changed")
+end
+
+
+let! ensures the object exists before the example
+
+before ensures you can modify or prepare it
+
+🔑 Interview-ready one-liner
+
+before hooks in RSpec run code before each example (:each) or once before all examples (:all), mainly for setup like test data, stubs, or environment prep.

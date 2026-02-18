@@ -1,0 +1,125 @@
+🕐 Mock Interview – Advanced Round (Real 2-Hour Level)
+Scenario Upgrade
+
+You’re building a Task Management API.
+
+Now interviewer adds:
+
+🚀 New Requirements
+1️⃣ Soft Delete Tasks
+
+Add soft delete for tasks.
+
+DELETE /tasks/:id
+
+Should NOT remove from DB
+
+Should mark deleted_at
+
+Deleted tasks should NOT appear in normal queries
+
+2️⃣ Add Endpoint
+
+GET /tasks
+
+Requirements:
+
+Only return non-deleted tasks
+
+Filtering:
+
+?status=completed
+
+?due_before=2026-03-01
+
+Sorting:
+
+?sort=due_date_desc
+
+Pagination (10 per page)
+
+Avoid N+1
+
+Return meta block
+
+3️⃣ Constraint
+
+You CANNOT use any gem for soft delete.
+
+No paranoia gem.
+Manual implementation only.
+
+Step 1
+
+Write:
+
+Migration change needed
+
+Model changes
+
+Scope for active tasks
+
+Destroy override
+
+Only Task model + migration logic for now.
+
+This is where many candidates collapse.
+
+
+##############
+
+
+class Task < ApplicationRecord
+  belongs_to :user
+
+  scope :active, -> { where(deleted_at: nil) }
+
+  def soft_delete
+    update(deleted_at: Time.current)
+  end
+end
+
+
+def index
+  tasks = Task.active.includes(:user)
+
+  tasks = tasks.where(status: params[:status]) if params[:status].present?
+  tasks = tasks.where("due_date < ?", params[:due_before]) if params[:due_before].present?
+
+  case params[:sort]
+  when "due_date_desc"
+    tasks = tasks.order(due_date: :desc)
+  when "due_date_asc"
+    tasks = tasks.order(due_date: :asc)
+  end
+
+  page = params[:page].to_i
+  page = 1 if page <= 0
+
+  per_page = 10
+  total_count = tasks.count
+
+  tasks = tasks.limit(per_page)
+               .offset((page - 1) * per_page)
+
+  render json: {
+    data: tasks.as_json(
+      only: [:id, :title, :status, :due_date],
+      include: { user: { only: [:id, :name, :email] } }
+    ),
+    meta: {
+      current_page: page,
+      per_page: per_page,
+      total_count: total_count,
+      total_pages: (total_count.to_f / per_page).ceil
+    }
+  }
+end
+
+def destroy
+  task = Task.find_by(id: params[:id])
+  return render json: { error: "Task not found" }, status: :not_found unless task
+
+  task.soft_delete
+  render json: { message: "Task deleted successfully" }, status: :ok
+end

@@ -1,0 +1,45 @@
+## devise
+### sidekiq
+## copy namespace scope
+## copy active record query
+## copy lock, transation include
+## pros & cons of ruby & rails
+###  validate syntax
+### rails s 
+### rails app update steps
+## callback_order
+## prepend
+## rails cache adds wrapper and some functions
+
+### dynamic price changes table scenario db
+
+### sidekiq payment integration
+
+### def
+user_params = params.require(:user).permit!
+user = User.find(params[:id])
+user.update(user_params)
+ end
+
+
+####
+
+When would order matter?
+
+Almost never for where + includes.
+
+But if you use:
+
+references
+
+joins
+
+select
+
+group
+
+order
+
+distinct
+
+then behavior can change depending on what you're doing.	

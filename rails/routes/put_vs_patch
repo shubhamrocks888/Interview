@@ -1,0 +1,121 @@
+🔹 PUT vs PATCH (What the HTTP spec says)
+✅ PUT (Replace the resource)
+
+Semantics: replace the entire resource
+
+Client is supposed to send the full representation
+
+Missing fields may be considered removed or reset
+
+✅ PATCH (Partial update)
+
+Semantics: update only the provided fields
+
+Unsent fields remain unchanged
+
+📘 This is what REST / HTTP standards say.
+
+🔹 Why in Rails PUT behaves like PATCH
+👉 Rails does NOT enforce PUT semantics
+
+In Rails:
+
+PUT   /users/:id  → users#update
+PATCH /users/:id  → users#update
+
+
+Both go to the same controller action:
+
+def update
+  @user.update(user_params)
+end
+
+
+Rails only updates attributes you permit and send.
+
+🔍 Example (Rails behavior)
+Request
+PUT /users/1
+{
+  "user": {
+    "name": "John"
+  }
+}
+
+What Rails does
+@user.update(name: "John")
+
+
+👉 Email, age, etc. remain unchanged
+👉 Rails treats it like PATCH
+
+🧠 Why nothing “breaks” with PUT in Rails
+
+Because:
+
+ActiveRecord update performs a partial update
+
+Missing attributes are ignored, not nulled
+
+Strong parameters prevent mass replacement
+
+Rails optimizes for developer safety, not strict REST purity.
+
+🔥 Important Interview Insight
+
+PUT vs PATCH difference is contractual, not technical.
+
+Rails allows PUT to behave like PATCH because:
+
+Full replacement is risky
+
+Clients often don’t have full state
+
+Partial updates are safer
+
+❗ When PUT would behave differently
+
+PUT behaves like a full replacement only if you implement it that way:
+
+def update
+  @user.assign_attributes(default_attributes)
+  @user.assign_attributes(user_params)
+  @user.save
+end
+
+
+OR if your API explicitly nullifies missing fields.
+
+Rails does not do this by default.
+
+📊 Quick Comparison
+Aspect	PUT	PATCH
+HTTP spec	Replace resource	Partial update
+Rails behavior	Partial update	Partial update
+Controller action	update	update
+Missing fields	Ignored	Ignored
+Enforced by Rails?	❌ No	❌ No
+🎯 Correct Interview Answer (Best)
+
+“According to HTTP spec, PUT replaces a resource while PATCH partially updates it. However, in Rails both PUT and PATCH are routed to the same update action and behave the same unless explicitly implemented otherwise.”
+
+⭐ Bonus: Why Rails prefers PATCH
+
+Rails scaffolds use PATCH because:
+
+Matches real behavior
+
+Safer
+
+More REST-accurate
+
+That’s why you’ll see:
+
+<%= form_with model: @user do |f| %>
+
+
+➡ generates PATCH, not PUT.
+
+🧠 One-Line Summary
+
+PUT and PATCH differ by intent, but Rails treats both as partial updates unless you enforce full replacement logic.

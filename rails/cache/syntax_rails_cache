@@ -1,0 +1,70 @@
+1️⃣ Basic write / read
+	Write
+	Rails.cache.write("users_count", 10)
+
+	Read
+	Rails.cache.read("users_count")
+	# => 10
+
+
+2️⃣ Write with expiration (VERY common)
+	Rails.cache.write("users_count", 10, expires_in: 5.minutes)
+	After 5 minutes → key disappears.
+
+3️⃣ fetch (MOST IMPORTANT METHOD ⭐)
+	Rails.cache.fetch("users_count", expires_in: 5.minutes) do
+	  User.count
+	end
+
+	What happens
+
+	Cache HIT → returns cached value
+	Cache MISS → runs block, stores result, returns it
+
+	📌 90% of Rails caching uses fetch
+
+4️⃣ Delete cache
+	Rails.cache.delete("users_count")
+
+	Used after updates.
+
+5️⃣ Check if key exists
+	Rails.cache.exist?("users_count")
+
+
+6️⃣ Increment / decrement (numbers only)
+	Rails.cache.increment("page_views")
+	Rails.cache.decrement("page_views")
+
+
+	With expiry:
+
+	Rails.cache.increment("page_views", 1, expires_in: 1.hour)
+
+7️⃣ fetch with race condition protection
+	Rails.cache.fetch(
+	  "expensive_data",
+	  expires_in: 10.minutes,
+	  race_condition_ttl: 5.seconds
+	) do
+	  heavy_computation
+	end
+
+
+	Prevents cache stampede.
+
+8️⃣ Namespacing keys (recommended)
+	Rails.cache.fetch("users/count") { User.count }
+
+
+	Use / or : for structure.
+
+10️⃣ Fragment caching (view-level)
+	<% cache @user do %>
+	  <%= render @user %>
+	<% end %>
+
+
+	Rails auto-generates cache keys.
+
+

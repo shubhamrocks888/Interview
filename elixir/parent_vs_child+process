@@ -1,0 +1,149 @@
+1️⃣ Why “parent” and “child” terminology exists
+
+Because in BEAM/OTP:
+
+Processes can start other processes and take responsibility for them.
+
+That relationship is called:
+
+Parent process → the one that starts
+
+Child process → the one that is started
+
+It’s about ownership and responsibility, not hierarchy of power.
+
+2️⃣ Parent ≠ Caller ≠ Boss (important clarification)
+
+A parent process:
+
+Starts another process
+
+May monitor or supervise it
+
+Is notified if it crashes
+
+A child process:
+
+Runs independently
+
+Has its own mailbox
+
+Has no shared memory
+
+❗ Child does not execute inside parent
+❗ Child does not share variables
+❗ Child does not block parent
+
+3️⃣ Simple real-world analogy
+Think of a company
+
+Manager → Supervisor (parent)
+
+Employee → Worker (child)
+
+Manager:
+
+Hires employee
+
+Restarts work if employee leaves
+
+Doesn’t do employee’s work
+
+Employee:
+
+Does the actual job
+
+Can fail
+
+Can be replaced
+
+🔥 Interview line:
+
+“Supervisors manage the lifecycle of worker processes, not their business logic.”
+
+4️⃣ In plain Elixir code (very simple)
+parent = self()
+
+child =
+  spawn(fn ->
+    receive do
+      :hello -> IO.puts("Hello from child")
+    end
+  end)
+
+send(child, :hello)
+
+
+Here:
+
+parent spawned child
+
+Parent knows child’s PID
+
+Child runs independently
+
+So we say:
+
+Parent process
+
+Child process
+
+5️⃣ Why this matters (this is the real reason)
+Because crashes propagate by links
+
+In OTP:
+
+Parent is linked to child
+
+If child crashes → parent is notified
+
+Supervisor decides what to do
+
+Without this relationship:
+
+You can’t restart safely
+
+You can’t isolate failures
+
+6️⃣ “Let it crash” depends on this
+
+If everything was flat:
+
+One crash = system crash
+
+With parent-child:
+
+Crash is contained
+
+Restart is local
+
+🔥 Interview sentence:
+
+“Parent-child relationships allow failures to be isolated and recovered without bringing down the entire system.”
+
+7️⃣ Rails comparison (important for you)
+
+| Rails           | Elixir         |
+| --------------- | -------------- |
+| Sidekiq process | Supervisor     |
+| Job             | Worker process |
+| Retry           | Restart child  |
+| Redis           | Mailbox        |
+
+
+Rails simulates this with infra
+Elixir has it built into the runtime
+
+8️⃣ Common misconception (clear this)
+
+❌ “Child process is a function call”
+❌ “Parent waits for child”
+
+✅ Child is an OS-independent lightweight process
+✅ Parent and child run concurrently
+
+9️⃣ One-sentence answer (perfect interview answer)
+
+Say this:
+
+“The parent–child terminology exists because processes are started and monitored by other processes. This relationship enables supervision, failure isolation, and automatic recovery under the let-it-crash philosophy.”

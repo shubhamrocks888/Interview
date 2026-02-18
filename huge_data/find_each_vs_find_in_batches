@@ -1,0 +1,62 @@
+Ah! This is a very common point of confusion in Rails, but the difference is subtle and important when working with huge datasets. Let’s break it down carefully:
+
+1️⃣ find_each
+
+Iterates one record at a time.
+
+Internally uses find_in_batches, but yields individual records.
+
+Default batch_size is 1000.
+
+Keeps memory usage low because you never load the whole table at once.
+
+You cannot access the whole batch, only one record at a time.
+
+Example:
+
+User.find_each(batch_size: 500) do |user|
+  puts user.name
+end
+
+
+If you have 5000 users, Rails will fetch 500 users at a time from DB, then yield each user individually.
+
+Useful when you want to process records one by one.
+
+2️⃣ find_in_batches
+
+Iterates batches of records.
+
+Yields an array of ActiveRecord objects per batch.
+
+You can process whole batches at once.
+
+Default batch_size is 1000.
+
+Example:
+
+User.find_in_batches(batch_size: 500) do |batch|
+  batch.each { |user| puts user.name }
+end
+
+
+Here, batch is an array of 500 User objects.
+
+Useful if you want to process records in bulk, e.g., bulk inserts, exporting CSV, sending emails in batch.
+
+✅ Key Differences at a Glance
+
+| Feature    | `find_each`               | `find_in_batches`                      |        |                    |       |        |
+| ---------- | ------------------------- | -------------------------------------- | ------ | ------------------ | ----- | ------ |
+| Yields     | Individual record         | Array of records (batch)               |        |                    |       |        |
+| Batch size | Yes, default 1000         | Yes, default 1000                      |        |                    |       |        |
+| Memory     | Low, record by record     | Slightly higher, holds batch in memory |        |                    |       |        |
+| Use case   | Processing single records | Bulk operations per batch              |        |                    |       |        |
+| Syntax     | `find_each {              | r                                      | ... }` | `find_in_batches { | batch | ... }` |
+
+
+Quick Tip for Interviews:
+
+find_each = “I want to loop through records individually without loading everything into memory.”
+
+find_in_batches = “I want to work with groups of records at a time, for batch processing.”

@@ -1,0 +1,99 @@
+Token Bucket — plain English first
+
+Token Bucket is a rate-limiting algorithm that allows bursts but enforces an average rate.
+
+Think of it like mobile data.
+
+You get data refilled every month
+
+If you haven’t used it, you can suddenly download a big file (burst)
+
+But overall usage is still capped
+
+How it works (step by step)
+1️⃣ Bucket of tokens
+
+Bucket has a maximum capacity (say 50 tokens)
+
+Each token = permission to make 1 API call
+
+2️⃣ Tokens are added at a fixed rate
+
+Example:
+50 tokens per hour
+
+Tokens are added gradually over time
+
+Bucket cannot overflow beyond max size
+
+3️⃣ On each request
+
+If token available → consume 1 token → allow request
+
+If no token → reject or wait
+
+That’s it.
+
+Simple visualization
+Time → ⏱
+
+Tokens added:  | + + + + + |
+Bucket size:   [ 🪣🪣🪣🪣🪣 ]
+Request comes: take 1 🪣 → allowed
+No token left: ❌ rejected / delayed
+
+Why Token Bucket is powerful
+
+✔ Allows short bursts
+✔ Enforces long-term rate
+✔ Prevents starvation
+✔ Bounded memory
+
+This is why it’s used in:
+
+API gateways
+
+Nginx
+
+AWS rate limiting
+
+Kubernetes
+
+Token Bucket vs Leaky Bucket (interview gold)
+
+| Feature       | Token Bucket | Leaky Bucket |
+| ------------- | ------------ | ------------ |
+| Burst allowed | ✅ Yes        | ❌ No         |
+| Output rate   | Variable     | Constant     |
+| Good for      | User traffic | Strict APIs  |
+| Complexity    | Medium       | Simple       |
+
+
+Key line to say:
+
+“Token bucket allows burst traffic while maintaining an average rate, whereas leaky bucket smooths traffic to a constant rate.”
+
+In your interview scenario
+
+3rd-party limit = 50/hr
+
+You can say:
+
+“I’d use a token bucket with capacity 50 and refill rate 50/hour. If traffic bursts above that, tokens get exhausted and excess requests are rejected or queued briefly.”
+
+That directly answers their concern.
+
+Redis-style pseudo logic (optional but impressive)
+every second:
+  tokens = min(max_tokens, tokens + refill_rate)
+
+on request:
+  if tokens >= 1:
+    tokens -= 1
+    allow
+  else:
+    reject
+
+One-line definition (memorize)
+
+Token Bucket is a rate-limiting algorithm where requests consume tokens added at a fixed rate, allowing bursts while enforcing an average limit.

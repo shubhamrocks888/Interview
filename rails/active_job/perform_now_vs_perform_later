@@ -1,0 +1,177 @@
+1️⃣ Is perform a built-in function?
+❌ No — YOU define perform
+def perform(user)
+end
+
+
+perform is not implemented by you calling Rails
+
+Rails expects your job class to define it
+
+It is just a normal Ruby method
+
+Think of it like:
+
+“This is the method Rails will call when the job runs.”
+
+If perform is missing → job crashes.
+
+2️⃣ Then who calls perform?
+Answer:
+
+👉 Active Job calls perform internally
+
+Flow:
+
+perform_later
+   ↓
+Sidekiq worker
+   ↓
+ActiveJob::Base
+   ↓
+calls your perform(...)
+
+
+You never call perform directly in real apps.
+
+3️⃣ What about perform_now and perform_later?
+✅ These ARE built-in methods
+
+They come from:
+
+ActiveJob::Base
+
+
+Your job inherits them via:
+
+ApplicationJob < ActiveJob::Base
+
+4️⃣ What does perform_now do?
+WelcomeEmailJob.perform_now(user)
+
+Meaning:
+
+Runs immediately
+
+Runs in the same thread
+
+NO Redis
+
+NO Sidekiq
+
+Blocks the request
+
+Equivalent to:
+
+WelcomeEmailJob.new.perform(user)
+
+
+Use case:
+
+Debugging
+
+Console
+
+Very small tasks
+
+5️⃣ What does perform_later do?
+WelcomeEmailJob.perform_later(user)
+
+Meaning:
+
+Enqueues job
+
+Sends job to queue adapter (Sidekiq)
+
+Stores job in Redis
+
+Returns immediately
+
+Job runs asynchronously
+
+This is what you use 99% of the time.
+
+6️⃣ Where exactly are these methods defined?
+Method	Defined in
+perform	Your job class
+perform_now	ActiveJob
+perform_later	ActiveJob
+queue_as	ActiveJob
+7️⃣ Execution timeline (important)
+perform_later
+Controller
+  ↓
+perform_later
+  ↓
+Active Job serializes args
+  ↓
+Push to Redis
+  ↓
+Sidekiq worker
+  ↓
+perform(user)
+
+perform_now
+Controller
+  ↓
+perform_now
+  ↓
+perform(user)
+
+8️⃣ Important warning about arguments ⚠️
+
+Your code:
+
+def perform(user)
+end
+
+
+This works, but is NOT recommended.
+
+Why?
+
+Jobs are serialized
+
+Passing full objects can break
+
+Object may be stale
+
+Best practice:
+def perform(user_id)
+  user = User.find(user_id)
+end
+
+
+Interviewers LOVE this.
+
+9️⃣ deliver_now vs deliver_later inside job
+
+Inside a job:
+
+deliver_now  # ✅ preferred
+deliver_later # ❌ creates nested job
+
+
+Reason:
+
+You’re already in background
+
+No need to enqueue again
+
+🔟 Interview-ready summary (memorize)
+
+💬 Is perform built-in?
+➡️ No, developers define it.
+
+💬 Who calls perform?
+➡️ Active Job via the queue adapter.
+
+💬 Where do perform_now and perform_later come from?
+➡️ ActiveJob::Base.
+
+💬 Difference?
+➡️ perform_now runs inline, perform_later enqueues.
+
+🧠 One-line mental model
+
+You write perform; Rails gives you perform_now and perform_later.

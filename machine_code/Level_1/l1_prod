@@ -1,0 +1,77 @@
+class UsersController < ApplicationController
+  def create
+    user = User.new(user_params)
+
+    if user.save
+      render json: user.as_json(include: :posts), status: :created
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def user_params
+    params.require(:user).permit(
+      :email,
+      :full_name,
+      posts_attributes: [:title, :status]
+    )
+  end
+end
+
+class User < ApplicationRecord
+  has_many :posts, dependent: :destroy
+
+  accepts_nested_attributes_for :posts
+
+  validates :email, uniqueness: true, presence: true, format: { with: Mail::To::EMAIL_REGEXP }
+  validates :full_name, presence: true
+end
+
+class PostsController < ApplicationController
+
+  def index
+    posts = Post.includes(:user).all or Post.includes(:user)
+
+    render json: posts,{only: [:title, :status], include: {user: {only: [:id, :full_name]}}}
+  end
+end
+
+
+####
+
+{
+  "user": {
+    "email": "a@test.com",
+    "full_name": "Shubham",
+    "posts": [
+      { "title": "Hello", "status": "draft" }
+    ]
+  }
+}
+
+
+
+
+def create
+  ActiveRecord::Base.transaction do
+    user = User.create!(
+      email: user_params[:email],
+      full_name: user_params[:full_name]
+    )
+
+    if user_params[:posts].present?
+      user_params[:posts].each do |post|
+        user.posts.create!(post)
+      end
+    end
+
+    render json: user.as_json(include: :posts), status: :created
+  end
+rescue ActiveRecord::RecordInvalid => e
+  render json: { errors: e.message }, status: :unprocessable_entity
+end
+
+
+###

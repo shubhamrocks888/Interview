@@ -1,0 +1,21 @@
+bundle update --conservative respects the version constraints in the Gemfile, such as ~> 5.2.4, and updates gems only within that range and only when necessary.
+
+##
+
+🎯 Interview-ready one-liner
+
+bundle update <gem> targets a specific gem and may update its dependencies, while bundle update --conservative minimizes dependency changes and only updates what is strictly required within the Gemfile constraints.
+
+###
+
+🎯 Interview-ready explanation
+
+Running bundle update without arguments updates all gems and their dependencies to the latest versions allowed by the Gemfile, often causing large lockfile changes and higher risk of regressions.
+
+### Comparison
+
+| Command                        | Scope    | Risk      |
+| ------------------------------ | -------- | --------- |
+| `bundle update`                | All gems | 🔥 High   |
+| `bundle update rails`          | One gem  | ⚠️ Medium |
+| `bundle update --conservative` | Minimal  | ✅ Low     |

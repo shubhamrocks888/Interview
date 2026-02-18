@@ -1,0 +1,113 @@
+Login Request
+   ↓
+Warden authenticates
+   ↓
+User ID stored in Rails session
+   ↓
+Session stored in cookie / Redis
+   ↓
+Next request
+   ↓
+Warden reads session
+   ↓
+User loaded from DB
+
+
+#####
+
+✅ Correct, Interview-Perfect Statement
+
+When a user logs in, Warden stores the user’s ID in the Rails session.
+That session is persisted in a signed and encrypted cookie in the browser (by default).
+
+✔ Warden
+✔ Session
+✔ Cookie
+✔ Browser
+
+All correct.
+
+🔍 Small but Important Precision
+What you said:
+
+“warden stores user_id in session cookie”
+
+Slightly better:
+
+Warden stores user_id in the Rails session, and Rails stores that session inside a cookie (by default).
+
+Why this matters:
+
+Warden → session
+
+Rails → cookie
+
+Browser → stores cookie
+
+Each layer has its responsibility.
+
+🧠 Step-by-Step Flow (Clean Mental Model)
+1️⃣ Login request
+POST /users/sign_in
+
+2️⃣ Warden authenticates
+
+Verifies email + password
+
+Gets user.id
+
+3️⃣ Warden writes to session
+session["warden.user.user.key"] = [[user.id], "auth_salt"]
+
+4️⃣ Rails serializes session
+
+Encrypts & signs session hash
+
+Stores it in a cookie
+
+5️⃣ Browser stores cookie
+
+Cookie sent with every request
+
+🔁 On Every Subsequent Request
+
+Browser sends session cookie
+
+Rails decrypts session
+
+Warden reads user ID
+
+User loaded from DB
+
+current_user available
+
+🔐 Is the user_id visible in the browser?
+
+👉 No
+
+Because:
+
+Cookie is encrypted
+
+Cookie is signed
+
+User cannot tamper with it
+
+Even though stored in browser, it’s secure.
+
+🚨 Common Interview Follow-Up Traps
+❓ Is password stored in cookie?
+
+👉 ❌ Never
+
+❓ Is whole user object stored?
+
+👉 ❌ Only user ID
+
+❓ Can user modify cookie to login as another user?
+
+👉 ❌ Signed & encrypted cookie prevents this
+
+🎯 One-Line Interview Answer (Perfect)
+
+“On login, Warden stores the user ID in the Rails session, and Rails persists that session in a signed and encrypted cookie stored in the browser.”

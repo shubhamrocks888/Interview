@@ -1,0 +1,109 @@
+Payment Failed Scenarios
+
+  Payment can fail due to multiple reasons:
+
+  Card declined / insufficient balance
+
+  UPI failed / timeout
+
+  Network issues
+
+  User cancels the payment
+
+STEP-BY-STEP FLOW
+
+We’ll follow the same 4-step structure as before.
+
+1️⃣ Frontend Checkout Attempt
+
+User opens Razorpay Checkout
+
+Enters payment info
+
+Razorpay processes payment with the bank
+
+If payment fails, Razorpay does not return payment_id.
+
+Frontend receives:
+{
+  "error": {
+    "code": "BAD_REQUEST_ERROR",
+    "description": "Payment failed due to insufficient funds",
+    "source": "card",
+    "step": "payment_authorization",
+    "reason": "Insufficient balance"
+  }
+}
+
+2️⃣ Frontend Handling
+
+Frontend shows “Payment Failed” message to user
+
+Does NOT call backend /verify, because there is no payment_id
+
+💡 Interview line:
+
+Frontend verification only happens on successful payment. Failed payments are handled entirely in frontend for user feedback.
+
+3️⃣ Webhook Handling
+
+Razorpay triggers webhook for payment.failed
+
+Backend receives payload like:
+
+{
+  "entity": "payment",
+  "event": "payment.failed",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_FAIL123",
+        "order_id": "order_Lk8XwP9abc123",
+        "status": "failed",
+        "amount": 50000,
+        "currency": "INR",
+        "method": "card",
+        "error_code": "INSUFFICIENT_BALANCE",
+        "error_description": "Payment declined by bank"
+      }
+    }
+  }
+}
+
+4️⃣ Backend Updates DB
+order = Order.find_by(razorpay_order_id: payment['order_id'])
+order.update(
+  razorpay_payment_id: payment['id'],
+  status: 'failed'
+)
+
+
+DB now looks like:
+
+id	razorpay_order_id	razorpay_payment_id	amount	status
+1	order_Lk8XwP9abc123	pay_FAIL123	50000	failed
+
+💡 Important: Even failed payments get a payment_id from Razorpay — useful for troubleshooting and refunds (if partial payment happens).
+
+5️⃣ Business Logic / Retry
+
+  Notify user: “Payment failed, please retry”
+
+  Allow retry → create new order_id for new attempt
+
+  Keep old failed payment record for audit
+
+Interview-ready explanation
+
+When payment fails, frontend shows an error to the user, and backend is notified via webhook payment.failed.
+The backend updates the order status to failed and logs the payment_id for audit.
+This allows safe retries and accurate reporting of payment attempts.
+
+✅ Key difference from success flow:
+
+| Aspect                  | Payment Success         | Payment Failed              |
+| ----------------------- | ----------------------- | --------------------------- |
+| Frontend `/verify` call | Yes                     | No                          |
+| Webhook                 | `payment.captured`      | `payment.failed`            |
+| DB status               | `paid`                  | `failed`                    |
+| Business logic          | trigger delivery, email | trigger retry / notify user |

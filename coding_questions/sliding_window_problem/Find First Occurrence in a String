@@ -1,0 +1,103 @@
+Perfect — Find First Occurrence in a String, or strStr, is another classic string problem often asked in interviews. Let’s go step by step.
+
+Problem: strStr / Find First Occurrence
+
+Question:
+
+Given two strings, haystack and needle, return the index of the first occurrence of needle in haystack.
+Return -1 if needle is not part of haystack.
+
+If needle is an empty string, return 0.
+
+Examples
+haystack = "hello"
+needle = "ll"
+Output: 2
+
+haystack = "aaaaa"
+needle = "bba"
+Output: -1
+
+haystack = "abc"
+needle = ""
+Output: 0
+
+Key points
+
+Return index of first match → don’t just check existence.
+
+Empty needle → return 0.
+
+Case-sensitive → “a” != “A”.
+
+Naive solution → O(n*m), where n = length of haystack, m = length of needle.
+
+Approach 1: Naive / Sliding Window
+
+Loop through haystack from 0 to haystack.length - needle.length
+
+At each position, check if substring matches needle
+
+If yes, return index
+
+If loop ends → return -1
+
+Time Complexity: O(n*m)
+Space Complexity: O(1)
+
+Example: "hello" & "ll"
+i = 0 → haystack[0..1] = "he" ≠ "ll"
+i = 1 → haystack[1..2] = "el" ≠ "ll"
+i = 2 → haystack[2..3] = "ll" = "ll" ✅
+return 2
+
+Approach 2: Optimized (KMP / Rabin-Karp)
+
+For long strings or repeated searches, we can use:
+
+KMP algorithm → O(n+m)
+
+Rabin-Karp / rolling hash → O(n) expected
+
+For interviews, naive solution is accepted unless they explicitly ask for optimization.
+
+Interview explanation
+
+“I iterate through haystack, checking every substring of length equal to needle. If I find a match, I return the index. If not, I return -1. If needle is empty, I return 0. This is simple and works for most cases in O(n*m) time.”
+
+
+###
+
+def first_occurrence(haystack, needle)
+  return 0 if needle.empty?
+  return -1 if haystack.length < needle.length
+
+  k = needle.length
+
+  (0..haystack.length - k).each do |i|
+    return i if haystack[i, k] == needle
+  end
+
+  -1
+end
+
+# Test
+p first_occurrence("hello", "ll")  # => 2
+p first_occurrence("aaaaa", "bba") # => -1
+p first_occurrence("abc", "")       # => 0
+
+
+###
+
+def first_occurence(str1,str2)
+    return 0 if str2.empty?
+    return -1 if str1.length < str2.length
+    
+    k = str2.length
+    (0...str1.length).each do |i|
+        return i if str1[i...i+k] == str2
+    end
+    return -1
+end
+
+p first_occurence("hello","ll")

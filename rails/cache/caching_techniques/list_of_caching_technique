@@ -1,0 +1,81 @@
+1️⃣ Caching techniques Rails uses
+
+Rails supports multiple caching techniques at different layers:
+
+a) Page caching
+
+Caches the entire output of a page (HTML).
+
+When the page is cached, Rails doesn’t even hit the controller.
+
+Example: Saving public/posts.html and serving it directly.
+
+Note: Removed in Rails 4+, replaced by reverse proxy caching (like Nginx, Varnish).
+
+b) Action caching
+
+Caches the controller action output, but still goes through routing and filters.
+
+Useful when you need before filters to run (like authentication) but want to avoid regenerating the view.
+
+Rails calls caches_action :index for this.
+
+c) Fragment caching
+
+Caches pieces of a view, not the whole page.
+
+Example: a sidebar, header, or list of posts.
+
+Syntax:
+
+<% cache @post do %>
+  <%= render @post %>
+<% end %>
+
+
+Efficient because only the fragment is stored, and dynamic parts remain fresh.
+
+d) Low-level caching
+
+Directly store arbitrary data in cache store.
+
+Uses Rails.cache API:
+
+Rails.cache.write("user_#{id}", user_data)
+Rails.cache.fetch("user_#{id}") { expensive_query }
+
+
+Works for any Ruby object, not just views.
+
+e) Russian doll caching
+
+A nested fragment caching technique.
+
+Outer fragments depend on inner fragments.
+
+If an inner fragment is updated, Rails automatically invalidates the outer ones.
+
+Syntax:
+
+<% cache @posts do %>
+  <% @posts.each do |post| %>
+    <%= render post %>
+  <% end %>
+<% end %>
+
+f) Query caching
+
+Rails caches SQL query results within the same request.
+
+Only valid for the current database connection.
+
+Helps avoid repeating the same query multiple times in one request.
+
+g) HTTP caching
+
+Uses ETag and Last-Modified headers to let the browser cache responses.
+
+Example:
+
+fresh_when @post
+expires_in 5.minutes, public: true

@@ -1,0 +1,11 @@
+Razorpay vs CCAvenue — Why Razorpay may be preferred
+
+
+| Feature                              | CCAvenue                 | Razorpay                            | Why Razorpay could be chosen                     |
+| ------------------------------------ | ------------------------ | ----------------------------------- | ------------------------------------------------ |
+| **Ease of integration**              | Moderate, older API      | Modern API, Rails/JS SDKs           | Faster dev integration; less boilerplate         |
+| **Webhooks & callbacks**             | Available but older docs | Well-documented, developer-friendly | Easier for real-time payment updates in Rails    |
+| **UPI & wallets support**            | Yes, but slower updates  | Yes, robust                         | Better for mobile-first apps                     |
+| **Subscriptions/Recurring payments** | Limited support          | Strong built-in support             | Needed if app had recurring orders or SaaS model |
+| **Developer experience**             | Steeper learning curve   | Simple, modern dashboards           | Saves dev time; easier debugging                 |
+| **Reporting & reconciliation**       | Good                     | Good, with cleaner UI               | Razorpay’s dashboard is more intuitive           |

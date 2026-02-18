@@ -1,0 +1,154 @@
+Short answer:
+
+CPU-bound → slow because the CPU is busy thinking 🧠
+
+I/O-bound → slow because the program is waiting on something else (disk, DB, network) ⏳
+
+Now the clear breakdown 👇
+
+What is CPU-bound?
+
+A task is CPU-bound when its performance is limited by CPU computation speed.
+
+👉 The program spends most of its time executing instructions, not waiting.
+
+Characteristics
+
+High CPU usage (80–100%)
+
+Faster CPU = faster program
+
+Threads don’t help much (unless multi-core + parallelizable)
+
+Examples
+
+Image/video processing
+
+Encryption / hashing (bcrypt, SHA)
+
+Data compression
+
+Complex algorithms (sorting huge arrays, graph algorithms)
+
+Machine learning training
+
+# CPU-bound example
+def fibonacci(n)
+  return n if n <= 1
+  fibonacci(n - 1) + fibonacci(n - 2)
+end
+
+
+Here, CPU is constantly working → CPU-bound
+
+What is I/O-bound?
+
+A task is I/O-bound when its performance is limited by input/output operations.
+
+👉 The program spends most of its time waiting.
+
+What it waits for
+
+Database
+
+Disk
+
+Network
+
+External APIs
+
+File system
+
+Characteristics
+
+Low CPU usage
+
+Faster disk/network = faster program
+
+Concurrency helps a LOT (threads, async, event loop)
+
+Examples
+
+DB queries
+
+API calls
+
+Reading/writing files
+
+Uploading/downloading data
+
+Rails controller actions (most of them!)
+
+# I/O-bound example
+user = User.find(1)     # DB call
+sleep(2)                # simulates waiting
+
+
+CPU is mostly idle → I/O-bound
+
+Rails-specific intuition (important for interviews)
+Most Rails apps are…
+
+👉 I/O-bound, not CPU-bound
+
+Why?
+
+Waiting on DB
+
+Waiting on Redis
+
+Waiting on APIs
+
+Waiting on S3
+
+CPU-bound in Rails happens when
+
+Heavy JSON processing
+
+PDF generation
+
+Image resizing
+
+Encryption (bcrypt cost factor)
+
+Large in-memory loops
+
+How to identify which one you have?
+Signs it’s CPU-bound
+
+CPU at 100%
+
+App slows even with no DB traffic
+
+Adding more DB connections doesn’t help
+
+Signs it’s I/O-bound
+
+CPU is low
+
+Threads are waiting
+
+App speeds up with:
+
+DB indexes
+
+Caching
+
+Faster network
+
+Background jobs
+
+Quick comparison
+
+| Feature           | CPU-bound  | I/O-bound           |
+| ----------------- | ---------- | ------------------- |
+| Bottleneck        | CPU        | Disk / DB / Network |
+| CPU usage         | High       | Low                 |
+| Speed improves by | Faster CPU | Better I/O          |
+| Threads help?     | ❌ little   | ✅ a lot             |
+| Rails apps        | Rare       | Very common         |
+
+
+One-liner you can say in interviews 💡
+
+“A CPU-bound task is limited by computation speed, whereas an I/O-bound task is limited by waiting on external resources like databases or network calls.”

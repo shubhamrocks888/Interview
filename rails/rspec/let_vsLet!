@@ -1,0 +1,110 @@
+let vs let! in RSpec
+
+Both are used to define helper variables in tests, but they differ in when the code is executed.
+
+1️⃣ let
+Definition
+
+Lazily evaluated.
+
+The block is not run until the variable is accessed in the example.
+
+Value is memoized (cached) for the example.
+
+Example
+RSpec.describe "let example" do
+  let(:user) { puts "Creating user"; User.new }
+
+  it "does not call let unless accessed" do
+    puts "Test started"
+    # user is not called
+  end
+
+  it "calls let when accessed" do
+    user
+  end
+end
+
+Output
+Test started
+Creating user
+Creating user
+
+
+Explanation:
+
+First test → user never accessed → no output from puts inside let.
+
+Second test → user accessed → block executed.
+
+✅ Lazy execution is the key.
+
+2️⃣ let!
+Definition
+
+Eagerly evaluated.
+
+Block runs before the example, even if the variable is never accessed.
+
+Still memoized for the example.
+
+Example
+RSpec.describe "let! example" do
+  let!(:user) { puts "Creating user"; User.new }
+
+  it "runs before example" do
+    puts "Test started"
+  end
+end
+
+Output
+Creating user
+Test started
+
+
+Explanation:
+
+let! always runs before the example starts
+
+Useful for setup that must exist in the DB or for side effects
+
+3️⃣ Key difference
+
+| Feature         | let                  | let!                                               |
+| --------------- | -------------------- | -------------------------------------------------- |
+| Execution       | Lazy (when accessed) | Eager (before example)                             |
+| Memoized?       | ✅                    | ✅                                                  |
+| Use case        | Only when needed     | Setup with side effects (e.g., DB record creation) |
+| Access required | ❌ Not required       | ❌ Still runs                                       |
+
+
+
+4️⃣ Practical Rails example
+
+
+RSpec.describe User, type: :model do
+  let(:user) { create(:user) }   # lazy
+  let!(:post) { create(:post) }  # eager
+
+  it "user is not created yet" do
+    puts User.count
+    user
+  end
+
+  it "post is already created" do
+    puts Post.count
+  end
+end
+
+Output
+0   # user not created yet
+1   # post already created before example
+
+
+let → created when called
+
+let! → created before the example, always
+
+🔑 Interview-ready one-liner
+
+let is lazy and only runs when referenced; let! is eager and runs before the example starts, even if not referenced.

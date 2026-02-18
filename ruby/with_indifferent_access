@@ -1,0 +1,77 @@
+with_indifferent_access
+What it does
+
+Converts a hash so you can access keys either as strings or symbols.
+
+h = { "a" => 1, :b => 2 }
+h[:a]       # => nil
+h["a"]      # => 1
+
+h2 = h.with_indifferent_access
+h2[:a]      # => 1
+h2["a"]     # => 1
+h2[:b]      # => 2
+h2["b"]     # => 2
+
+
+✅ Works for top-level keys only by default.
+
+Does it affect nested keys?
+Default with_indifferent_access
+
+No, nested hashes remain regular hashes.
+
+Only the top-level keys are converted.
+
+h = { user: { name: "Shubham", age: 30 } }
+h2 = h.with_indifferent_access
+
+h2[:user]          # => { name: "Shubham", age: 30 } (regular hash)
+h2[:user][:name]   # => works
+h2[:user]["name"]  # ❌ NoMethodError (nested hash keys are strings/symbols as they were)
+
+To convert nested keys too
+
+Rails provides deep_transform_keys + with_indifferent_access trick:
+
+h = { "user" => { "name" => "Shubham", "age" => 30 } }
+h2 = h.deep_transform_keys(&:to_s).with_indifferent_access
+
+h2[:user][:name]    # => "Shubham"
+h2["user"]["name"]  # => "Shubham"
+
+
+Or a shorter custom helper:
+
+def deep_indifferent_access(hash)
+  hash.with_indifferent_access.each do |k, v|
+    hash[k] = deep_indifferent_access(v) if v.is_a?(Hash)
+  end
+end
+
+Important note
+
+with_indifferent_access does not automatically recurse into arrays containing hashes.
+
+Only hashes directly nested under keys can be converted if you use deep_transform_keys.
+
+Rails common usage
+Params in controllers
+params = ActionController::Parameters.new({
+  "user" => { "name" => "Shubham" }
+})
+
+params = params.to_unsafe_h.with_indifferent_access
+params[:user][:name]    # works
+params["user"]["name"]  # works
+
+
+Top-level keys converted
+
+Nested hashes stay as-is
+
+Rails 6+ has strong params; with_indifferent_access is often used after calling to_unsafe_h
+
+Interview killer one-liner 🧠
+
+with_indifferent_access allows hash keys to be accessed as strings or symbols, but only converts the top-level keys. Nested keys remain unchanged unless you use deep_transform_keys or a custom deep conversion.

@@ -1,0 +1,47 @@
+🚀 Next Level Improvement
+
+Real Uber would also:
+
+Mark driver unavailable
+
+Ensure driver not already on another ride
+
+But we’ll add that next step.
+
+Now next task:
+
+Add validation so that:
+
+A driver cannot accept a ride if already assigned to another active ride.
+
+Implement that logic.
+
+
+#######
+
+def accept
+  ride = Ride.find_by(id: params[:id])
+  return render json: { errors: "Ride not found" }, status: :not_found unless ride
+
+  driver = User.find_by(id: params[:driver_id], role: "driver")
+  return render json: { errors: "Driver not found" }, status: :not_found unless driver
+
+  ActiveRecord::Base.transaction do
+    ride.lock!
+
+    unless ride.requested?
+      raise StandardError, "Ride is not in requested state"
+    end
+
+    if Ride.where(driver: driver, status: [:accepted, :started]).exists?
+      raise StandardError, "Driver already on another ride"
+    end
+
+    ride.update!(driver: driver, status: :accepted)
+  end
+
+  render json: { message: "Ride accepted" }, status: :ok
+
+rescue StandardError => e
+  render json: { errors: e.message }, status: :unprocessable_entity
+end

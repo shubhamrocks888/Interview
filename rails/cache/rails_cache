@@ -1,0 +1,63 @@
+1️⃣ What is Rails.cache?
+
+	Rails.cache is a key–value store used to avoid expensive operations like:
+
+	DB queries
+	API calls
+	Heavy computations
+
+	It sits outside your app process (Redis / Memcached / FileStore / MemoryStore).
+
+
+				OR
+
+	Rails.cache is a unified caching API. Whether it sits outside the app process depends on the configured cache store.
+
+	MemoryStore 		→ inside the process
+	FileStore 			→ outside process but local
+	Redis / Memcached 	→ fully outside the app process
+
+
+
+
+	When should you use what?
+
+	✅ Use Rails.cache when:
+
+		You are caching derived / temporary data
+
+		Data can be safely evicted
+
+		You want expiration, fetch, race protection
+
+		You may change cache backend later
+
+		👉 90% of app caching
+
+	✅ Use Redis directly when:
+
+		Redis is a primary system component
+
+		You need:
+
+		Background jobs
+
+		Rate limiting
+
+		Locks
+
+		Pub/Sub
+
+		Queues
+
+		Counters
+
+		👉 Business logic depends on Redis
+
+		Interview-quality answer (memorize this)
+
+		Even if Rails.cache uses Redis underneath, Rails.cache and Redis are not the same.
+		Rails.cache treats Redis as a cache with Rails-level features like expiration, serialization, and fetch semantics, whereas direct Redis usage treats it as a datastore and requires manual handling.
+
+
+		

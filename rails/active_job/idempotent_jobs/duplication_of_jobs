@@ -1,0 +1,53 @@
+The correct short answer
+
+We handle duplication of jobs by making jobs idempotent.
+
+That’s the core idea ✔️
+
+The complete interview-ready answer (best)
+
+Sidekiq guarantees at-least-once execution, so jobs can run more than once due to retries, crashes, or Redis failures. To handle duplication, we make jobs idempotent by using a business-level idempotency key (request_id) and enforcing uniqueness at the database level. This ensures that even if the same job is retried or enqueued multiple times, the side effect happens only once.
+
+If interviewer asks: “How exactly?”
+
+You break it down step by step:
+
+Generate a stable request_id
+
+order_id, transaction_id, webhook_id, or UUID
+
+Pass it to the job
+
+Check or enforce uniqueness in DB
+
+unique index on request_id
+
+Exit early or use find_or_create_by
+
+prevents duplicate inserts
+
+Allow Sidekiq retries safely
+
+Tiny code example (optional in interview)
+def perform(user_id, request_id)
+  Transaction.find_or_create_by!(job_id: request_id) do |t|
+    t.user_id = user_id
+    t.amount = 100
+  end
+end
+
+If interviewer asks: “Why not rely on Sidekiq?”
+
+Perfect follow-up answer 👇
+
+Because Sidekiq provides at-least-once delivery. If a worker crashes after completing work but before acknowledging Redis, the job will be retried. So idempotency must be handled at the application or database layer.
+
+If interviewer asks: “Is jid enough?”
+
+Answer:
+
+jid is sufficient to protect against retries of the same job execution, but it does not protect against duplicate enqueues of the same business action. For that, a business-level idempotency key is required.
+
+Final one-liner to memorize 🔥
+
+“We handle job duplication by designing Sidekiq jobs to be idempotent using business-level idempotency keys and database uniqueness constraints.”

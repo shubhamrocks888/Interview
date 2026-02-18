@@ -1,0 +1,109 @@
+✅ Instance methods (very common)
+
+class Order < ApplicationRecord
+
+	def total_price
+		item.sum(&:price)
+	end
+end
+
+
+✅ Class methods (finder logic)
+
+class User < ApplicationRecord
+
+	
+	def self.active
+		where(active: true)
+	end
+
+	Or preferred scope style:
+
+	scope :active ,-> { where(active: true)}
+end
+
+✅ Realistic examples
+
+before_validation
+
+	before_validation :normalize_email
+
+	def normalize_email
+		self.email = email.downcase.strip
+	end
+
+
+after_commit (better than after_save)
+
+	after_commit :send_welcome_email, on: :create
+
+
+3️⃣ Validations — MUST know (most asked)
+
+🔥 Top validations (memorize)
+
+	validates :email, presence: true, uniqueness: true
+	validates :age, numericality: {greater_than: 0)}
+	validates :password, length: { minimum:6}, presence: true, on: :create
+	validates :discount, presence: true, if: :premium_user?
+
+	validate :start_date_before_end_date
+
+	def start_date_before_end_date
+		if start_date > end_date
+			errors.add(:start_date, "must be before end date")
+		end
+	end
+
+5️⃣ Enum (asked surprisingly often)
+
+	enum status: {pending: 0, paid:1, shipped: 1}
+
+	order.paid!
+	order.paid?
+	Order.paid
+
+
+6️⃣ Callbacks vs Validations (classic interview question)
+	❓ Where to put what?
+	| Logic                 | Place             |
+	| --------------------- | ----------------- |
+	| Data correctness      | validation        |
+	| Data formatting       | before_validation |
+	| Side effects (emails) | after_commit      |
+	| Business calculation  | model method      |
+
+
+####  validates email regex
+
+	validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+	Why this is the correct answer in interviews
+
+	Built into Ruby/Rails
+	Well-tested
+	Covers most valid emails
+	Avoids overly strict regex bugs
+
+\	🎯 This is the answer interviewers expect
+
+	What URI::MailTo::EMAIL_REGEXP looks like (FYI)
+
+	You don’t need to memorize this, but roughly:
+
+	/\A[^@\s]+@[^@\s]+\z/
+
+
+	Rails maintains it internally.
+
+
+
+
+
+
+
+
+
+
+
+

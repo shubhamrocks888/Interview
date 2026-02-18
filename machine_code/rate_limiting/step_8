@@ -1,0 +1,106 @@
+Absolutely — you can apply a token bucket algorithm to your RideCompletionJob to make rate limiting smoother and more precise than the simple per-minute counter. Let me explain conceptually and how it would fit your existing job without giving full code yet so you can implement it step by step.
+
+1️⃣ What is a Token Bucket?
+
+Imagine a bucket with a fixed number of tokens (e.g., 100 per minute).
+
+Every time you send an email, you remove 1 token from the bucket.
+
+Tokens refill over time at a steady rate (not necessarily all at once per minute).
+
+If the bucket is empty → the job must wait or retry later.
+
+✅ This allows smooth throttling, not “all-or-nothing” per minute like your current counter.
+
+2️⃣ How it fits your current job
+
+Instead of incrementing current_count, you check if a token is available.
+
+If a token is available:
+
+Consume it
+
+Send the email
+
+If no tokens are left:
+
+Retry later (e.g., enqueue to :throttled_mailers with 1-minute wait)
+
+Optional: you can discard jobs if they exceed a certain retry threshold.
+
+3️⃣ Implementation mapping
+
+| Current counter-based logic                  | Token bucket logic                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------- |
+| `current_count = Rails.cache.increment(...)` | `token_available = TokenBucket.consume(:ride_email_bucket)`                   |
+| `current_count > LIMIT` → retry              | `token_available == false` → retry later                                      |
+| `expires_in: 1.minute` → reset               | Token bucket refills tokens gradually or per minute                           |
+| Optional: `race_condition_ttl`               | Token consume operation must be atomic (Redis increment/decrement works well) |
+
+
+4️⃣ Why Token Bucket is better
+
+Smooth distribution → avoids bursts of emails at the start of each minute.
+
+You can set refill rate to 100 tokens/minute or 1.66 tokens/second for more granular control.
+
+Works naturally with high concurrency, especially if implemented in Redis.
+
+
+
+
+
+
+###########
+
+class RideCompletionJob < ApplicationJob
+  queue_as :mailers
+
+  retry_on StandardError, attempts: 5
+
+  LIMIT = 100            # max tokens per minute
+  REFILL_INTERVAL = 1    # seconds between token refills
+  THROTTLED_QUEUE = :throttled_mailers
+
+  def perform(ride_id)
+    ride = Ride.find_by(id: ride_id)
+    return unless ride&.completed?
+
+    # Try to consume a token
+    unless consume_token
+      # No tokens available → retry later in throttled queue
+      self.class.set(wait: 1.minute, queue: THROTTLED_QUEUE).perform_later(ride.id)
+      return
+    end
+
+    # Lock ride for idempotency
+    ride.with_lock do
+      return if ride.completion_email_sent
+
+      # Send email
+      RideMailer.ride_completed(ride).deliver_now
+
+      # Mark email as sent
+      ride.update!(completion_email_sent: true)
+    end
+  end
+
+  private
+
+  # Token bucket logic using Redis
+  def consume_token
+    key = "ride_email_bucket"
+
+    # Atomic Redis Lua script would be ideal for production
+    # Simple approximation using Redis cache increment
+    Rails.cache.fetch(key, expires_in: 1.minute) do
+      LIMIT
+    end
+
+    # Atomically decrement token if available
+    token_count = Rails.cache.decrement(key)
+    return token_count >= 0
+  rescue
+    false
+  end
+end

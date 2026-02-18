@@ -1,0 +1,166 @@
+✅ High-level idea (you’re right)
+
+“When a user requests the same report again, we first check our database to see if a previously generated file already exists. If it does and is still valid, we reuse it instead of regenerating the report.”
+
+That’s the core concept: reuse, not regenerate.
+
+Now let’s explain it step by step, properly.
+
+1️⃣ User clicks “Download report” again
+
+Frontend sends something like:
+
+GET /api/reports/enrollments?from=2025-01-01&to=2025-01-31&format=csv
+
+2️⃣ Backend first does security checks (always)
+
+Before touching files:
+
+Authenticate user
+
+Validate session timeout
+
+Authorize report access
+
+This step is non-negotiable.
+
+3️⃣ Step 1: Check DB for existing generated report
+
+You do NOT check S3 directly.
+
+Instead, you check your reports table:
+
+existing_report = ReportExport.find_by(
+  user_id: current_user.id,
+  report_type: "enrollments",
+  from_date: from,
+  to_date: to,
+  format: format,
+  status: "completed"
+)
+
+
+🎯 Interviewer phrase:
+
+“The database is the source of truth, not object storage.”
+
+4️⃣ Step 2: Validate that report is reusable
+
+Even if a record exists, you still check:
+
+✅ 1. File is not expired
+existing_report.created_at > 24.hours.ago
+
+✅ 2. Data freshness rules
+
+Enrollment data might have changed
+
+Security-sensitive reports often have short TTL
+
+Say:
+
+“Reports have a validity window.”
+
+5️⃣ Step 3: If reusable → generate NEW expiring link
+
+Important point (many miss this):
+
+❌ You do not reuse the old signed URL
+✅ You generate a new signed URL every time
+
+download_url = s3.presigned_url(
+  :get_object,
+  key: existing_report.file_key,
+  expires_in: 10.minutes
+)
+
+
+Why?
+
+Old URL may have expired
+
+Security best practice
+
+🎯 Interviewer phrase:
+
+“We reuse the file, not the access.”
+
+6️⃣ Step 4: Return link to user
+{
+  "status": "ready",
+  "download_url": "https://..."
+}
+
+
+UX win:
+
+Instant response
+
+No waiting
+
+No heavy processing
+
+7️⃣ Step 5: If report does NOT exist or is stale
+
+Only then:
+
+enqueue ReportGenerationJob
+
+
+Response:
+
+{
+  "status": "processing"
+}
+
+
+User gets notified later.
+
+8️⃣ VERY IMPORTANT CLARIFICATION (INTERVIEW TRAP)
+
+You said:
+
+“another user click on report and we want to get same report”
+
+⚠️ Correct rule:
+
+Same user → reuse file (if valid)
+
+Different user → usually ❌ do NOT reuse
+
+Why?
+
+Data scope may differ
+
+Permissions differ
+
+Auditing requirements
+
+So you say:
+
+“Reports are cached per user or per permission scope, not globally.”
+
+Unless:
+
+Report is explicitly global/admin-level
+
+9️⃣ Security & audit logging (mention this)
+AuditLog.create!(
+  user_id: current_user.id,
+  action: "report_download_requested",
+  report_id: existing_report.id
+)
+
+🔟 Final clean flow (say this smoothly)
+User requests report
+→ Authenticate & authorize
+→ Check reports table for existing completed export
+→ Verify freshness & ownership
+→ Generate a new expiring download link
+→ Return link immediately
+Else:
+→ Enqueue report generation job
+
+🎯 Final interviewer-ready answer (memorize)
+
+“When a user requests the same report again, we first check our reports table to see if a completed export already exists for that user, parameters, and format. If the report is still within its validity window, we reuse the stored file and generate a fresh expiring download link. If not, we enqueue a new generation job. This avoids unnecessary recomputation while maintaining security and access control.”

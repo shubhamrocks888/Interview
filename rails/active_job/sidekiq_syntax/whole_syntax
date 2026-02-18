@@ -1,0 +1,250 @@
+🧠 STEP 0 — Why Sidekiq even exists
+Problem (without Sidekiq)
+
+Rails by default is synchronous.
+
+UserMailer.welcome_email(user).deliver_now
+
+
+Rails thread waits:
+
+SMTP connection
+
+Email sending
+
+Network latency
+
+👉 Slow APIs, bad UX, timeouts.
+
+Solution
+
+Do slow work outside the request-response cycle
+
+That’s what background jobs are.
+
+🧠 STEP 1 — What is Sidekiq (plain English)
+
+Sidekiq is a background job processor for Ruby that uses Redis as a queue and runs jobs in parallel threads.
+
+Break that down:
+
+Term	Meaning
+Background	Not blocking user request
+Job	A unit of work
+Processor	Executes jobs
+Redis	Queue storage
+Parallel	Multiple jobs at once
+🧠 STEP 2 — Life before Sidekiq (synchronous)
+User hits API
+   ↓
+Rails processes request
+   ↓
+Rails sends email
+   ↓
+User waits 😐
+
+🧠 STEP 3 — Life with Sidekiq (asynchronous)
+User hits API
+   ↓
+Rails enqueues job to Redis
+   ↓
+Rails responds immediately 🚀
+   ↓
+Sidekiq worker picks job
+   ↓
+Job executes
+
+🧠 STEP 4 — Core components of Sidekiq
+1️⃣ Redis (Queue)
+
+Stores jobs
+
+FIFO (first in, first out)
+
+2️⃣ Sidekiq Server (Worker process)
+
+Runs separately from Rails
+
+Pulls jobs from Redis
+
+Executes Ruby code
+
+3️⃣ Job
+
+Ruby class with perform method
+
+🧠 STEP 5 — Install Sidekiq
+# Gemfile
+gem "sidekiq"
+
+bundle install
+
+🧠 STEP 6 — Configure Rails to use Sidekiq
+# config/application.rb
+config.active_job.queue_adapter = :sidekiq
+
+
+Now Rails jobs → Sidekiq.
+
+🧠 STEP 7 — Start Redis
+redis-server
+
+
+Sidekiq cannot work without Redis.
+
+🧠 STEP 8 — Start Sidekiq
+bundle exec sidekiq
+
+
+Now Sidekiq is listening to queues.
+
+🧠 STEP 9 — Your first Sidekiq job (from scratch)
+Create a worker
+# app/workers/hello_worker.rb
+class HelloWorker
+  include Sidekiq::Worker
+
+  def perform(name)
+    puts "Hello #{name}"
+  end
+end
+
+Enqueue job
+HelloWorker.perform_async("Shubham")
+
+
+🔥 That’s Sidekiq in its raw form.
+
+🧠 STEP 10 — What perform_async does
+HelloWorker.perform_async("Shubham")
+
+
+Actually:
+
+Serializes arguments
+
+Pushes job into Redis
+
+Returns immediately
+
+Sidekiq later calls:
+
+perform("Shubham")
+
+🧠 STEP 11 — Sidekiq + Rails way (ActiveJob)
+
+Rails gives a wrapper called ActiveJob.
+
+class WelcomeJob < ApplicationJob
+  queue_as :default
+
+  def perform(user_id)
+    user = User.find(user_id)
+    UserMailer.welcome_email(user).deliver_now
+  end
+end
+
+
+Enqueue:
+
+WelcomeJob.perform_later(user.id)
+
+
+ActiveJob → Sidekiq → Redis → Worker
+
+🧠 STEP 12 — Why Action Mailer works without custom job
+UserMailer.welcome_email(user).deliver_later
+
+
+Rails internally enqueues:
+
+ActionMailer::MailDeliveryJob
+
+
+You don’t write this job — Rails provides it.
+
+🧠 STEP 13 — Important Sidekiq methods (MUST KNOW)
+🔹 Enqueue
+perform_async
+perform_in(5.minutes)
+perform_at(1.hour.from_now)
+
+🔹 Retry (automatic)
+
+Sidekiq retries failed jobs automatically.
+
+sidekiq_options retry: 5
+
+
+Default: 25 retries.
+
+🔹 Queue
+sidekiq_options queue: :mailers
+
+
+Queues allow prioritization.
+
+🔹 Disable retry
+sidekiq_options retry: false
+
+🧠 STEP 14 — Error handling
+
+If perform raises error:
+
+Job fails
+
+Stored in retry set
+
+Retries with exponential backoff
+
+After retries exhausted:
+
+Goes to Dead Job Queue (DLQ)
+
+🧠 STEP 15 — Sidekiq UI
+
+Add route:
+
+# config/routes.rb
+require "sidekiq/web"
+mount Sidekiq::Web => "/sidekiq"
+
+
+See:
+
+Queues
+
+Retries
+
+Failures
+
+Scheduled jobs
+
+🧠 STEP 16 — Sidekiq vs Rails server
+Rails	Sidekiq
+Handles HTTP	Handles jobs
+Short-lived	Long-running
+User-facing	Background
+Puma	Sidekiq
+
+They are separate processes.
+
+🧠 STEP 17 — Common beginner mistakes
+
+❌ Forgetting to start Redis
+❌ Using deliver_now inside controller
+❌ Heavy logic inside controller
+❌ Passing full ActiveRecord objects to jobs
+
+✅ Always pass IDs.
+
+🧠 STEP 18 — Interview-ready explanation (memorize)
+
+“Sidekiq is a Redis-backed background job processor that executes jobs asynchronously using threads.
+In Rails, it’s commonly used with ActiveJob to offload slow tasks like emails and API calls.”
+
+🧠 STEP 19 — Mental model (never forget)
+perform_async → Redis → Sidekiq → perform
+
+
+That’s it.

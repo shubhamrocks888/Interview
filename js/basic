@@ -1,0 +1,256 @@
+###
+
+let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!emailPattern.test(email)) {
+  error.innerText = "Invalid email format";
+  return;
+}
+
+
+###
+
+if (isNaN(age)) {
+  error.innerText = "Age must be a number";
+  return;
+}
+
+
+###
+
+let error = document.getElementById("error");
+
+  error.innerText = "";
+
+
+  ###
+
+  let name = document.getElementById("name").value;
+
+
+  ###### confirm password
+
+  <input type="password" id="confirmpassword" placeholder="confirmpassword">
+
+  let confirmPassword = dcocument.getElementById("").value;
+
+  if (password != confirmpassword) {
+    error.innerText = "password do not match"
+  }
+
+  ###
+
+  if (!name || !email || !password) {
+
+  }
+
+  ###
+
+  if (name==="") {
+  	nameInput.style.border = '2px solid red';
+  }
+
+####
+
+emailInput.addEventListener("input", function ()
+
+{
+	if 	
+}
+);
+
+
+####
+
+element.addEventListener("eventName", function(event)
+{}
+);
+
+###
+
+button.addEventListener("click", function()
+{
+	
+}
+);
+
+
+#### Events
+click ,input, submit, change, focus, blur, mouseover, mouseout
+
+###  
+
+<input type="email" id="email" placeholder="email">
+
+let email = document.getElementById("email");
+
+email.addEventListener("input", function() 
+{
+	console.log(this.value);
+}
+)
+
+###
+
+form.addEventListener("submit", function(event) {
+	event.preventDefault();
+});
+
+( event.target -> element that triggers the event )
+
+##
+
+document
+.getElementById("submit")
+.addEventListener("submit", function(event) {
+	
+})
+
+
+#########
+
+
+<input type="checkbox" id="terms">
+
+
+
+### dropdown
+
+<select id="country">
+<option>India</option>
+<option><USA/option>
+
+
+</select>
+
+
+##########  ID Methods
+
+input = document.getElementById("inpput");
+
+input.value
+input.checked
+document.getElementById('country').selectedIndex
+
+let select = document.getElementById('country')
+select.options[selectedIndex].value
+
+
+input.style.border = "2px solid red"
+input.classList.add("error")
+input.classList.remove("error")
+input.classList.contains("error")
+
+###### how to change value
+
+		x.value = ""
+		x.selectedIndex =1
+
+
+######
+
+<div id="box">
+  <p>Hello</p>
+</div>
+
+
+TO get inner html --> <p> Hello </p>
+
+box.innerHTMl
+and to set box box.innerHTML = "<h2>"
+
+to get whole HTML
+
+box.outerHTML
+
+###### class error
+element.classList.add("error")
+element.classList.remove("error")
+
+element.classList.toggle("error")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

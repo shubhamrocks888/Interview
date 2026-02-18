@@ -1,0 +1,122 @@
+✅ STEP 1 — Think Before Writing Controller
+
+When user signs up, request may look like:
+
+{
+  "user": {
+    "email": "test@gmail.com",
+    "full_name": "Shubham Jain"
+  },
+  "referral_code": "ABCD1234"
+}
+
+
+Important:
+
+referral_code here is not stored directly
+
+We must:
+
+Find user with that referral_code
+
+Set referred_by_id
+
+🧠 Question Before Coding
+
+Where should referral lookup logic go?
+
+A) Inside controller
+B) Inside model
+C) Service object
+
+For a 30-min machine coding round:
+
+👉 Controller is acceptable.
+
+For production:
+
+👉 Service object is cleaner.
+
+For now → we’ll do it in controller.
+
+✅ STEP 2 — What Controller Must Do
+
+Inside create action:
+
+Extract referral_code from params
+
+Find referrer user
+
+Initialize new user with user_params
+
+Assign referrer if found
+
+Save
+
+Handle errors properly
+
+✍️ Your Task
+
+Generate controller:
+
+rails g controller Users
+
+
+Now write only the create action.
+
+Do NOT write full controller.
+
+Write:
+
+create method
+
+strong params method
+
+Don’t overcomplicate.
+
+Paste your controller code.
+I’ll review it like interviewer. 💪
+
+
+
+
+#############################################
+
+
+class UsersController < ApplicationController
+  def create
+    referrer = User.find_by(referral_code: params[:referral_code])
+
+    user = User.new(user_params)
+    user.referrer = referrer if referrer
+
+    if user.save
+      render json: user, status: :created
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def index
+  users = User.includes(:referrer, :referrals)
+
+  render json: users.to_json(
+    only: [:id, :email, :full_name, :referral_code],
+    include: {
+      referrer: {
+        only: [:id, :email, :full_name, :referral_code]
+      },
+      referrals: {
+        only: [:id, :email, :full_name, :referral_code]
+      }
+    }
+  )
+end
+
+
+  private
+
+  def user_params
+    params.require(:user).permit(:email, :full_name)
+  end
+end

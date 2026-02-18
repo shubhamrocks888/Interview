@@ -1,0 +1,37 @@
+ 
+### for creating both post and user simultaneously
+
+def create
+    ActiveRecord::Base.transaction do
+      user = User.create!(user_params)
+      posts = user.posts.create!(posts_params)
+
+      render json: {
+        message: "User and posts created successfully",
+        user: user,
+        posts: posts
+      }, status: :created
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+ ### for extracting post params differently
+
+ def posts_params
+    params.require(:posts).map { |p| p.permit(:title, :status) }
+  end
+
+  {
+  "user": {
+    "email": "test@example.com",
+    "full_name": "Shubham Jain"
+  },
+  "posts": [
+    { "title": "Post 1", "status": "draft" },
+    { "title": "Post 2", "status": "published" }
+  ]
+}
+
+
+###

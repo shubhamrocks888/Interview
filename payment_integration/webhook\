@@ -1,0 +1,53 @@
+Webhook — Simplified Definition
+
+A webhook is a design pattern where a server sends or receives HTTP requests automatically whenever a specific event occurs.
+
+Key points:
+
+Event-driven:
+
+Webhooks are triggered by an event (e.g., payment captured, new order, user signup).
+
+HTTP-based:
+
+Communication happens via HTTP POST requests (usually with JSON payload).
+
+Two sides:
+
+Receiving webhook: your server exposes a URL → another server calls it when an event happens.
+
+Sending webhook: your server calls another server’s URL → to notify them when an event happens.
+
+Security:
+
+Usually verified using signatures or shared secrets, because webhooks are server-to-server.
+
+Use case:
+
+Works for asynchronous notifications (something happened, maybe delayed, maybe outside your control).
+
+Alternative to polling the API constantly.
+
+Analogy
+
+Webhook = Event-based notification system between servers
+
+Normal request = “I ask you now, give me a response”
+
+Webhook = “I’ll tell you automatically when it happens”
+
+Example Recap
+
+Receiving webhook: Razorpay calls your Rails app when payment is captured.
+
+Sending webhook: Your Rails app calls CRM or inventory server when order is created.
+
+Both follow the same design pattern:
+
+“When event X happens, POST this data to URL Y.”
+
+So yes ✅, in essence:
+
+Webhook is a design to send and receive HTTP requests automatically in response to specific events.
+
+

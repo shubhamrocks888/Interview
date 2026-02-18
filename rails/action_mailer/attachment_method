@@ -1,0 +1,85 @@
+1️⃣ Basic Syntax to Add Attachments
+
+In Action Mailer, attachments are added before calling mail.
+
+class UserMailer < ApplicationMailer
+  def invoice_email(user, invoice_path)
+    @user = user
+    attachments["invoice.pdf"] = File.read(invoice_path)
+    mail(to: @user.email, subject: "Your Invoice")
+  end
+end
+
+
+✅ Key points:
+
+attachments["filename"] = File.read(path)
+
+Must be set before mail(...)
+
+The string in attachments["filename"] is the name the user will see
+
+2️⃣ Multiple Attachments
+def multiple_files_email(user, files)
+  @user = user
+  files.each do |file|
+    attachments[file[:name]] = File.read(file[:path])
+  end
+  mail(to: @user.email, subject: "Files Attached")
+end
+
+
+Here, files is an array of hashes with :name and :path
+
+You can attach as many files as needed
+
+3️⃣ Attach Inline Attachments (Embedded Images)
+
+Sometimes you want images inside HTML emails:
+
+def welcome_email(user)
+  @user = user
+  attachments.inline["logo.png"] = File.read("app/assets/images/logo.png")
+  mail(to: @user.email, subject: "Welcome!")
+end
+
+
+In the view:
+
+<img src="cid:logo.png" alt="Logo">
+
+
+✅ attachments.inline → embeds the image so it shows in the email body.
+
+4️⃣ Delivering the Email (No Change)
+UserMailer.invoice_email(user, "/tmp/invoice.pdf").deliver_now
+
+
+Attachments don’t change deliver_now or deliver_later.
+
+5️⃣ Memory Trick for Online Tests
+
+Think “ATTACH first, MAIL second”
+
+attachments["filename"] = File.read(path)
+mail(to: ..., subject: ...)
+
+6️⃣ Common Mistakes in OA / Interviews
+
+❌ Adding attachments after calling mail → won’t work
+❌ Using file paths incorrectly → file must exist
+❌ Forgetting to use attachments.inline for inline images
+
+7️⃣ Mini Template for OA (Ready-to-copy)
+class UserMailer < ApplicationMailer
+  def report_email(user, report_path)
+    @user = user
+    attachments["report.pdf"] = File.read(report_path)
+    mail(to: @user.email, subject: "Monthly Report")
+  end
+end
+
+
+Call it:
+
+UserMailer.report_email(user, "/tmp/report.pdf").deliver_now

@@ -1,0 +1,134 @@
+Definition
+
+Hashing converts data into a fixed-length value using a one-way function.
+
+One-way → cannot be reversed
+
+Same input → same output
+
+Small change → completely different output
+
+🔹 Example
+password = "secret123"
+hash(password) = "5f4dcc3b5aa765d61d8327deb882cf99"
+
+
+You cannot get secret123 back from the hash.
+
+🔹 Where hashing is used
+
+Password storage
+
+Data integrity checks
+
+Digital signatures
+
+🔹 Rails example (Devise)
+has_secure_password
+
+
+or in Devise:
+
+Password is hashed (bcrypt)
+
+Only hash is stored in DB
+
+Login = hash(input password) + compare
+
+2️⃣ Encryption
+🔹 Definition
+
+Encryption converts data into unreadable form that can be reversed using a key.
+
+Two-way process
+
+Requires a key
+
+Can decrypt back to original data
+
+🔹 Example
+"credit_card" → encrypt(key) → "A9x#K!2"
+"A9x#K!2" → decrypt(key) → "credit_card"
+
+🔹 Where encryption is used
+
+Credit card numbers
+
+Tokens
+
+Sensitive personal data
+
+Secure communication (HTTPS)
+
+3️⃣ Key Differences (Very Important)
+Feature	Hashing	Encryption
+Reversible	❌ No	✅ Yes
+Key required	❌ No	✅ Yes
+Purpose	Verify data	Protect data
+Output length	Fixed	Variable
+Password storage	✅ Correct	❌ Wrong
+4️⃣ Why passwords are hashed, not encrypted
+
+If passwords were encrypted:
+
+Server could decrypt them
+
+Data breach → passwords exposed
+
+With hashing:
+
+Server never knows the password
+
+Only compares hashes
+
+👉 This is critical for security
+
+5️⃣ Salt & Pepper (Interview bonus)
+🔹 Salt
+
+Random value added to password before hashing
+
+Prevents rainbow table attacks
+
+hash(password + salt)
+
+
+Devise uses bcrypt, which includes salt internally.
+
+🔹 Pepper
+
+Secret value stored in app config
+
+Adds extra security
+
+6️⃣ One-line Interview Answers
+Hashing
+
+Hashing is a one-way function used to verify data, commonly for password storage.
+
+Encryption
+
+Encryption is a reversible process used to protect sensitive data that must be read later.
+
+7️⃣ Common Interview Trap
+
+❌ “Passwords are encrypted in database”
+✅ “Passwords are hashed in database”
+
+Correcting this politely gives you extra points.
+
+8️⃣ Real-world analogy
+
+Hashing → fingerprint (can verify, cannot reconstruct)
+
+Encryption → locked box (can unlock with key)
+
+9️⃣ Final takeaway
+
+Use hashing when you only need to verify
+
+Use encryption when you need to retrieve
+
+Passwords → always hashed
+
+Sensitive data → encrypted

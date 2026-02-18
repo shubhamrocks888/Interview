@@ -1,0 +1,149 @@
+🎥 LMS Video Upload → Playback → Completion
+End-to-End Architecture Flow
+🟣 PHASE 1: Admin uploads video
+Admin clicks "Upload Video"
+        ↓
+Frontend opens upload form (chapter, title, video file)
+        ↓
+Frontend requests upload authorization from backend
+
+🟣 PHASE 2: Backend prepares upload
+Backend creates Video record (status = "uploading")
+        ↓
+Backend generates pre-signed S3 URL
+        ↓
+Backend returns upload URL to frontend
+
+
+📌 Why pre-signed URL?
+
+Avoids routing large files through Rails
+
+Secure + scalable
+
+🟣 PHASE 3: Frontend uploads video
+Frontend uploads raw video directly to S3
+        ↓
+S3 stores raw video file
+        ↓
+S3 sends upload success event (or frontend notifies backend)
+
+🟣 PHASE 4: Backend triggers processing
+Backend updates video status = "processing"
+        ↓
+Backend enqueues background job (Sidekiq)
+        ↓
+Background worker starts video processing
+
+🟣 PHASE 5: Video processing (backend async)
+Worker downloads raw video from S3
+        ↓
+Transcodes video into HLS format
+   - 360p
+   - 720p
+   - 1080p
+        ↓
+Generates playlist (.m3u8)
+        ↓
+Extracts metadata (duration, resolution)
+
+🟣 PHASE 6: Store processed files
+Processed HLS segments uploaded to S3
+        ↓
+Files distributed via CDN (CloudFront)
+        ↓
+Backend updates Video record:
+   - status = "ready"
+   - duration
+   - streaming_url
+
+
+📌 CDN ensures:
+
+Fast global delivery
+
+No load on Rails
+
+🟣 PHASE 7: Learner opens video
+User opens course chapter
+        ↓
+Frontend requests video metadata
+        ↓
+Backend authorizes access (RBAC + enrollment)
+        ↓
+Backend returns streaming URL (CDN)
+
+🟣 PHASE 8: Video playback starts
+Browser video player loads .m3u8 playlist
+        ↓
+Player fetches segments dynamically from CDN
+        ↓
+Adaptive bitrate selection based on network
+
+
+No Rails involvement here 👈
+
+🟣 PHASE 9: Heartbeat-based progress tracking
+Every X seconds:
+Frontend sends heartbeat:
+  - current_time
+  - playback_rate
+  - video_id
+        ↓
+Backend validates:
+  - continuous playback?
+  - delta within allowed range?
+        ↓
+If valid:
+  - Update video_progress table
+
+🟣 PHASE 10: Prevent cheating
+User seeks forward
+        ↓
+Backend detects large delta
+        ↓
+Progress NOT updated
+        ↓
+User must watch continuously again
+
+🟣 PHASE 11: Completion check
+If watched_duration ≥ 95%
+        ↓
+Mark video as completed
+        ↓
+Trigger chapter completion
+
+🟣 PHASE 12: Chapter → Course → Program progress
+All videos in chapter completed
+        ↓
+Chapter marked complete
+        ↓
+All chapters complete → course complete
+        ↓
+All courses complete → program complete
+
+🟣 PHASE 13: Analytics & reporting
+Progress events stored
+        ↓
+Used for:
+  - dashboards
+  - compliance reports
+  - admin insights
+
+🧠 One-line summary (VERY important)
+
+“Video upload and playback are decoupled using async processing, CDN delivery, and heartbeat-based progress tracking to ensure scalability, reliability, and accurate learning completion.”
+
+🎯 Why this answer impresses architects
+
+Because it shows:
+
+Separation of concerns
+
+Async thinking
+
+Security awareness
+
+Real-world failure handling
+
+Scale readiness

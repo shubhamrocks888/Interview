@@ -1,0 +1,159 @@
+1️⃣ What is auth_salt?
+
+In Devise, auth_salt is a per-user unique value used to validate that the session is still valid.
+
+Stored in the user model (typically via encrypted_password or updated_at hash).
+
+It is different for every user.
+
+Combined with the user_id in the session.
+
+2️⃣ Why do we need it?
+
+Imagine this scenario:
+
+A user changes their password.
+
+Or an admin invalidates all sessions.
+
+Or the user’s account is deleted.
+
+If we only stored user_id in session, the old session cookie would still be valid.
+
+That’s a security risk — someone could stay logged in with an old session.
+
+3️⃣ How auth_salt prevents this
+
+Devise stores user_id + auth_salt in the session:
+
+session["warden.user.user.key"] = [[user.id], auth_salt]
+
+
+During each request, Warden checks:
+
+if auth_salt_from_session == current_user.authenticatable_salt
+  # session valid
+else
+  # session invalid → logout
+end
+
+🔑 Key point
+
+auth_salt ensures sessions become invalid if password changes.
+
+Acts as a session fingerprint tied to the current state of the user.
+
+4️⃣ Where does auth_salt come from?
+
+In Devise:
+
+def authenticatable_salt
+  "#{encrypted_password}"
+end
+
+
+Default: derived from encrypted_password
+
+Optional: can include updated_at to invalidate sessions on profile changes
+
+5️⃣ Flow Example (Password Change)
+
+1️⃣ User logs in → session stores:
+
+user_id = 1
+auth_salt = "abc123"
+
+
+2️⃣ User changes password → encrypted_password changes → authenticatable_salt changes.
+
+3️⃣ Next request:
+
+Warden compares auth_salt in session vs current authenticatable_salt
+
+Mismatch → session invalid → user logged out
+
+6️⃣ Interview Tip
+
+Auth_salt is the reason old session cookies are invalidated automatically when the user changes password or account is updated.
+
+This is a security feature, not a performance feature.
+
+7️⃣ One-Line Interview Answer (Perfect)
+
+“Auth_salt in the session cookie acts as a per-user fingerprint. Warden uses it to ensure that a session is still valid — if the user changes their password or is modified, the auth_salt no longer matches and the session is invalidated.”
+
+
+
+
+
+
+
+
+
+#################
+
+
+
+
+
+
+🔑 Devise Login / Current_User Session Validation Flow
+1️⃣ Session stores:
+session["warden.user.user.key"] = [[user.id], auth_salt]
+
+
+user.id → identifies the user
+
+auth_salt → fingerprint for session validity
+
+2️⃣ On each request, Warden does:
+user = User.find_by(id: session_user_id)  # session_user_id extracted from session
+
+
+This fetches the current_user from DB
+
+current_user is memoized per request
+
+3️⃣ Then it validates the session
+if current_user.authenticatable_salt == session_auth_salt
+  # session valid
+else
+  # session invalid → sign out
+end
+
+
+✅ Only if this check passes does Devise consider the user logged in.
+
+4️⃣ What does this achieve?
+
+If password changed, authenticatable_salt changes → session invalid
+
+If user account deleted, current_user will be nil → session invalid
+
+Prevents stale or hijacked sessions from being used
+
+5️⃣ Visual Flow (Step by Step)
+Request comes in
+      ↓
+Warden reads session:
+  user_id + auth_salt
+      ↓
+current_user = User.find(user_id)
+      ↓
+Compare:
+  current_user.authenticatable_salt == session_auth_salt ?
+      ↓
+Yes → session valid → current_user accessible
+No → session invalid → logout
+
+6️⃣ Interview-Trap Explanation
+
+current_user is always fetched from DB using user_id
+
+auth_salt ensures the session reflects the current state of the user
+
+Warden does not trust the session blindly
+
+7️⃣ One-Line Interview Statement (Perfect)
+
+“Devise fetches current_user using the user_id from the session, and validates the session by comparing current_user.authenticatable_salt with the auth_salt stored in the session. If they match, the session is valid; otherwise, the user is signed out.”

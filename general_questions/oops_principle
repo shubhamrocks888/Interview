@@ -1,0 +1,180 @@
+1. Abstraction
+Definition (Simple)
+
+Abstraction means hiding internal implementation and exposing only what is necessary.
+
+Rails Example
+User.create(name: "John", email: "john@test.com")
+
+
+👉 You don’t know:
+
+SQL queries
+
+DB connections
+
+Transactions
+
+You only use a simple interface.
+
+How to say in interview:
+
+“Rails ActiveRecord abstracts database operations. I use User.create without worrying about SQL.”
+
+
+### Ruby Example
+
+class Order
+  def place
+    validate_order
+    charge_payment
+    send_confirmation
+  end
+
+  private
+
+  def validate_order
+    # validation logic
+  end
+
+  def charge_payment
+    # payment logic
+  end
+
+  def send_confirmation
+    # email logic
+  end
+end
+
+
+2. Encapsulation
+Definition (Simple)
+
+Encapsulation means bundling data and methods together and restricting direct access.
+
+Rails Example
+class User < ApplicationRecord
+  validates :email, presence: true
+
+  private
+
+  def normalize_email
+    email.downcase
+  end
+end
+
+
+Data (email) + behavior (normalize_email) are together
+
+private hides internal logic
+
+How to say:
+
+“Rails models encapsulate business logic and protect internal methods using access modifiers.”
+
+
+Ruby Example
+
+class User
+  attr_reader :email       # read-only
+  attr_accessor :name      # read & write
+
+  def initialize(name, email)
+    @name = name
+    self.email = email
+  end
+
+  def display_name
+    name.upcase
+  end
+
+  private
+
+  def email=(email)
+    @email = email.downcase
+  end
+end
+
+
+
+3. Inheritance
+Definition (Simple)
+
+Inheritance allows a class to reuse behavior from another class.
+
+Rails Example
+class ApplicationController < ActionController::Base
+end
+
+class UsersController < ApplicationController
+end
+
+
+👉 UsersController inherits:
+
+Filters
+
+Authentication
+
+Common logic
+
+How to say:
+
+“Rails uses inheritance heavily, like controllers inheriting from ApplicationController.”
+
+
+
+
+
+
+4. Polymorphism
+Definition (Simple)
+
+Polymorphism means same method name, different behavior.
+
+Rails Example 1: ActiveRecord
+User.find(1)
+Post.find(1)
+
+
+Same method find, different models.
+
+Rails Example 2: Polymorphic Association
+class Comment < ApplicationRecord
+  belongs_to :commentable, polymorphic: true
+end
+
+
+A comment can belong to:
+
+Post
+
+Photo
+
+Article
+
+How to say:
+
+“Rails supports polymorphism using polymorphic associations and shared method names across models.”
+
+
+
+
+
+#### Ruby example
+
+class EmailNotification
+  def send_message
+    "Sending email"
+  end
+end
+
+class SmsNotification
+  def send_message
+    "Sending SMS"
+  end
+end
+
+def notify(notification)
+  notification.send_message
+end

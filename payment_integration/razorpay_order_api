@@ -1,0 +1,93 @@
+Now let’s break it slowly and line-by-line, because this exact confusion is very common in interviews.
+
+What happens when user clicks “Pay ₹500”?
+Step 1️⃣ UI → Rails backend
+
+Yes ✅
+When user clicks ₹500, frontend calls your backend API:
+
+POST /create_order
+
+
+Up to this point → no Razorpay call yet
+
+Now look at THIS line very carefully 👇
+order = Razorpay::Order.create(
+  amount: 50000,
+  currency: 'INR'
+)
+
+🔥 THIS LINE CALLS RAZORPAY API 🔥
+
+Behind the scenes, this gem does:
+
+POST https://api.razorpay.com/v1/orders
+
+
+with:
+
+amount = 50000
+
+currency = INR
+
+auth = key_id + secret
+
+So YES, Razorpay third-party server is contacted here.
+
+Full flow with clarity
+User clicks Pay ₹500
+        ↓
+Frontend → Rails API (/create_order)
+        ↓
+Rails → Razorpay Orders API   ✅ (HERE)
+        ↓
+Razorpay → returns order_id
+        ↓
+Rails → Frontend (order_id)
+
+
+👉 Money is NOT involved yet
+👉 Only an order reference is created
+
+Why do we call Razorpay here if no payment yet?
+Because Razorpay needs:
+
+A server-generated order
+
+A fixed amount
+
+A trusted reference
+
+This ensures:
+❌ User cannot change amount
+❌ Fake payment success is impossible
+
+💡 Interview line:
+
+Order creation locks the amount on Razorpay’s server.
+
+When does REAL payment happen then?
+👉 NOT here ❌
+👉 Happens later in frontend checkout
+new Razorpay(options).open()
+
+
+This opens Razorpay UI and:
+
+talks to bank
+
+handles OTP / UPI
+
+debits money
+
+Timeline Summary (MEMORIZE)
+Step	Who talks	Razorpay involved?	Money
+Click Pay	UI → Rails	❌	❌
+Create Order	Rails → Razorpay	✅	❌
+Checkout	UI → Razorpay	✅	✅
+Verify	Rails → Razorpay	✅	❌
+Interview-Ready Answer (Perfect)
+
+Yes, Razorpay API is called while creating the order.
+This creates an order reference on Razorpay’s server, but no money is deducted at this stage.
+Actual payment happens later during Razorpay Checkout on the client side.

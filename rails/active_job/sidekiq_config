@@ -1,0 +1,113 @@
+1️⃣ Job-level config (sidekiq_options)
+
+These are set inside the job class:
+
+class MyJob
+  include Sidekiq::Job
+  sidekiq_options retry: 5, queue: :critical, backtrace: true
+end
+
+
+Common options:
+
+Option	Purpose
+queue	Default queue for the job (:default, :critical, etc.)
+retry	Number of retries (integer), true for default (25), false to disable
+backtrace	Include full error backtrace in logs / Web UI (true/false)
+dead	Whether to move job to Dead set after retries exhausted (true/false)
+unique (Sidekiq Pro)	Prevent duplicate jobs
+2️⃣ Global config (Sidekiq initializer)
+
+In config/initializers/sidekiq.rb:
+
+Sidekiq.configure_server do |config|
+  config.options[:concurrency] = 10
+  config.poll_interval = 15
+end
+
+
+Common server-side configs:
+
+Config	Purpose
+concurrency	Number of threads processing jobs (default 10)
+queues	Array of queues to process with optional weight, e.g., [["critical",5],["default",2]]
+poll_interval	Seconds between retry/scheduled job polling
+strict	Whether to enforce only configured queues
+dead_max_jobs	Max jobs in Dead set (default 10_000)
+timeout	Graceful shutdown timeout
+redis	Redis connection pool & URL
+
+Client-side configs (enqueue jobs):
+
+Config	Purpose
+redis	Redis connection URL/pool for pushing jobs
+namespace	Redis key namespace for this Sidekiq instance
+3️⃣ Queue weight / priority
+
+When starting Sidekiq:
+
+bundle exec sidekiq -q critical,5 -q default,2
+
+
+critical,5 → process 5 times more critical jobs than default
+
+Weight only affects worker thread polling frequency
+
+Important for priority jobs
+
+4️⃣ Retry / schedule behavior
+
+Retry count → controlled per job (sidekiq_options retry: n)
+
+Retry delay → exponential backoff with jitter (automatic)
+
+Scheduled jobs → .set(wait: 10.minutes)
+
+Poll interval → how often Sidekiq checks retry and schedule sets
+
+5️⃣ Logging & error handling
+
+sidekiq_options backtrace: true → full exception trace
+
+Sidekiq.logger → custom logger
+
+error_handlers → custom callbacks on job failures
+
+Sidekiq.configure_server do |config|
+  config.error_handlers << Proc.new { |ex,ctx_hash| MyNotifier.notify(ex, ctx_hash) }
+end
+
+6️⃣ Middleware
+
+Sidekiq allows server & client middleware to manipulate jobs
+
+Examples: logging, metrics, job transformations, rate limiting
+
+Sidekiq.configure_server do |config|
+  config.server_middleware do |chain|
+    chain.add MyCustomMiddleware
+  end
+end
+
+7️⃣ Sidekiq Pro/Enterprise configs
+
+If you have Sidekiq Pro:
+
+unique jobs (avoid duplicates)
+
+Batches / callbacks
+
+Rate limiting
+
+Job expiration / TTL
+
+✅ Summary
+Level	Configurable options
+Job-level	queue, retry, backtrace, dead, unique
+Server-level	concurrency, queues/weights, poll interval, timeout, dead_max_jobs, redis
+Client-level	redis, namespace
+Runtime	scheduled jobs, .set(wait:)
+Middleware	logging, metrics, transformations
+Interview-ready one-liner 💡
+
+Sidekiq configuration can be done at the job level (sidekiq_options), server/client initializer, runtime (scheduled jobs), queue weights, retry policies, error handling, and via middleware, allowing control over concurrency, queue priority, retry behavior, and logging.

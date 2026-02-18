@@ -1,0 +1,68 @@
+Mock Interview – Round 1 (System Warmup – 15 min)
+Question 1
+
+Build a Rails API-only app for a Task Management System.
+
+Models:
+User
+
+email (unique, required)
+
+name (required)
+
+Task
+
+title (required)
+
+description (optional)
+
+status (must be: pending, in_progress, completed)
+
+due_date (required)
+
+user_id
+
+Relationships:
+
+A user has many tasks
+
+A task belongs to a user
+
+Step 1
+
+Write:
+
+Associations
+
+Validations
+
+Any DB-level improvements you’d suggest
+
+Only models for now.
+
+Type your code.
+
+(I’m watching for subtle mistakes 👀)
+
+
+######
+
+
+
+class User < ApplicationRecord
+  has_many :tasks, dependent: :destroy
+
+  validates :email, presence: true, uniqueness: true,
+                    format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :name, presence: true
+end
+
+
+
+class Task < ApplicationRecord
+  belongs_to :user
+
+  validates :title, presence: true
+  validates :status, inclusion: { in: %w[pending in_progress completed] }
+  validates :due_date, presence: true
+end

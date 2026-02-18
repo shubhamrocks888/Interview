@@ -1,0 +1,110 @@
+2️⃣ Data Modeling (Courses, Programs, Enrollments)
+❓ Question they’ll ask
+
+“How did you model courses, programs, and enrollments in the LMS?”
+
+✅ Strong, clear answer (this is your base answer)
+
+“We modeled Users, Courses, and Programs as core entities.
+Since users can enroll in multiple courses and programs—and each course or program can have many users—we introduced separate enrollment tables to handle these many-to-many relationships.
+
+This allowed us to store enrollment-specific data like status, progress, completion dates, and audit information without polluting the core entities.”
+
+This immediately shows good relational thinking.
+
+🧱 Typical tables (you don’t need to show code, just concept)
+
+users
+
+courses
+
+programs
+
+course_enrollments
+
+program_enrollments
+
+Each enrollment table had:
+
+user_id
+
+course_id / program_id
+
+status (enrolled, completed, dropped)
+
+progress / completion info
+
+timestamps
+
+🧠 Why this design matters (what they’re testing)
+
+Do you understand many-to-many relationships
+
+Can you attach behavior & state to relationships
+
+Are you thinking about future features
+
+🔍 Follow-up questions they WILL ask
+1️⃣ “Why separate course_enrollments and program_enrollments?”
+
+Answer:
+
+“Courses and programs had different lifecycles and business rules.
+Programs could span multiple courses and have their own completion logic, so separating them kept the data model simpler and avoided conditional logic inside a single table.”
+
+2️⃣ “Could a course belong to multiple programs?”
+
+Answer:
+
+“Yes. We used a join table between programs and courses, which allowed us to reuse courses across programs without duplication.”
+
+This sounds architect-level correct.
+
+3️⃣ “How did you prevent duplicate enrollments?”
+
+Answer:
+
+“We enforced uniqueness at the database level using a composite unique index on user_id and course_id (or program_id).
+This ensured data integrity even under concurrent requests.”
+
+🎯 DB constraints = big plus.
+
+4️⃣ “Where did progress live?”
+
+Answer:
+
+“Progress was stored on the enrollment record rather than the course or user, since progress is specific to a user’s enrollment in that course or program.”
+
+That’s the right answer.
+
+🧠 Architect push question
+“Why not just store course_id on users?”
+
+Answer:
+
+“That wouldn’t scale well because users can enroll in many courses, and we’d lose the ability to track enrollment-specific metadata like progress, status, and history.”
+
+⚠️ Mistakes to avoid
+
+❌ “We just used HABTM”
+
+❌ “We added columns later when needed”
+
+❌ “Application-level checks only”
+
+Always mention DB-level safety.
+
+Bonus: advanced touch (only if they push)
+
+“We also considered historical correctness—if a course was updated later, enrollment records preserved the user’s state at the time of enrollment.”
+
+This shows long-term thinking.
+
+20-second summary (if they want it fast)
+
+“We used enrollment tables to model many-to-many relationships and store enrollment-specific state like progress and status.
+Database constraints ensured uniqueness and consistency, while separate models kept course and program logic clean.”
+
+Next step 👇
+Say “next: roles & authorization”
+That’s where architects test security + design maturity 🔐

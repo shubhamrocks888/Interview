@@ -1,0 +1,276 @@
+user
+id
+name
+email
+amount
+
+sender_receiver
+id sender_id receiver_id amount
+
+
+class User
+    
+    def send_money(money)
+        self.amount = self.amount- money
+        self.save
+    end
+    
+    def receive_money(money)
+        self.amount = self.amount + money
+        self.save
+    end
+end
+
+class SenderReceiver
+    
+end
+
+class MoneyTransfer
+    
+    def send_money(sender,receive,amount)
+        ActiveRecord::Transaction do
+            sender.send_money(amount)
+            receiver.receive_money(amount)
+            
+            SenderReceiver.lock.create(sender_id: senderid, receiver_id: receiver.id, amount: amount)
+        
+        end
+        
+    end
+    
+    
+end
+
+
+
+
+
+
+
+###########  solution
+
+
+Short answer: YES, a deadlock can happen with your current locking approach — unless you’re careful.
+
+Let’s break it down cleanly.
+
+🧩 The situation you’re describing
+
+Two transfers happening at the same time:
+
+Transaction A
+Sender:   User 1
+Receiver: User 2
+
+Transaction B (reverse)
+Sender:   User 2
+Receiver: User 1
+
+❌ What causes the deadlock?
+
+If you lock in different order:
+
+Transaction A
+User.lock.find(1)  # locks user 1
+User.lock.find(2)  # waits for user 2
+
+Transaction B
+User.lock.find(2)  # locks user 2
+User.lock.find(1)  # waits for user 1
+
+
+🚨 Result:
+
+A holds lock on User 1, waits for User 2
+
+B holds lock on User 2, waits for User 1
+
+👉 Classic circular wait = DEADLOCK
+
+PostgreSQL will detect it and kill one transaction.
+
+🛑 What happens in Rails / PostgreSQL?
+
+PostgreSQL detects deadlock automatically
+
+One transaction is rolled back
+
+Rails raises:
+
+ActiveRecord::Deadlocked
+
+
+So:
+✔ DB remains consistent
+❌ One request fails unless you retry
+
+✅ How to PREVENT deadlocks (BEST PRACTICE)
+⭐ Always lock rows in a consistent order
+
+Example: lock by id ASC
+
+class MoneyTransfer
+  def self.send_money(sender_id, receiver_id, amount)
+    user_ids = [sender_id, receiver_id].sort
+
+    ActiveRecord::Base.transaction do
+      users = User.lock.where(id: user_ids).index_by(&:id)
+
+      sender   = users[sender_id]
+      receiver = users[receiver_id]
+
+      sender.debit!(amount)
+      receiver.credit!(amount)
+
+      SenderReceiver.create!(
+        sender_id: sender.id,
+        receiver_id: receiver.id,
+        amount: amount
+      )
+    end
+  end
+end
+
+💡 Why this works
+
+Both transactions lock in the same order:
+
+lock user 1
+lock user 2
+
+
+No circular wait → no deadlock ✅
+
+🔁 Extra safety: retry on deadlock
+
+Even with ordering, DBs can still deadlock in rare cases.
+
+def self.send_money(sender_id, receiver_id, amount, retries = 3)
+  ActiveRecord::Base.transaction do
+    ...
+  end
+rescue ActiveRecord::Deadlocked
+  retry if (retries -= 1) > 0
+  raise
+end
+
+🏦 How real payment systems handle this
+
+Banks usually:
+
+Lock accounts in deterministic order
+
+Use ledger entries (append-only)
+
+Retry deadlocked transactions automatically
+
+Never trust app-level locking alone
+
+🎯 Interview-ready answer (gold)
+
+“Yes, deadlocks can happen if sender and receiver are locked in different orders.
+To prevent this, I always acquire locks in a deterministic order—usually by sorting IDs—so circular waits never occur.”
+
+
+
+
+
+###################
+
+
+✅ Correct & Production-Ready Version
+User model
+class User < ApplicationRecord
+  validates :amount, numericality: { greater_than_or_equal_to: 0 }
+
+  def debit!(money)
+    raise "Insufficient balance" if amount < money
+    update!(amount: amount - money)
+  end
+
+  def credit!(money)
+    update!(amount: amount + money)
+  end
+end
+
+SenderReceiver model
+class SenderReceiver < ApplicationRecord
+  belongs_to :sender, class_name: "User"
+  belongs_to :receiver, class_name: "User"
+end
+
+MoneyTransfer service (IMPORTANT PART)
+class MoneyTransfer
+  def self.send_money(sender_id, receiver_id, amount)
+    ActiveRecord::Base.transaction do
+      sender   = User.lock.find(sender_id)
+      receiver = User.lock.find(receiver_id)
+
+      sender.debit!(amount)
+      receiver.credit!(amount)
+
+      SenderReceiver.create!(
+        sender_id: sender.id,
+        receiver_id: receiver.id,
+        amount: amount
+      )
+    end
+  end
+end
+
+🔒 Why lock is mandatory?
+User.lock.find(sender_id)
+
+
+This issues:
+
+SELECT * FROM users WHERE id = ? FOR UPDATE;
+
+
+👉 It prevents race conditions by ensuring:
+
+Only one transaction can modify a user’s balance at a time
+
+💥 What happens if something fails?
+
+If any of these fail:
+
+Insufficient balance
+
+DB error
+
+Validation failure
+
+👉 Entire transaction is rolled back
+✔ Sender not debited
+✔ Receiver not credited
+✔ No transaction record created
+
+This gives ACID consistency.
+
+🧠 Interview-ready explanation
+
+“I wrap the transfer in a database transaction and lock both sender and receiver rows using SELECT FOR UPDATE.
+This prevents race conditions and guarantees atomic money transfer.”
+
+⭐ Bonus: Even better (bank-grade approach)
+
+Use a ledger table instead of updating balance directly:
+
+Append-only transactions
+
+Balance = sum of credits − debits
+
+Fully auditable
+
+If you want, I can show you:
+
+Ledger-based design
+
+Handling retries safely
+
+Idempotency keys
+
+Sidekiq + money transfer safely
+
+Just say 👌

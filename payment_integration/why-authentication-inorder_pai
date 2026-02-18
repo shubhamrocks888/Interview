@@ -1,0 +1,92 @@
+Why is this authentication needed? (2 core reasons)
+1️⃣ Identify WHO is creating the order (Merchant identity)
+
+✔ Razorpay must know:
+
+Which merchant account this order belongs to
+
+Which dashboard it should appear in
+
+Which settlement bank account will receive money
+
+So yes ✅
+👉 It identifies the customer (merchant), NOT the end user
+
+📌 Interview line:
+
+The key_id identifies the merchant account.
+
+2️⃣ Security – prevent unauthorized order creation
+
+Only someone who has:
+
+key_id
+
+secret
+
+can:
+
+Create orders
+
+Fetch payments
+
+Verify signatures
+
+Process refunds
+
+❌ Without secret → request rejected
+
+📌 Interview line:
+
+The secret key ensures only authorized servers can create orders.
+
+Very Important Clarification (Interview Trap ❗)
+❌ It does NOT identify the end user who clicked Pay
+
+Razorpay does not know:
+
+which user
+
+which email
+
+which customer in your DB
+
+👉 Razorpay only knows merchant
+
+The user–order mapping is YOUR responsibility.
+
+Example:
+
+Order.create(
+  user_id: current_user.id,
+  razorpay_order_id: order.id,
+  amount: 50000
+)
+
+One-Line Interview Answer (MEMORIZE)
+
+Razorpay authentication using key_id and secret is used to authenticate the merchant’s server and securely associate the order with the correct Razorpay merchant account.
+
+Simple Mental Model 🧠
+User clicks Pay
+   ↓
+Your server says to Razorpay:
+"I am Shubham’s Rails app, here is my secret"
+   ↓
+Razorpay says:
+"Okay, you are verified. Order created."
+
+Bonus Interview Question
+❓ Why not put secret key in frontend?
+
+👉 Anyone can:
+
+Create fake orders
+
+Issue refunds
+
+Access payments
+
+📌 Final punch line:
+
+Secret key must always stay on server.

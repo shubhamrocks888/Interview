@@ -1,0 +1,181 @@
+Rails Microservices Example
+User Service + Order Service + Payment Service
+
+Assume 3 separate Rails apps, each deployed independently.
+
+1️⃣ User Service (Rails App)
+Responsibility
+
+User signup/login
+
+User profile
+
+Authentication
+
+Database
+users
+ ├── id
+ ├── email
+ ├── encrypted_password
+ ├── name
+
+Exposes API
+GET /api/users/:id
+
+Controller
+# user_service/app/controllers/api/users_controller.rb
+class Api::UsersController < ApplicationController
+  def show
+    user = User.find(params[:id])
+    render json: { id: user.id, email: user.email, name: user.name }
+  end
+end
+
+
+🔒 Only User Service touches users table
+
+2️⃣ Order Service (Rails App)
+Responsibility
+
+Create orders
+
+Track order status
+
+Database
+orders
+ ├── id
+ ├── user_id
+ ├── total_amount
+ ├── status   # pending, paid, cancelled
+
+
+👉 Stores only user_id, no user table
+
+Order Creation Flow
+# order_service/app/controllers/api/orders_controller.rb
+class Api::OrdersController < ApplicationController
+  def create
+    # Validate user via User Service
+    user_response = HTTParty.get(
+      "http://user-service/api/users/#{params[:user_id]}"
+    )
+
+    return render json: { error: "Invalid user" }, status: 400 if user_response.code != 200
+
+    order = Order.create!(
+      user_id: params[:user_id],
+      total_amount: params[:amount],
+      status: "pending"
+    )
+
+    render json: order, status: :created
+  end
+end
+
+
+📌 Order Service never queries User DB directly
+
+3️⃣ Payment Service (Rails App)
+Responsibility
+
+Process payments
+
+Communicate with payment gateway
+
+Database
+payments
+ ├── id
+ ├── order_id
+ ├── amount
+ ├── status  # success, failed
+
+Payment API
+POST /api/payments
+
+Controller
+# payment_service/app/controllers/api/payments_controller.rb
+class Api::PaymentsController < ApplicationController
+  def create
+    payment = Payment.create!(
+      order_id: params[:order_id],
+      amount: params[:amount],
+      status: "success"
+    )
+
+    # Notify Order Service
+    HTTParty.post(
+      "http://order-service/api/orders/#{params[:order_id]}/mark_paid"
+    )
+
+    render json: payment
+  end
+end
+
+4️⃣ Order Service reacts to Payment
+# order_service/app/controllers/api/orders_controller.rb
+class Api::OrdersController < ApplicationController
+  def mark_paid
+    order = Order.find(params[:id])
+    order.update!(status: "paid")
+    head :ok
+  end
+end
+
+Full Interaction Flow (Explain Like This in Interview)
+Client
+  ↓
+Order Service (create order)
+  ↓
+User Service (validate user)
+  ↓
+Order Service (order created: pending)
+  ↓
+Payment Service (process payment)
+  ↓
+Order Service (mark order as paid)
+
+Important Interview Points (Say These)
+
+✔ Each service:
+
+Is a separate Rails app
+
+Has its own database
+
+Is independently deployable
+
+✔ Communication:
+
+REST APIs
+
+No shared DB
+
+No joins across services
+
+✔ Data consistency:
+
+Eventual consistency
+
+Order becomes paid after payment callback
+
+Common Interview Follow-up: “What if Payment fails?”
+
+Answer:
+
+Order remains in pending state. Payment service sends failure event or response, and Order service can retry or cancel the order.
+
+How this looks in Production
+
+Each service Dockerized
+
+Kubernetes / ECS
+
+API Gateway in front
+
+Service-to-service auth (JWT / mTLS)
+
+Async events via Kafka (instead of HTTP)
+
+20-Second Interview Summary (Memorize)
+
+In a Rails microservices setup, User, Order, and Payment are separate Rails applications. Each service owns its own database and communicates via APIs. Order service validates users via User service, Payment service processes payments and notifies Order service. There is no shared database, ensuring loose coupling and independent deployments.

@@ -1,0 +1,9 @@
+User clicks "Download Report"
+→ API validates session & permissions
+→ Data is prepared & normalized
+→ File is generated (CSV / XLS)
+→ File is returned OR stored temporarily
+→ Session timeout rules enforced
+
+
+###

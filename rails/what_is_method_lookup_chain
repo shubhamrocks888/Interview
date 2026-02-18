@@ -1,0 +1,137 @@
+1️⃣ BasicObject — the absolute root
+BasicObject
+
+What it is
+
+The parent of everything in Ruby
+
+Has almost nothing in it
+
+No puts, no inspect, no class, no nil?
+
+Why it exists
+
+For very minimal objects
+
+Used internally and for DSLs
+
+Example
+BasicObject.instance_methods
+# => [:__send__, :__id__]
+
+
+💡 Rails sometimes uses this to avoid method name conflicts.
+
+2️⃣ Kernel — global methods live here
+Kernel
+
+What it is
+
+A module, not a class
+
+Mixed into Object
+
+Gives you “global” methods
+
+Methods you use every day
+puts
+print
+p
+loop
+sleep
+require
+raise
+rand
+
+Why puts works without a receiver
+
+Because:
+
+Object.include Kernel
+
+
+So every object has Kernel methods.
+
+3️⃣ Object — default parent of all classes
+Object
+
+What it is
+
+Parent of almost every Ruby class
+
+Where most common methods live
+
+Common methods
+to_s
+inspect
+nil?
+present? (Rails)
+blank?   (Rails)
+== 
+class
+is_a?
+
+Example
+class User
+end
+
+User.superclass
+# => Object
+
+🔗 Full hierarchy (simplified)
+BasicObject
+   ↑
+Object
+   ↑
+User
+
+
+And Kernel is mixed into Object:
+
+Kernel (module)
+   ↓
+Object
+   ↓
+User
+
+🔍 Method lookup chain (no modules)
+
+When Ruby looks for a method:
+
+User
+ ↓
+Object
+ ↓
+Kernel
+ ↓
+BasicObject
+
+🧠 Why this matters (real-world)
+1️⃣ Explains “magic” methods
+
+Why this works:
+
+puts "hello"
+
+
+Because:
+
+puts → Kernel → Object → available everywhere
+
+2️⃣ Helps with debugging overrides
+
+If you override to_s, you’re overriding a method from Object.
+
+3️⃣ Important for prepend / include
+
+Understanding this chain explains:
+
+monkey patching
+
+Rails concerns
+
+ActiveSupport magic
+
+🎯 Interview-ready one-liner
+
+BasicObject is the minimal root class, Object is the default superclass that provides common behavior, and Kernel is a module mixed into Object that provides global methods like puts.

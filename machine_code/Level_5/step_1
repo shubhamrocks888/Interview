@@ -1,0 +1,38 @@
+1️⃣ User Model
+Requirements:
+
+Fields: email, full_name
+
+Validations:
+
+email must be present, unique, and valid format
+
+full_name must be present
+
+Associations:
+
+User has_many :bookings
+
+🧠 Think Before Writing
+
+Questions to consider (interview mindset):
+
+Should bookings be deleted if user is deleted? → Use dependent: :destroy
+
+Do we need any callback here? → Not yet
+
+✍️ Task:
+
+Write the User model with:
+
+Validations
+
+Association with bookings
+
+########
+
+class User < ApplicationRecord
+	has_many :bookings
+	validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+	validates :full_name, presence: true
+end

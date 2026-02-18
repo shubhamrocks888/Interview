@@ -1,0 +1,110 @@
+Yes ✅ — with include, you can call both methods using super, but only in one specific direction.
+Let’s walk it slowly and clearly.
+
+🔹 Setup: same method in class and included module
+module Trackable
+  def save
+    puts "module save"
+    super
+  end
+end
+
+class User
+  include Trackable
+
+  def save
+    puts "class save"
+  end
+end
+
+User.new.save
+
+✅ Output
+module save
+class save
+
+🧠 Why this works
+
+Method lookup order with include:
+
+User
+ ↓
+Trackable
+ ↓
+Object
+
+
+When you call:
+
+User.new.save
+
+
+Ruby finds save in Trackable first (because include inserts module after the class in the lookup chain).
+
+Inside the module’s save:
+
+super
+
+
+Ruby continues down the chain → finds User#save.
+
+⚠️ Important limitation
+❌ You cannot call module method from class using super
+class User
+  include Trackable
+
+  def save
+    puts "class save"
+    super   # ❌ NoMethodError
+  end
+end
+
+
+Why?
+
+Because after User, Ruby looks in:
+
+Trackable → Object → Kernel
+
+
+But super only works if a method exists later in the chain.
+If the module is before the class (via prepend), then this changes.
+
+🔁 Same example with prepend
+module Trackable
+  def save
+    puts "module save"
+    super
+  end
+end
+
+class User
+  prepend Trackable
+
+  def save
+    puts "class save"
+  end
+end
+
+Output
+module save
+class save
+
+
+Now lookup order:
+
+Trackable
+ ↓
+User
+ ↓
+Object
+
+🧠 Rule of thumb (very interview-friendly)
+Scenario	Can super call the other method?
+include → module calls class	✅ YES
+include → class calls module	❌ NO
+prepend → module calls class	✅ YES
+prepend → class calls module	❌ NO
+🎯 Interview one-liner
+
+With include, the module method can call the class method using super, but the class cannot call the module’s method. With prepend, the module always takes precedence in the lookup chain.

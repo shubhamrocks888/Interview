@@ -1,0 +1,112 @@
+Short Answer (say this first)
+
+A node in NoSQL is a database server (machine or instance) that stores and processes part of the data.
+
+It can be:
+
+A physical machine
+
+A virtual machine (EC2)
+
+A container (in some setups)
+
+What exactly is a Node?
+
+A node is:
+
+One running instance of the NoSQL database software
+
+With its own CPU, RAM, disk
+
+Participates in a cluster
+
+Example:
+
+MongoDB Cluster
+├── Node 1 (EC2 instance)
+├── Node 2 (EC2 instance)
+└── Node 3 (EC2 instance)
+
+
+Each node:
+
+Stores data
+
+Serves read/write requests
+
+Communicates with other nodes
+
+Why NoSQL uses multiple nodes
+
+Because NoSQL is built for:
+
+Horizontal scaling
+
+High availability
+
+Fault tolerance
+
+Instead of one big DB server → many smaller nodes.
+
+Node vs Cluster (important distinction)
+Term	Meaning
+Node	One DB server
+Cluster	Group of nodes working together
+
+Cluster = multiple nodes
+
+Types of nodes (MongoDB example)
+1️⃣ Primary Node
+
+Handles writes
+
+Replicates data to others
+
+2️⃣ Secondary Nodes
+
+Replicate data
+
+Can serve reads
+
+Take over if primary fails
+
+3️⃣ Arbiter (optional)
+
+Voting only (no data)
+
+Helps with leader election
+
+Node in Sharded Cluster
+Client
+  ↓
+Mongos (router)
+  ↓
+Shard 1 → Node A, Node B
+Shard 2 → Node C, Node D
+
+
+Each shard = subset of data
+
+Each shard itself = replica set (multiple nodes)
+
+Interview-friendly analogy
+
+Node = one shop
+
+Cluster = chain of shops
+
+Sharding = each shop handles a different area
+
+Replication = same shop copied in multiple places
+
+AWS Context (important)
+
+Node = EC2 instance running MongoDB
+
+Or DynamoDB node (managed, abstracted)
+
+Kubernetes → one node per pod sometimes
+
+Perfect Interview Answer (memorize)
+
+“A node in NoSQL is a database server instance that stores and processes part of the data. Multiple nodes form a cluster, allowing horizontal scaling, replication, and fault tolerance. Nodes can run on physical machines, virtual machines like EC2, or containers.”

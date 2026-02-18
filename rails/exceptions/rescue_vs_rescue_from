@@ -1,0 +1,146 @@
+rescue vs rescue_from (Rails)
+🔹 1️⃣ rescue (Ruby-level)
+What it is
+
+Plain Ruby exception handling
+
+Works anywhere: models, services, controllers, jobs
+
+begin
+  do_something
+rescue Payment::Failed => e
+  Rails.logger.error(e.message)
+end
+
+
+OR shorthand:
+
+def call
+  do_something
+rescue Payment::Failed => e
+  handle_error(e)
+end
+
+✅ Use when
+
+Handling local, specific logic
+
+Inside service objects
+
+Inside background jobs
+
+You want fine-grained control
+
+❌ Don’t use when
+
+You want global request-level handling
+
+You don’t want to swallow bugs
+
+🎯 Interview line:
+
+“rescue is Ruby-level and scoped to a block or method.”
+
+🔹 2️⃣ rescue_from (Rails-level)
+What it is
+
+Rails controller feature
+
+Handles exceptions globally across requests
+
+Defined in ApplicationController
+
+class ApplicationController < ActionController::Base
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
+
+  def not_found
+    render json: { error: "Not Found" }, status: :not_found
+  end
+end
+
+✅ Use when
+
+Handling expected application errors
+
+Rendering consistent HTTP responses
+
+API error handling
+
+❌ Limitations
+
+Works only in controllers
+
+Not available in models/services/jobs
+
+🎯 Interview line:
+
+“rescue_from is Rails-specific and controller-scoped.”
+
+🧠 KEY DIFFERENCES (Interview Table)
+
+| Aspect        | `rescue`       | `rescue_from`        |
+| ------------- | -------------- | -------------------- |
+| Level         | Ruby           | Rails                |
+| Scope         | Block / Method | Controller / App     |
+| Where         | Anywhere       | Controllers only     |
+| Best for      | Business logic | Request-level errors |
+| Granularity   | Fine           | Global               |
+| API responses | ❌ manual       | ✅ clean & consistent |
+
+
+🎯 Example Interview Scenario
+❓ Question
+
+“How would you handle ActiveRecord::RecordNotFound?”
+
+❌ Weak answer
+
+“I’ll rescue it in every controller action.”
+
+✅ Strong answer
+
+“I handle it once using rescue_from in ApplicationController.”
+
+rescue_from ActiveRecord::RecordNotFound do
+  render json: { error: "Record not found" }, status: :not_found
+end
+
+🔥 Combined Usage (BEST PRACTICE)
+Service Object
+class Orders::CreateOrder
+  def call
+    Order.create!
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error(e.message)
+    raise
+  end
+end
+
+Controller
+class ApplicationController < ActionController::Base
+  rescue_from ActiveRecord::RecordInvalid do |e|
+    render json: { error: e.record.errors }, status: :unprocessable_entity
+  end
+end
+
+
+🎯 Interview line:
+
+“I rescue locally where it makes sense and handle response formatting globally.”
+
+🚫 Common Interview Red Flags
+rescue
+end
+
+
+❌ Swallows everything
+❌ Hides bugs
+❌ Production nightmare
+
+🎯 Say:
+
+“I never rescue StandardError blindly.”
+
+🏁 PERFECT INTERVIEW ANSWER (30 sec)
+
+“rescue is Ruby-level and used for local error handling inside services or jobs. rescue_from is Rails-specific and used in controllers to handle expected exceptions globally and return consistent HTTP responses. I use both depending on the scope.”

@@ -1,0 +1,126 @@
+if redis goes down then obviously all the call will be shifted to main db and load on db will increase , at that time on aws via auto-scale real replicas would increase and may be solve our problem
+
+This is a very honest answer, and it shows you’re thinking operationally — but an architect would stop you immediately 😅
+Not because you’re careless, but because there are dangerous assumptions hidden in it.
+
+Let me walk you through this like the architect would, then give you the correct interview-grade answer.
+
+Why your answer triggers concern 🚨
+
+You said (paraphrased):
+
+“If Redis goes down, calls shift to the main DB; DB load increases; auto-scaling read replicas may solve it.”
+
+Hidden problems an architect sees instantly:
+
+❌ Sidekiq does NOT fall back to DB
+
+Sidekiq depends on Redis
+
+If Redis is down → Sidekiq is down
+
+❌ Auto-scaling does not fix correctness
+
+Writes don’t go to read replicas
+
+Background jobs often involve writes
+
+❌ Failing open is dangerous
+
+You may trigger retry storms
+
+You may double-process jobs later
+
+So the concern is data correctness and system safety, not just load.
+
+The architect-level mental model
+
+Redis is a critical dependency, not an optional cache.
+
+If Redis is down:
+
+Jobs cannot be enqueued
+
+Jobs cannot be dequeued
+
+Retry state is lost temporarily
+
+So the correct response is graceful degradation, not rerouting.
+
+The correct interview answer (say this)
+
+“If Redis goes down, Sidekiq becomes unavailable, so the correct approach is to fail fast and apply backpressure at the API layer. We should temporarily stop enqueueing jobs, return errors or degraded responses, and rely on Redis high availability rather than falling back to the database.”
+
+This answer = 🔥
+
+Then explain prevention (important)
+1️⃣ Redis High Availability
+
+Redis Cluster / Sentinel
+
+Multi-AZ deployment
+
+Automatic failover
+
+Say:
+
+“Redis must be treated as tier-1 infrastructure.”
+
+2️⃣ Circuit breaker at enqueue point
+
+If Redis is unreachable:
+
+Don’t enqueue
+
+Don’t retry blindly
+
+Avoid cascading failures
+
+3️⃣ Idempotency for recovery
+
+When Redis comes back:
+
+Safe to re-enqueue
+
+No double processing
+
+4️⃣ Monitoring & alerts
+
+Redis latency
+
+Memory usage
+
+Evictions
+
+Connection failures
+
+If architect pushes harder:
+“Business says jobs must not be lost”
+
+Your answer:
+
+“Then we need durable queues like SQS or Kafka, or persist job intent in the database and enqueue asynchronously when Redis recovers.”
+
+That’s the escalation path.
+
+One killer line to memorize
+
+“Redis is not a cache for Sidekiq; it is the system of record for job state. If Redis is down, the safest action is to apply backpressure and degrade functionality.”
+
+Architects LOVE this line.
+
+What you’re doing right (important to say)
+
+You’re thinking about resilience
+
+You’re thinking about scaling
+
+You’re thinking about AWS infra
+
+Now we’re just refining it to correct assumptions.
+
+Ready for next grill? 😄
+
+Interviewer:
+
+How do you prevent retry storms in background jobs?

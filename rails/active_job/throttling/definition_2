@@ -1,0 +1,82 @@
+The correct understanding
+
+❌ Not always “block extra requests”
+✅ Control the rate of requests
+
+Blocking is one possible outcome, not the definition.
+
+Simple breakdown
+Throttling means:
+
+Regulating how frequently requests are processed over time
+
+That regulation can result in:
+1️⃣ Slowing requests
+2️⃣ Delaying requests
+3️⃣ Blocking requests (usually with 429)
+
+Think in levels 🪜
+Example: 100 requests / minute
+Requests	What happens
+1–60	Normal speed
+61–90	Slower responses
+91–100	Very slow
+101+	Blocked (429)
+
+👉 This is true throttling
+
+What you’re thinking of (very common)
+Rate limiting
+
+Hard stop
+
+100 requests / minute
+101st request → BLOCK
+
+
+This is what most Rails apps do using:
+
+Rack::Attack
+
+Nginx
+
+API gateways
+
+So your statement is partially correct.
+
+Interview-safe answer (say this 👇)
+
+“Throttling controls the rate of requests.
+In practice, many systems implement it by blocking extra requests after a limit is exceeded.”
+
+Perfect balance ✔️
+
+One-line memory trick 🧠
+
+Throttling → “Slow down”
+
+Rate limiting → “Stop after limit”
+
+Rails reality check 🛠️
+
+In most Rails apps:
+
+Throttling = block extra requests with 429
+
+True gradual throttling is rare
+
+So interviewers usually accept:
+
+“Throttling blocks requests after a threshold.”
+
+Just add one clarifying line and you’re golden.
+
+If you want, next we can:
+
+###
+
+implement a throttler in Ruby
+
+explain token bucket vs leaky bucket
+
+design OTP throttling (very popular question)

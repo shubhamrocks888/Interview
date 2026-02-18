@@ -1,0 +1,36 @@
+### app/jobs/ride_completion_job.rb
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :default
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+		RideMailer.ride_completed(ride).deliver_now
+	end
+end
+
+### app/models/ride.rb
+
+class Ride < ApplicationRecord
+   after_commit :send_completion_email, if: :saved_change_to_completed?
+
+   def saved_change_to_completed?
+   	saved_change_to_status? && completed?
+   end
+
+   def send_completion_email
+   	RideCompletionJob.perform_later(id)
+   end
+end
+
+
+#####
+
+Next step:
+
+1️⃣ Add retry control in Sidekiq
+2️⃣ Move job to custom queue
+3️⃣ Add idempotency protection
+4️⃣ Schedule job (delay email)

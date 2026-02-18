@@ -1,0 +1,130 @@
+1️⃣ PUT Request
+🔹 Definition
+
+PUT replaces the entire resource with the data you send.
+
+“Here is the complete new version of this resource.”
+
+🔹 Key Characteristics
+
+Full update
+
+Client must send all fields
+
+Missing fields may be overwritten or set to null
+
+Idempotent (calling it multiple times gives same result)
+
+🔹 Example (REST API)
+
+Existing User
+
+{
+  "id": 1,
+  "name": "Shubham",
+  "email": "shubham@gmail.com",
+  "age": 25
+}
+
+
+PUT /users/1
+
+{
+  "name": "Shubham Jain",
+  "email": "shubham.jain@gmail.com",
+  "age": 26
+}
+
+
+✔️ Entire user replaced
+
+⚠️ If you send:
+
+{
+  "name": "Shubham Jain"
+}
+
+
+Other fields (email, age) may be erased
+
+🔹 Rails Example
+put "/users/:id", to: "users#update"
+
+
+Rails allows partial params, but conceptually PUT means full replace.
+
+2️⃣ PATCH Request
+🔹 Definition
+
+PATCH updates only specific fields of a resource.
+
+“Change only these fields.”
+
+🔹 Key Characteristics
+
+Partial update
+
+Send only fields you want to change
+
+Safer for small updates
+
+Idempotent (in REST practice)
+
+🔹 Example (REST API)
+
+PATCH /users/1
+
+{
+  "email": "newemail@gmail.com"
+}
+
+
+✔️ Only email updated
+✔️ Name & age remain unchanged
+
+🔹 Rails Example
+patch "/users/:id", to: "users#update"
+
+
+Rails internally treats PATCH as the default for updates.
+
+3️⃣ PUT vs PATCH – Side-by-Side
+Aspect	PUT	PATCH
+Purpose	Replace whole resource	Update part of resource
+Data sent	Full object	Partial fields
+Risk	Can overwrite data	Safer
+Idempotent	Yes	Yes (usually)
+Common usage	Rare	Very common
+4️⃣ What Rails Uses (Important for Interview)
+resources :users
+
+
+Generates:
+
+PATCH /users/:id  → users#update
+PUT   /users/:id  → users#update
+
+
+➡️ Rails prefers PATCH, but supports both.
+
+5️⃣ Real-World Rule of Thumb
+
+✔️ Use PATCH when:
+
+Updating profile name
+
+Changing password
+
+Updating status, email, etc.
+
+✔️ Use PUT when:
+
+Replacing a full document
+
+Strict REST APIs
+
+Configuration objects
+
+6️⃣ Interview One-Line Answer
+
+PUT replaces the entire resource, while PATCH updates only specific fields. PATCH is safer and more commonly used in real applications like Rails.

@@ -1,0 +1,132 @@
+In Rails, middleware is code that sits between the web server and your Rails app, and it gets a chance to inspect, modify, or short-circuit a request/response as it passes through the stack.
+
+Think of it like an assembly line 🏭 for every HTTP request.
+
+The big picture
+Browser
+  ↓
+Web Server (Puma)
+  ↓
+Rack Middleware Stack
+  ↓
+Rails Controller
+  ↓
+Rack Middleware Stack (on the way back)
+  ↓
+Response to Browser
+
+
+Middleware runs:
+
+before the request hits your controller
+
+after the response leaves your controller
+
+What middleware actually does
+
+A middleware can:
+
+Read or modify request headers
+
+Authenticate users
+
+Handle sessions & cookies
+
+Log requests
+
+Catch exceptions
+
+Compress responses
+
+Block or redirect requests
+
+Most “invisible magic” in Rails happens in middleware.
+
+Rails is built on Rack
+
+Rails uses Rack, which defines a simple interface:
+
+call(env) → [status, headers, body]
+
+
+Every middleware:
+
+Receives an env hash (request data)
+
+Returns a response array
+
+Common Rails middleware (real examples)
+
+Some middleware you already use without realizing it:
+
+Middleware	What it does
+ActionDispatch::Cookies	Reads & writes cookies
+ActionDispatch::Session::CookieStore	Manages sessions
+ActionDispatch::RequestId	Adds X-Request-Id
+Rack::Runtime	Adds request time
+Rack::MethodOverride	Allows _method=PUT
+ActionDispatch::ShowExceptions	Pretty error pages
+ActionDispatch::DebugExceptions	Dev error stack traces
+View your middleware stack
+
+Run this in your Rails app:
+
+rails middleware
+
+
+You’ll see the full request pipeline in order.
+
+Simple custom middleware example
+1️⃣ Create middleware
+# app/middleware/request_logger.rb
+class RequestLogger
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    Rails.logger.info "Incoming request: #{env['PATH_INFO']}"
+    @app.call(env)
+  end
+end
+
+2️⃣ Register it
+# config/application.rb
+config.middleware.use RequestLogger
+
+
+Now every request will be logged before hitting controllers.
+
+Middleware vs Controller (interview favorite)
+Middleware	Controller
+Runs before routing	Runs after routing
+App-wide	Route-specific
+No params / sessions helpers	Full Rails helpers
+Best for cross-cutting concerns	Business logic
+
+👉 Auth, logging, rate limiting → middleware
+👉 CRUD, validations, rendering → controllers
+
+When should YOU write middleware?
+
+Use middleware when:
+
+Logic applies to every request
+
+It doesn’t belong to a single controller
+
+You need to act before routing
+
+Examples:
+
+Request throttling
+
+API key validation
+
+Custom headers
+
+Maintenance mode
+
+One-liner explanation (for interviews)
+
+Middleware in Rails is a Rack component that intercepts HTTP requests and responses before they reach controllers, allowing cross-cutting concerns like authentication, logging, sessions, and error handling to be applied globally.

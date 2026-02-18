@@ -1,0 +1,110 @@
+Good question — this phrase sounds fancy in interviews, but it actually means something very practical 🙂
+
+When someone says:
+
+“a modular monolith with clearly separated domains—users, courses, programs, and enrollments”
+
+“Clearly separated domains” means:
+
+Each business domain is treated like its own mini-application inside the same codebase, with strong boundaries.
+
+1️⃣ What is a “domain” here?
+
+A domain = a business area with its own rules and logic
+
+Examples in your case:
+
+Users domain → users, roles, authentication, profiles
+
+Courses domain → courses, lessons, syllabus
+
+Programs domain → bundles of courses, pricing, duration
+
+Enrollments domain → who enrolled in what, progress, status
+
+Each domain answers one type of business question.
+
+2️⃣ “Clearly separated” in practical terms 👇
+✅ Separate folders / modules
+app/
+  domains/
+    users/
+      user.rb
+      user_service.rb
+      user_repository.rb
+    courses/
+      course.rb
+      course_service.rb
+    programs/
+      program.rb
+    enrollments/
+      enrollment.rb
+
+
+Not everything dumped into models/ or services/.
+
+✅ Domain owns its logic
+
+User-related rules live only in users
+
+Course rules live only in courses
+
+Enrollment logic is not spread everywhere
+
+❌ Bad:
+
+User.enroll(course)
+
+
+✅ Good:
+
+Enrollments::EnrollUser.call(user, course)
+
+✅ Minimal cross-domain access
+
+Domains don’t reach into each other’s internals.
+
+❌ Bad:
+
+Course.find(id).users.create(...)
+
+
+✅ Good:
+
+Enrollments::Create.call(user_id:, course_id:)
+
+
+Domains communicate via interfaces / services, not direct DB poking.
+
+✅ Separate tables (often)
+users
+courses
+programs
+enrollments
+
+
+enrollments acts as a boundary domain
+
+No giant tables doing everything
+
+3️⃣ Why interviewers love this answer ❤️
+
+Because it shows you understand:
+
+Separation of concerns
+
+Scalability without microservices
+
+Clean architecture
+
+Easier refactoring later
+
+You can even say:
+
+“Each domain could later be extracted into a microservice if needed.”
+
+That’s a 🔥 bonus line.
+
+4️⃣ One-line interview explanation (memorize this)
+
+“Clearly separated domains mean each business area has its own models, services, and rules, with strong boundaries and minimal coupling—even though everything lives in a single monolith.”

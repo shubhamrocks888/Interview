@@ -1,0 +1,71 @@
+🚀 Task 3: Build a Simple Rate Limiter
+📝 Problem
+
+Design a class RateLimiter that:
+
+Allows only N requests per minute
+
+Returns true if allowed
+
+Returns false if limit exceeded
+
+Automatically resets after 1 minute window
+
+🎯 What Interviewer Is Testing
+
+Time logic
+
+Data structures
+
+Edge case handling
+
+Clean encapsulation
+
+Efficient thinking
+
+This connects directly to your previous Rails rate limiting work 👀
+
+🧠 First — Think Before Coding
+
+Ask:
+
+What data should I store?
+
+How do I remove old requests?
+
+How do I check time window?
+
+Strong candidates think first.
+
+##
+class RateLimiter
+  WINDOW_SIZE = 60 # seconds
+
+  def initialize(limit)
+    raise ArgumentError, "Limit must be positive" if limit <= 0
+
+    @limit = limit
+    @timestamps = []
+  end
+
+  def allow?
+    now = Time.now
+
+    cleanup_old_requests(now)
+
+    if @timestamps.size < @limit
+      @timestamps << now
+      true
+    else
+      false
+    end
+  end
+
+  private
+
+  def cleanup_old_requests(current_time)
+    @timestamps.reject! do |timestamp|
+      timestamp <= current_time - WINDOW_SIZE
+    end
+  end
+end

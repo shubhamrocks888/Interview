@@ -1,0 +1,1 @@
+prepend puts the module before the class in the method lookup chain. If method names clash, the module’s method runs first, but the original method is still available via super.

@@ -1,0 +1,125 @@
+Move Zeroes — what the question really means
+
+Typical wording:
+
+“Given an integer array nums, move all 0s to the end of the array while maintaining the relative order of the non-zero elements.
+You must do this in-place without making a copy of the array.”
+
+Key constraints hidden in the wording
+1️⃣ In-place
+
+❌ Don’t create a new array
+
+✅ Modify the existing array
+
+2️⃣ Preserve order of non-zero elements
+
+Non-zero numbers must stay in the same relative order
+
+Example:
+
+[1,0,2,0,3] → [1,2,3,0,0]
+
+
+Notice how 1,2,3 keeps its order.
+
+3️⃣ Zeroes go to the end
+
+All 0s must be grouped at the end of the array
+
+Number of zeros stays the same
+
+How it’s different from “Remove Element”
+Remove Element  Move Zeroes
+Remove a value  Push zeros to end
+Count new length  Whole array remains same length
+Non-target elements must shift  Maintain relative order of non-zero elements
+Why this is a two-pointer problem
+
+Think of it as:
+
+Slow pointer (write): tracks where the next non-zero element should go
+
+Fast pointer (read): scans all elements
+
+Whenever nums[read] ≠ 0:
+
+copy to nums[write]
+
+move write
+
+After scanning, fill remaining positions with 0s
+
+This is very similar to Remove Element, but here you don’t shrink the array, you just shift zeros.
+
+Mental example
+
+Input:
+
+[0,1,0,3,12]
+
+
+Pointer logic:
+
+read=0, nums[0]=0 → skip
+
+read=1, nums[1]=1 → write at index 0 → [1,1,0,3,12], write → 1
+
+read=2, nums[2]=0 → skip
+
+read=3, nums[3]=3 → write at index 1 → [1,3,0,3,12], write → 2
+
+read=4, nums[4]=12 → write at index 2 → [1,3,12,3,12], write → 3
+
+Then fill remaining positions with 0:
+
+[1,3,12,0,0]
+
+
+✅ Done
+
+Common mistakes
+
+❌ Swapping zeros blindly → breaks order
+
+❌ Counting zeros and appending → creates extra array
+
+❌ Moving one zero at a time (O(n²)) instead of shifting elements efficiently
+
+Interviewer wants to see
+
+In-place manipulation
+
+Two-pointer strategy
+
+Proper handling of order
+
+Linear time, constant space
+
+Interview-ready explanation (say this)
+
+“I use two pointers: one scans the array, the other tracks where the next non-zero element should be written. After moving all non-zero elements forward, I fill the remaining positions with zeros.”
+
+
+
+###################
+def move_zeroes(nums)
+  write = 0
+
+  nums.each_with_index do |num, read|
+    if num != 0
+      # Swap only if read and write are at different positions
+      if read != write
+        nums[read], nums[write] = nums[write], nums[read]
+      end
+      write += 1
+    end
+  end
+
+  nums
+end
+
+# Example usage
+arr = [0, 1, 0, 3, 12]
+move_zeroes(arr)
+p arr  # => [1, 3, 12, 0, 0]

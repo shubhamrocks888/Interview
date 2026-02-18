@@ -1,0 +1,142 @@
+1️⃣ ids vs pluck(:id) (VERY common interview Q)
+  
+  ids
+  User.where(active: true).ids
+
+  pluck(:id)
+  User.where(active: true).pluck(:id)
+
+Difference 👇
+
+| Aspect  | `ids`                        | `pluck(:id)`         |
+| ------- | ---------------------------- | -------------------- |
+| Purpose | Optimized for primary key    | Generic column fetch |
+| Speed   | ⚡ Slightly faster            | Fast                 |
+| SQL     | `SELECT users.id FROM users` | Same                 |
+| Intent  | Clearer                      | More general         |
+
+Interview answer 🎯
+
+Use ids when you only need primary keys. It’s optimized and more expressive.
+
+2️⃣ pick vs pluck (Rails 6+)
+
+  pick
+  User.where(id: 1).pick(:email)
+  # => "a@test.com"
+
+  pluck
+  User.where(id: 1).pluck(:email)
+  # => ["a@test.com"]
+
+Key difference
+
+	|        | `pick`       | `pluck`   |
+| ------ | ------------ | --------- |
+| Rows   | 1 row only   | Many rows |
+| Return | Scalar value | Array     |
+| Speed  | ⚡ Fastest    | Fast      |
+
+
+SQL
+SELECT email FROM users WHERE id = 1 LIMIT 1;
+
+Rule
+
+One record → pick
+
+Many records → pluck
+
+3️⃣ select + map vs pluck
+
+  ❌ Bad:
+
+  User.select(:email).map(&:email)
+
+
+  ✅ Good:
+
+  User.pluck(:email)
+
+
+Why?
+
+select creates AR objects
+
+pluck skips instantiation
+
+📌 Interview phrase:
+
+pluck avoids object allocation, which is the biggest performance win.
+
+4️⃣ pluck breaks chaining (important)
+
+  User.where(active: true).pluck(:email).where(admin: true)
+  # ❌ NoMethodError
+
+
+Because:
+
+pluck → Array
+
+
+While:
+
+User.select(:email).where(admin: true)
+# ✅ still an ActiveRecord::Relation
+
+5️⃣ pluck with multiple columns (structure)
+User.pluck(:id, :email)
+# => [[1, "a@test.com"], [2, "b@test.com"]]
+
+
+⚠️ No hash, no model.
+
+If you want hash:
+
+User.pluck(:id, :email).to_h
+
+6️⃣ Memory usage (big deal in prod)
+
+| Method         | Memory   |
+| -------------- | -------- |
+| `pluck`        | 🟢 Low   |
+| `select`       | 🔴 High  |
+| `select + map` | 🔥 Worst |
+
+This matters in background jobs, reports, exports.
+
+7️⃣ pluck vs find_each
+❌ Wrong
+User.pluck(:id).each { |id| heavy_work(id) }
+
+
+Loads all IDs in memory.
+
+✅ Correct
+User.find_each do |user|
+  heavy_work(user.id)
+end
+
+
+Use pluck for data, find_each for processing records.
+
+8️⃣ When select is the right choice
+
+Use select when:
+
+  You need model methods
+
+  You need callbacks / associations
+
+  You want lazy evaluation
+
+User.select(:id, :email).each do |user|
+  user.domain   # method
+end
+
+Final interview cheat-sheet 🧠
+pluck  → fastest → raw data → ends relation
+select → slower → AR objects → chainable
+ids    → fastest PK fetch
+pick   → single value

@@ -1,0 +1,114 @@
+🔐 Example: Enrollment Service (Program Enrollment)
+
+Suppose we have a service object that enrolls a user into a program.
+
+We want to enforce RBAC here, because this service might be called:
+
+From a controller
+
+From a background job (e.g., batch enrollment)
+
+From an internal API
+
+1️⃣ Service Object
+class ProgramEnrollmentService
+  def initialize(current_user, user_to_enroll, program)
+    @current_user = current_user
+    @user_to_enroll = user_to_enroll
+    @program = program
+  end
+
+  def call
+    authorize!  # ✅ RBAC enforcement happens here
+
+    ActiveRecord::Base.transaction do
+      # Create program enrollment
+      ProgramEnrollment.find_or_create_by!(
+        user: @user_to_enroll,
+        program: @program,
+        status: :enrolled
+      )
+
+      # Enroll in all mandatory courses
+      @program.courses.each do |course|
+        CourseEnrollment.find_or_create_by!(
+          user: @user_to_enroll,
+          course: course
+        )
+      end
+    end
+  end
+
+  private
+
+  def authorize!
+    policy = ProgramPolicy.new(@current_user, @program)
+    raise Pundit::NotAuthorizedError unless policy.enroll_user?
+  end
+end
+
+2️⃣ ProgramPolicy
+class ProgramPolicy
+  attr_reader :user, :program
+
+  def initialize(user, program)
+    @user = user
+    @program = program
+  end
+
+  # Only admin or coordinators assigned to the program
+  def enroll_user?
+    admin? || coordinator_assigned?
+  end
+
+  private
+
+  def admin?
+    user.role.name == "admin"
+  end
+
+  def coordinator_assigned?
+    user.role.name == "coordinator" &&
+      program.coordinators.exists?(user.id)
+  end
+end
+
+3️⃣ Where this is called
+a) From controller
+def enroll
+  ProgramEnrollmentService.new(current_user, params[:user_id], Program.find(params[:id])).call
+  render json: { message: "Enrolled successfully" }
+end
+
+b) From background job (batch enrollment)
+class BatchProgramEnrollmentJob < ApplicationJob
+  def perform(current_user_id, program_id, user_ids)
+    current_user = User.find(current_user_id)
+    program = Program.find(program_id)
+
+    user_ids.each do |uid|
+      user = User.find(uid)
+      ProgramEnrollmentService.new(current_user, user, program).call
+    end
+  end
+end
+
+
+✅ Notice that authorization is still enforced inside the service, not just the controller.
+
+4️⃣ Why this is important
+
+Consistency: All entry points go through the same policy
+
+Security: A background job or internal API cannot bypass RBAC
+
+Maintainability: Policy logic is centralized and reusable
+
+Architect-friendly phrasing:
+
+“We enforce RBAC in services for sensitive operations so any entry point—controller, background job, or script—respects the same permissions.”
+
+5️⃣ Interview-ready summary
+
+“Controllers enforce request-level RBAC for external requests, but for operations that can be triggered elsewhere, like background jobs or internal services, we call the same policies inside the service objects.
+This keeps authorization centralized, consistent, and prevents bypass.”

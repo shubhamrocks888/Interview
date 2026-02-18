@@ -1,0 +1,222 @@
+🔥 Software Architect Interview Question Playbook
+1️⃣ Rate Limiting & Traffic Control (VERY common)
+
+Questions
+
+3rd-party API allows 50 req/hr, traffic is 200/hr. What do you do?
+
+Why not just queue everything?
+
+Difference between token bucket and leaky bucket?
+
+How do you prevent starvation?
+
+They are testing
+
+Backpressure
+
+Queueing theory
+
+Fairness vs throughput
+
+Keywords to say
+
+Leaky bucket, token bucket, bounded queues, backpressure, load shedding
+
+2️⃣ High Traffic & System Stability
+
+Questions
+
+What happens if traffic keeps increasing forever?
+
+How do you protect your system from overload?
+
+How do you ensure old requests don’t starve?
+
+They are testing
+
+Capacity planning
+
+Flow control
+
+Stability under sustained load
+
+Correct mindset
+
+Unlimited input + limited output = reject or degrade
+
+3️⃣ Async vs Sync (trap questions)
+
+Questions
+
+Why not make everything async?
+
+Does async always scale?
+
+Can async systems still fail?
+
+They are testing
+
+Understanding that async ≠ infinite capacity
+
+Correct line
+
+Async hides latency but doesn’t remove bottlenecks.
+
+4️⃣ Security & Incident Response
+
+Questions
+
+Someone stole your payment gateway keys — what now?
+
+API key leaked publicly — what’s first action?
+
+How do you reduce blast radius?
+
+They are testing
+
+Incident response
+
+Security maturity
+
+Damage containment
+
+Keywords
+
+Credential rotation, IP whitelisting, least privilege, audit logs, alerts
+
+5️⃣ Data Consistency & Concurrency
+
+Questions
+
+Two users transfer money at same time — what happens?
+
+Can deadlocks occur?
+
+How do you avoid double spending?
+
+They are testing
+
+Transactions
+
+Locks
+
+Idempotency
+
+Keywords
+
+DB transactions, optimistic locking, idempotency keys
+
+6️⃣ Failure Handling & Resilience
+
+Questions
+
+What if Redis goes down?
+
+What if Sidekiq is stuck?
+
+What if 3rd-party API is slow or flaky?
+
+They are testing
+
+Fault tolerance
+
+Graceful degradation
+
+Keywords
+
+Circuit breaker, retries, timeouts, fallbacks
+
+7️⃣ Data Growth & Scaling
+
+Questions
+
+Table has 1 billion rows — how do you handle queries?
+
+How do you archive old data?
+
+How do you scale reads vs writes?
+
+They are testing
+
+Storage strategy
+
+Long-term thinking
+
+Keywords
+
+Partitioning, sharding, read replicas, archiving
+
+8️⃣ Observability & Monitoring
+
+Questions
+
+How do you know system is slow?
+
+What metrics do you track?
+
+How do you debug production issues?
+
+They are testing
+
+Operability
+
+Keywords
+
+Latency, throughput, error rate, queue depth, alerts
+
+9️⃣ API Design & Contracts
+
+Questions
+
+How do you version APIs?
+
+How do you handle breaking changes?
+
+How do you make APIs backward compatible?
+
+They are testing
+
+Long-term maintainability
+
+10️⃣ Business Trade-offs (VERY important)
+
+Questions
+
+Business says “don’t reject requests” — what now?
+
+Latency vs cost — which do you choose?
+
+Consistency vs availability?
+
+They are testing
+
+Decision-making
+
+Not just technical correctness
+
+Golden line
+
+Architecture is about trade-offs, not perfection.
+
+🎯 How to answer architect questions (RULE OF 3)
+
+Always structure answers as:
+
+Acknowledge the constraint
+
+Explain the core principle
+
+Give a practical solution
+
+Example:
+
+“Given a hard rate limit, we must apply backpressure. Practically, I’d use a bounded leaky bucket enforced at the ingress.”
+
+🧠 One universal sentence that saves you
+
+If you ever get stuck, say:
+
+“At this point it becomes a system design and capacity problem, so we must bound the system or degrade gracefully.”
+
+That sentence alone buys you time and respect.

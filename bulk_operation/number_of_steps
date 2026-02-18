@@ -1,0 +1,87 @@
+Step-by-Step Approach
+1️⃣ Receive & Prepare the CSV
+
+Validate file type and size before processing.
+
+Avoid loading the entire file into memory if it’s huge.
+
+Use streaming or chunked reading:
+
+In Ruby: CSV.foreach(file_path, headers: true).each_slice(1000) do |rows| ... end
+
+This processes 1000 rows at a time instead of 1M at once.
+
+2️⃣ Data Validation
+
+Validate each row before inserting/updating:
+
+Required fields (email, name, etc.)
+
+Correct formats (email regex, age numeric)
+
+Log invalid rows separately so the job continues for valid data.
+
+3️⃣ Prepare for Bulk Operations
+
+Separate inserts vs updates:
+
+If your database supports upsert, you can combine insert/update:
+
+INSERT INTO users (id, name, email)
+VALUES ...
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email;
+
+
+Batch rows to reduce DB calls (e.g., 500–1000 rows per query).
+
+4️⃣ Use Transactions & Bulk Inserts
+
+Wrap each batch in a transaction:
+
+Ensures data integrity
+
+Speeds up inserts because the DB commits fewer times
+
+Example in Rails:
+
+User.transaction do
+  User.upsert_all(batch_rows)
+end
+
+5️⃣ Avoid System Degradation
+
+Process CSV in background jobs (Sidekiq, Resque, Delayed Job)
+
+Limit concurrency to avoid DB overload
+
+Monitor job progress and memory usage
+
+Use database indexes on frequently updated fields (e.g., email or id)
+
+6️⃣ Error Handling
+
+Catch exceptions per batch, not per row:
+
+Allows process to continue if a batch fails
+
+Log detailed errors for later analysis
+
+7️⃣ Post-Processing
+
+Verify counts: total inserted/updated vs total CSV rows
+
+Generate summary report for auditing
+
+Optionally, trigger notifications when processing completes
+
+✅ Key Tips for Performance
+
+Never load 1M+ rows in memory at once
+
+Use batch inserts/updates instead of one-by-one
+
+Use background workers and limit concurrency
+
+Proper indexing on DB
+
+Monitor resource usage and failures

@@ -1,0 +1,138 @@
+🎥 Video Handling Flow – Mental Diagram (Memorize This)
+1️⃣ Admin uploads video (RAW ASSET)
+Admin Browser
+     ↓
+Pre-signed URL
+     ↓
+Object Storage (S3 / GCS)
+
+
+What this means:
+
+Video is only stored
+
+Not playable yet
+
+No duration
+
+No streaming
+
+👉 State: uploaded
+
+2️⃣ Storage event triggers processing
+Object Storage
+     ↓ (event)
+Background Worker
+
+
+What happens:
+
+System is notified that a new file exists
+
+No user is waiting
+
+Fully async
+
+👉 Reason: heavy work must not block requests
+
+3️⃣ Video processing (PREPARATION)
+Raw Video
+   ↓
+Normalize format
+   ↓
+Split into chunks
+   ↓
+Create multiple qualities
+   ↓
+Extract metadata
+
+
+Results:
+
+Browser-compatible format
+
+Streaming support
+
+Duration known
+
+Thumbnails created
+
+👉 State: processing
+
+4️⃣ Video becomes STREAM-READY
+Processed Video
+     ↓
+CDN
+
+
+Database updated:
+
+duration
+
+playback URL
+
+status = ready
+
+👉 Now it is playable
+
+5️⃣ Admin publishes chapter
+Video ready
+     ↓
+Chapter published
+
+
+Why separate step?
+
+Avoid exposing broken content
+
+Admin controls visibility
+
+6️⃣ Learner plays video
+Learner
+   ↓ (request)
+Rails (authorize)
+   ↓
+Signed URL
+   ↓
+CDN (streams video)
+
+
+Rails:
+
+Does NOT stream video
+
+Only authorizes access
+
+7️⃣ Progress tracking
+Player
+   ↓ (heartbeat)
+Rails
+   ↓
+Progress table
+
+
+Used for:
+
+Resume playback
+
+Completion %
+
+Course & program progress
+
+🧠 One-paragraph interview answer (memorize)
+
+“Video upload is a two-phase process.
+First, the raw video is uploaded directly to object storage using a pre-signed URL.
+Second, a background worker processes the video into streaming-optimized formats, extracts metadata like duration, and prepares adaptive bitrates.
+Only after processing and publishing is the video available to learners, while Rails handles authorization and progress tracking.”
+
+🔥 If architect pushes further
+
+If they say:
+
+“Why not just store and play the uploaded file?”
+
+You answer:
+
+“Raw videos are inconsistent, heavy, and not streaming-friendly.
+Processing ensures reliability, scalability, and accurate progress tracking.”

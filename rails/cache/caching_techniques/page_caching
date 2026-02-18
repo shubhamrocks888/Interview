@@ -1,0 +1,145 @@
+1️⃣ What is Page Caching? (Exact definition)
+
+Page caching means caching the entire HTML response of a page and serving it directly from the web server without hitting Rails at all.
+
+No:
+
+controller
+
+model
+
+view
+
+database
+
+Rails is completely bypassed.
+
+2️⃣ How Page Caching Works (conceptually)
+First request:
+
+Request comes to Rails
+
+Controller action runs
+
+View renders HTML
+
+HTML is saved as a static file
+
+Response is returned
+
+Next request:
+
+Request comes in
+
+Web server (Nginx/Apache) finds cached HTML
+
+HTML is returned directly
+
+Rails never runs
+
+3️⃣ Simple Example (Blog posts page)
+
+Route:
+
+GET /posts
+
+
+Controller:
+
+class PostsController < ApplicationController
+  def index
+    @posts = Post.all
+  end
+end
+
+Cached result:
+public/posts.html
+
+
+Now:
+
+Visiting /posts
+
+Server returns posts.html
+
+Rails is skipped entirely 🚀
+
+4️⃣ Why Page Caching Is FAST
+Step	Fragment caching	Page caching
+Rails boot	✅ Yes	❌ No
+Controller	✅ Yes	❌ No
+View rendering	Partial	❌ No
+DB queries	Often	❌ No
+Web server only	❌	✅
+
+👉 Fastest possible caching
+
+5️⃣ Why Rails Removed Built-in Page Caching
+
+Page caching was removed after Rails 3 because:
+
+❌ No user-specific content
+❌ Hard to expire
+❌ Doesn’t work well with auth / sessions
+❌ Breaks dynamic pages
+
+So Rails moved to:
+
+HTTP caching
+
+Reverse proxy caching
+
+Fragment caching
+
+6️⃣ Modern Rails Page Caching (How it’s done now)
+
+Instead of Rails doing it, we use:
+
+🔹 Nginx / Varnish / Cloudflare
+
+Rails sends headers:
+
+expires_in 10.minutes, public: true
+
+
+Web server / CDN caches the full page.
+
+7️⃣ Page Caching vs Fragment Caching
+Feature	Page caching	Fragment caching
+Cached content	Entire page HTML	Part of page
+Rails involved	❌ No	✅ Yes
+Per-user content	❌ No	✅ Yes
+Speed	🚀 Fastest	Fast
+Flexibility	Low	High
+8️⃣ When to Use Page Caching
+
+✅ Public pages
+✅ Same content for everyone
+✅ Rarely changing pages
+
+Examples:
+
+Landing pages
+
+Marketing pages
+
+Blogs (public view)
+
+Documentation
+
+9️⃣ When NOT to Use Page Caching
+
+❌ Logged-in pages
+❌ Personalized dashboards
+❌ Pages with sessions / cookies
+❌ Admin panels
+
+10️⃣ One-Line Interview Answer
+
+Page caching stores the entire rendered HTML of a page and serves it directly from the web server, completely bypassing Rails for maximum performance.
+
+Mental model
+
+Fragment caching = cache parts
+Russian doll = cache parts + container
+Page caching = cache everything

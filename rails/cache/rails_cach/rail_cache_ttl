@@ -1,0 +1,127 @@
+🔹 What is race_condition_ttl?
+Short definition
+
+race_condition_ttl prevents a cache stampede when a cached value expires.
+
+🧠 The Problem (Cache Stampede)
+
+Without race_condition_ttl:
+
+Cache expires at 10:00:00
+100 requests hit at 10:00:01
+❌ All 100 recompute `heavy_computation`
+❌ DB / CPU spike
+
+🔧 What race_condition_ttl: 5.seconds does
+Rails.cache.fetch(
+  "expensive_data",
+  expires_in: 10.minutes,
+  race_condition_ttl: 5.seconds
+) do
+  heavy_computation
+end
+
+
+Rails behavior:
+
+Cache expires
+
+First request starts recomputing
+
+Old value is kept alive for 5 seconds
+
+Other requests:
+
+Get stale value
+
+Do NOT recompute
+
+New value replaces old one
+
+🔄 Timeline (Very Clear)
+T = 10:00:00 cache expires
+T = 10:00:01 request #1 → recompute
+T = 10:00:02 request #2 → gets old value
+T = 10:00:03 request #3 → gets old value
+T = 10:00:04 request #4 → gets old value
+T = 10:00:05 new value written
+
+⚠️ Important Details
+🔸 Only ONE process recomputes
+
+Rails uses a soft lock internally.
+
+🔸 Others get stale data
+
+For a short, controlled time.
+
+🔸 Staleness is acceptable
+
+Better than overload.
+
+❌ What race_condition_ttl is NOT
+
+❌ Not cache expiration
+
+❌ Not retry logic
+
+❌ Not background job
+
+❌ Not distributed locking
+
+🔥 Interview One-Liner (Perfect)
+
+“race_condition_ttl allows serving stale cache briefly to prevent cache stampedes when a value expires.”
+
+🧪 Example Without It (Bad)
+Rails.cache.fetch("x", expires_in: 1.minute) do
+  expensive_call
+end
+
+
+High traffic → thundering herd problem.
+
+🧪 Example With It (Good)
+Rails.cache.fetch(
+  "x",
+  expires_in: 1.minute,
+  race_condition_ttl: 10.seconds
+) do
+  expensive_call
+end
+
+
+Smooth traffic.
+
+🎯 When should you use it?
+
+Use race_condition_ttl when:
+
+Heavy DB queries
+
+External API calls
+
+CPU-intensive computation
+
+High traffic endpoints
+
+🧠 One Mental Model
+
+expires_in → hard TTL
+race_condition_ttl → grace period
+
+⚠️ Gotcha (Interview bonus)
+
+race_condition_ttl only works with cache stores that support expiration metadata
+(e.g. Memcached, Redis).
+It’s ignored by some simple stores.
+
+✅ Final Summary
+
+Prevents cache stampede
+
+Serves stale data briefly
+
+Protects DB & CPU
+
+Essential in high traffic Rails apps

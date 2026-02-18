@@ -1,0 +1,86 @@
+Perfect — this is another classic architect-level question, and it’s a trap for people who just say “monitor metrics” without structure. Architects want how you reason and pinpoint the problem.
+
+Here’s how to answer it step by step.
+
+1️⃣ Start with metrics (overview)
+
+“First, I check if the database is actually the bottleneck by monitoring key metrics.”
+
+Metrics to look at:
+
+| Metric              | Why it matters                                    |
+| ------------------- | ------------------------------------------------- |
+| CPU usage           | High CPU → expensive queries                      |
+| Memory usage        | High memory → inefficient caching, sorting, joins |
+| Disk IO / latency   | Reads/writes slower than expected                 |
+| Active connections  | Connection pool exhaustion                        |
+| Locks / wait events | Contention causing slow queries                   |
+
+
+Tools:
+
+Postgres: pg_stat_activity, pg_stat_statements, EXPLAIN ANALYZE
+
+MySQL: SHOW PROCESSLIST, slow query log
+
+APM tools: NewRelic, Datadog, AppSignal
+
+2️⃣ Identify slow queries
+
+“Once I confirm the DB is the bottleneck, I pinpoint slow queries.”
+
+Methods:
+
+Slow query logs
+
+Postgres: log_min_duration_statement
+
+MySQL: slow_query_log
+
+Capture queries taking longer than threshold (e.g., 1s)
+
+Query stats tables
+
+Postgres: pg_stat_statements → top N queries by total execution time
+
+MySQL: performance_schema
+
+Application-level monitoring
+
+Track endpoint latency
+
+Correlate with DB calls to see which queries are slow
+
+EXPLAIN / EXPLAIN ANALYZE
+
+Check query plan
+
+Identify full table scans, sequential scans, nested loops
+
+3️⃣ Look for hotspots
+
+Queries with high frequency × latency
+
+Queries causing locks or deadlocks
+
+Queries accessing large tables without indexes
+
+Queries performing heavy aggregations
+
+Architects love seeing this logic: frequency × cost = impact
+
+4️⃣ Example answer for interview
+
+“I first monitor DB metrics like CPU, memory, and disk IO to confirm the database is the bottleneck. Then I check slow query logs and stats tables (pg_stat_statements for Postgres) to identify queries with high latency or high frequency. For suspicious queries, I run EXPLAIN ANALYZE to see the execution plan and determine if it’s scanning tables inefficiently, waiting on locks, or performing expensive joins. This lets me prioritize which queries to optimize first.”
+
+5️⃣ Optional bonus points
+
+Mention APM tools (NewRelic, Datadog, Scout) for correlating slow endpoints to queries
+
+Mention index analysis / missing indexes
+
+Mention query caching or materialized views for repeated expensive queries
+
+One-liner killer version
+
+“I confirm the DB is the bottleneck using metrics, then identify slow or expensive queries via slow query logs, stats tables, and execution plans, prioritizing those that impact throughput and latency the most.”

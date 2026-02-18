@@ -1,0 +1,182 @@
+1️⃣ Database Optimization (MOST IMPORTANT)
+
+	“Most performance issues come from the database.”
+
+	✅ Indexing
+
+	Add indexes on:
+
+	WHERE
+	JOIN
+	ORDER BY
+	GROUP BY
+	CREATE INDEX idx_users_email ON users(email);
+
+
+	📌 Interview line:
+	“I check slow queries and add proper indexes.”
+
+
+	✅ Avoid N+1 Queries
+		# Bad
+		posts.each { |p| p.user.name }
+
+		# Good
+		Post.includes(:user)
+
+
+		📌 Say:
+
+		“I use eager loading to avoid N+1 queries.”
+
+	✅ Reduce Data Fetch
+
+		Use select, pluck, pagination
+		User.pluck(:id, :email)
+
+
+	📌 Say:
+
+	“I fetch only required columns instead of entire objects.”
+
+
+2️⃣ Caching (Huge Performance Boost)
+	✅ Page / Fragment / Data Caching
+	Rails.cache.fetch("users", expires_in: 10.minutes) do
+	  User.all.as_json
+	end
+
+
+	📌 Say:
+
+	“I use Redis/Memcached to cache frequently accessed data.”
+
+
+✅ HTTP Caching
+
+	ETag
+	Last-Modified
+	CDN caching
+
+	📌 Say:
+
+	“I leverage browser and CDN caching to reduce server load.”
+
+
+
+3️⃣ Background Jobs (Async Processing)
+
+	Move slow tasks out of request-response cycle.
+
+	Examples:
+
+	Emails
+	File processing
+	Notifications
+	Reports
+
+	UserMailer.welcome_email(user).deliver_later
+
+
+	📌 Say:
+
+	“I use background jobs like Sidekiq to keep requests fast.”
+
+
+
+4️⃣ Code-Level Optimizations
+
+	✅ Reduce Loops & Heavy Computation
+
+	Use DB instead of Ruby loops
+
+	# Bad
+	users.select { |u| u.active }
+
+	# Good
+	User.where(active: true)
+
+
+	📌 Say:
+
+	“I push computation to the database where possible.”
+
+
+	✅ Memoization
+
+	def current_user
+	  @current_user ||= User.find(session[:id])
+	end
+
+
+5️⃣ API & Network Optimization
+	✅ Pagination
+	User.page(params[:page]).per(20)
+
+
+	✅ Avoid Large JSON Responses
+
+	Use serializers
+
+	Send only required fields
+
+	📌 Say:
+
+	“I optimize API responses to reduce payload size.”
+
+6️⃣ Scaling the Application
+
+	✅ Horizontal Scaling
+
+	Multiple app servers
+	Load balancer
+
+	✅ Read Replicas
+
+	Reads → replica
+	Writes → primary DB
+
+	📌 Say:
+
+	“For high traffic, I scale horizontally and use read replicas.”
+
+7️⃣ Monitoring & Profiling
+	✅ Identify Bottlenecks
+
+	Tools:
+
+	New Relic
+	Skylight
+	Bullet (Rails)
+	Slow query logs
+
+	📌 Say:
+
+	“I first measure performance using monitoring tools, then optimize.”
+
+8️⃣ Frontend Optimizations (If Full Stack)
+
+	Minify JS/CSS
+
+	Lazy loading
+
+	Image optimization
+
+	CDN
+
+	📌 Say:
+
+	“I optimize frontend assets to improve page load time.”
+
+
+
+
+
+
+
+
+
+
+
+
+

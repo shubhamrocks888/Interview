@@ -1,0 +1,121 @@
+hat does dependent: :nullify mean? ✅
+
+When the parent record is deleted, Rails:
+
+👉 sets the foreign key in child records to NULL
+👉 does NOT delete the child records
+
+Basic example
+class User < ApplicationRecord
+  has_many :posts, dependent: :nullify
+end
+
+class Post < ApplicationRecord
+  belongs_to :user, optional: true
+end
+
+What happens?
+user = User.find(1)
+user.posts.count # => 3
+
+user.destroy
+
+
+➡ Posts remain in DB
+➡ posts.user_id becomes NULL
+
+Before & After visualization
+Before delete
+
+| posts.id | user_id | title  |
+| -------- | ------- | ------ |
+| 1        | 1       | Post A |
+| 2        | 1       | Post B |
+
+After user.destroy
+
+| posts.id | user_id | title  |
+| -------- | ------- | ------ |
+| 1        | NULL    | Post A |
+| 2        | NULL    | Post B |
+
+⚠️ Important requirements (VERY IMPORTANT)
+1️⃣ Foreign key must allow NULL
+t.bigint :user_id, null: true
+
+
+❌ This will break:
+
+t.bigint :user_id, null: false
+
+2️⃣ belongs_to must be optional (Rails 5+)
+belongs_to :user, optional: true
+
+
+Otherwise:
+❌ Validation error: User must exist
+
+When should you use dependent: :nullify? 🤔
+
+✅ Audit data must be preserved
+✅ Historical records
+✅ Logs, comments, posts
+✅ User deleted but content remains
+
+Example:
+
+User deletes account
+
+Blog posts remain visible but anonymous
+
+When NOT to use it 🚫
+
+❌ Orphan records don’t make sense
+❌ Data must be removed with parent
+
+Use instead:
+
+dependent: :destroy
+
+dependent: :delete_all
+
+Compare with other dependent options (interview must-know)
+| Option                     | What happens                |
+| -------------------------- | --------------------------- |
+| `:destroy`                 | Calls `destroy` on children |
+| `:delete_all`              | Deletes directly via SQL    |
+| `:nullify`                 | Sets FK to NULL             |
+| `:restrict_with_error`     | Prevents delete             |
+| `:restrict_with_exception` | Raises exception            |
+
+Interview one-liner ⭐
+
+“dependent: :nullify keeps child records but removes their association by setting the foreign key to NULL.”
+
+⚠️ Performance note (bonus)
+
+Rails runs:
+
+UPDATE posts SET user_id = NULL WHERE user_id = ?
+
+
+Can be expensive for large tables
+
+Common interview follow-up ❓
+❓ Will callbacks on child run?
+
+❌ No
+Because records are not destroyed
+
+❓ Will validations run?
+
+❌ No
+Only an update happens
+
+⭐ Final takeaway
+
+dependent: :nullify → data preserved
+
+Requires nullable FK + optional belongs_to
+
+Useful for historical/audit data

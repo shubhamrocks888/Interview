@@ -1,0 +1,95 @@
+🧠 Now Your Turn (Interview Mode)
+
+Implement this:
+
+Create a Library class.
+
+Requirements:
+
+Add book
+
+Remove book
+
+List available books
+
+Borrow book (cannot borrow if unavailable)
+
+Return book
+
+Try to design:
+
+Proper structure
+
+Separate Book class?
+
+Validations
+
+Clean design
+
+
+###
+
+class Library
+  @available_books = []
+  @transactions = []
+
+  # ---- Class Methods ----
+  def self.available_books
+    @available_books
+  end
+
+  def self.transactions
+    @transactions
+  end
+
+  def self.add_book(book)
+    @available_books << book
+  end
+
+  def self.remove_book(book)
+    @available_books.delete(book)
+  end
+
+  def self.list_available_books
+    @available_books
+  end
+
+  # ---- Instance Methods ----
+  attr_reader :account, :borrowed_books
+
+  def initialize(account)
+    @account = account
+    @borrowed_books = []
+  end
+
+  def borrow_book(book)
+    unless self.class.available_books.include?(book)
+      raise "Book not available"
+    end
+
+    self.class.available_books.delete(book)
+    @borrowed_books << book
+    record_entry("borrow", book)
+  end
+
+  def return_book(book)
+    unless @borrowed_books.include?(book)
+      raise "You did not borrow this book"
+    end
+
+    @borrowed_books.delete(book)
+    self.class.available_books << book
+    record_entry("return", book)
+  end
+
+  private
+
+  def record_entry(type, book)
+    self.class.transactions << {
+      account: @account,
+      type: type,
+      book: book,
+      time: Time.now
+    }
+  end
+end

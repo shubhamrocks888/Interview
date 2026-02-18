@@ -1,0 +1,88 @@
+1️⃣ Big Picture: How Online Payments Actually Work
+
+Before Razorpay or Rails — understand the flow.
+
+Actors involved
+
+Client (Browser / Mobile App)
+
+Your Server (Rails backend)
+
+Payment Gateway (Razorpay)
+
+Bank / Card Network
+
+High-level flow
+Client → Rails Server → Razorpay → Bank
+                    ← Razorpay ← Bank
+Client ← Rails Server
+
+
+💡 Key interview line
+
+Money never flows through our server. Only payment status does.
+
+2️⃣ Razorpay Payment Flow (End-to-End)
+
+Let’s take Card / UPI payment example.
+
+Step-by-step flow
+1. User clicks "Pay ₹500"
+2. Client calls Rails backend
+3. Rails creates Razorpay Order
+4. Razorpay returns order_id
+5. Client opens Razorpay Checkout
+6. User enters card / UPI
+7. Razorpay talks to bank
+8. Payment success / failure
+9. Razorpay returns payment_id + signature
+10. Rails verifies signature
+11. Rails marks order as PAID
+
+
+📌 Interview golden rule
+👉 Payment is confirmed ONLY on server after signature verification
+
+3️⃣ Important Razorpay Concepts (Must Know)
+🔹 Order
+
+Created on your server
+
+Represents amount + currency
+
+Example:
+
+{
+  "id": "order_KJH234",
+  "amount": 50000,
+  "currency": "INR"
+}
+
+
+Amount is always in paise, not rupees.
+
+🔹 Payment
+
+Created after user pays
+
+Comes from Razorpay
+
+🔹 Signature (MOST IMPORTANT FOR INTERVIEW)
+
+Razorpay sends:
+
+order_id
+payment_id
+signature
+
+
+Signature =
+
+HMAC_SHA256(order_id|payment_id, secret_key)
+
+
+💡 Purpose:
+
+Prevents fake payment success
+
+Proves Razorpay actually sent this response

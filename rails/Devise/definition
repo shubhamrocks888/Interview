@@ -1,0 +1,374 @@
+1️⃣ What is Devise? (Simple Definition)
+
+Devise is an authentication framework for Rails.
+
+Authentication = Who are you?
+(Login, logout, sessions, cookies, passwords)
+
+Devise helps you handle:
+
+User signup
+
+Login / logout
+
+Password encryption
+
+Session handling
+
+current_user
+
+Remember me
+
+Password reset
+
+Account confirmation
+
+Account locking
+
+Timeout / auto logout
+
+👉 Devise does NOT handle authorization (what you can do).
+That’s done by Pundit / CanCanCan.
+
+2️⃣ Why Devise Exists (Why not build it ourselves?)
+
+Without Devise, you must manually handle:
+
+Password hashing
+
+Secure cookies
+
+Session fixation attacks
+
+CSRF + authentication integration
+
+Reset password tokens
+
+Remember-me tokens
+
+Edge cases (logout all sessions, expiry, etc.)
+
+Devise solves security-critical logic that is easy to get wrong.
+
+3️⃣ Devise Architecture (Very Important)
+
+Devise is built on top of Warden.
+
+Rails App
+  |
+  |-- Devise
+        |
+        |-- Warden (Rack middleware)
+              |
+              |-- Session / Cookies
+
+Key point (INTERVIEW GOLD)
+
+Devise is NOT magic. It is a thin Rails wrapper around Warden.
+
+Warden:
+
+Runs at Rack level
+
+Authenticates requests
+
+Stores user in session
+
+Devise:
+
+Provides Rails helpers
+
+Provides generators
+
+Provides controllers + models
+
+4️⃣ Devise Setup (What happens when you install Devise)
+bundle add devise
+rails generate devise:install
+
+
+This creates:
+
+1️⃣ Initializer
+config/initializers/devise.rb
+
+
+This file controls:
+
+Password length
+
+Token expiry
+
+Remember-me duration
+
+Mailer config
+
+Stretching cost (bcrypt)
+
+We’ll cover this later line by line.
+
+2️⃣ Routes
+
+Devise injects routes like:
+
+devise_for :users
+
+
+Which expands to:
+
+new_user_session     GET    /users/sign_in
+user_session         POST   /users/sign_in
+destroy_user_session DELETE /users/sign_out
+new_user_registration GET   /users/sign_up
+
+
+👉 These are regular Rails routes, not magic.
+
+5️⃣ Devise Model (User model)
+rails generate devise User
+
+
+Creates:
+
+class User < ApplicationRecord
+  devise :database_authenticatable,
+         :registerable,
+         :recoverable,
+         :rememberable,
+         :validatable
+end
+
+
+Each symbol is a module.
+
+👉 Devise is modular. You enable only what you want.
+
+6️⃣ Core Modules Overview (High Level)
+
+| Module                     | What it does                         |
+| -------------------------- | ------------------------------------ |
+| `database_authenticatable` | Password encryption & authentication |
+| `registerable`             | Sign up / edit / delete account      |
+| `recoverable`              | Reset password                       |
+| `rememberable`             | Remember me                          |
+| `validatable`              | Email + password validations         |
+| `confirmable`              | Email confirmation                   |
+| `lockable`                 | Lock account after failed attempts   |
+| `timeoutable`              | Auto logout                          |
+| `trackable`                | Login stats                          |
+
+We will cover each one in detail, starting with the most important.
+
+7️⃣ Authentication Flow (VERY IMPORTANT)
+
+Let’s understand what happens when user logs in.
+
+Step-by-step
+
+1️⃣ User submits login form
+2️⃣ Devise controller receives params
+3️⃣ Warden authenticates user
+4️⃣ Password is checked using bcrypt
+5️⃣ User ID stored in session
+6️⃣ current_user becomes available
+
+8️⃣ database_authenticatable (Password Handling)
+
+This module handles:
+
+Password hashing
+
+Password comparison
+
+Secure storage
+
+Database fields
+t.string :email
+t.string :encrypted_password
+
+
+❌ Devise NEVER stores plain password
+✔ Uses bcrypt
+
+Password flow
+user.password = "secret"
+
+
+Internally:
+
+BCrypt::Password.create("secret")
+
+
+Stored as:
+
+$2a$12$Lx0K...hashed_string
+
+Login check
+BCrypt::Password.new(encrypted_password) == entered_password
+
+
+👉 Password is never decrypted (one-way hashing)
+
+9️⃣ Sessions & current_user (CORE CONCEPT)
+Where is user stored after login?
+
+In Rails session
+
+session[:user_id] = user.id
+
+
+But Devise uses Warden, so internally:
+
+env['warden'].set_user(user)
+
+How current_user works
+
+Devise adds a helper:
+
+current_user
+
+
+Internally:
+
+env['warden'].user
+
+
+👉 It:
+
+Reads session
+
+Fetches user from DB
+
+Memoizes result
+
+🔟 before_action :authenticate_user!
+before_action :authenticate_user!
+
+
+This does:
+
+Checks if user exists in session
+
+If not → redirect to login
+
+Sets flash message
+
+Equivalent logic:
+
+redirect_to new_user_session_path unless current_user
+
+1️⃣1️⃣ Remember Me (Cookies)
+
+When user checks Remember me:
+
+Devise creates:
+
+A remember_token
+
+Stored in signed cookie
+
+Stored hashed in DB
+
+t.string   :remember_token
+t.datetime :remember_created_at
+
+Flow
+
+User logs in with remember me
+
+Cookie saved for weeks
+
+Session expires
+
+Devise re-authenticates using cookie
+
+👉 Secure because:
+
+Token is random
+
+Token is hashed in DB
+
+Cookie is signed
+
+1️⃣2️⃣ Logout Flow
+DELETE /users/sign_out
+
+
+Devise:
+
+Clears session
+
+Clears remember cookie
+
+Calls Warden logout
+
+1️⃣3️⃣ Devise Controllers (Hidden but Real)
+
+Devise provides controllers:
+
+Devise::SessionsController
+
+Devise::RegistrationsController
+
+Devise::PasswordsController
+
+You can override them:
+
+rails generate devise:controllers users
+
+1️⃣4️⃣ Devise Views
+rails generate devise:views
+
+
+Gives:
+
+Login form
+
+Signup form
+
+Forgot password form
+
+They are normal ERB files.
+
+1️⃣5️⃣ Security Built-in (Why Devise is trusted)
+
+Devise protects against:
+
+Session fixation
+
+Brute force (with lockable)
+
+Token replay
+
+Timing attacks
+
+CSRF integration
+
+1️⃣6️⃣ Common Interview Questions (Short Answers)
+
+Q: Is Devise authentication or authorization?
+👉 Authentication
+
+Q: Where is current_user stored?
+👉 Session via Warden
+
+Q: Does Devise store password in DB?
+👉 No, only encrypted_password
+
+Q: Can Devise work without cookies?
+👉 No (sessions rely on cookies)
+
+1️⃣7️⃣ How We’ll Continue (Next Steps)
+
+Next, we’ll go one module at a time, very deep:
+
+1️⃣ database_authenticatable (bcrypt, pepper, stretches)
+2️⃣ recoverable (reset password tokens)
+3️⃣ rememberable (cookies deep dive)
+4️⃣ confirmable
+5️⃣ lockable
+6️⃣ timeoutable
+7️⃣ Devise + JWT (API mode)
+8️⃣ Devise vs custom auth
+9️⃣ Devise + Sidekiq emails
+🔟 Common production pitfalls

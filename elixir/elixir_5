@@ -1,0 +1,115 @@
+In Elixir:
+
+A process is a lightweight unit of execution managed by the BEAM VM.
+Costs a few KBs of memory
+Creation is cheap
+Millions can exist at once
+Each has isolated state
+
+
+What “1 process per connection” means
+In Elixir / Phoenix:
+
+When a user connects (HTTP request, WebSocket, LiveView, Kafka message):
+
+👉 Elixir spawns a new lightweight process
+👉 That process:
+
+Handles that user’s request
+Maintains only that user’s state
+Dies when work is done
+No shared objects. 
+No locks.
+
+🔹 Compare with Ruby (Rails)
+Rails
+
+Limited thread pool (e.g., 5–16 threads)
+One thread handles many requests over time
+Requests wait in a queue if threads are busy
+Threads share memory → locks
+
+Elixir
+
+Every request gets its own process
+Requests don’t block each other
+Scheduler switches between processes efficiently
+
+🔹 Visual Mental Model (IMPORTANT)
+Ruby
+Request Queue → Thread Pool (10 threads) → App
+
+
+100,000 users → most wait
+
+Elixir
+100,000 connections → 100,000 lightweight processes
+
+
+Scheduler distributes them across CPU cores.
+
+🔹 Example (Conceptual)
+spawn(fn ->
+  handle_request(conn)
+end)
+
+
+Every request → new process
+
+💡 You don’t write this manually in Phoenix — the framework does it for you.
+
+🔹 Why this scales
+Because:
+
+No shared memory
+No mutexes
+No thread exhaustion
+Processes are isolated
+
+Golden line:
+
+“In Elixir, a spike in traffic creates more processes, not contention.”
+
+🔹 What happens if one user crashes?
+Elixir
+
+Only that user’s process crashes
+Supervisor restarts it
+Others unaffected
+
+Ruby
+
+Exception may kill thread
+Can impact shared state
+Requires defensive coding
+
+🔹 WebSockets / LiveView Example (Very Strong Point)
+
+WebSockets keep connections open.
+
+Ruby
+
+Threads stay busy
+Memory pressure
+Hard limit on connections
+
+Elixir
+
+Idle process consumes almost no CPU
+Can hold hundreds of thousands of open connections
+
+Say this:
+
+“Elixir is ideal for long-lived connections because idle processes are cheap.”
+
+🔹 Final Interview-Perfect Explanation (Memorize)
+
+“1 process per connection means that each user request or connection is handled by its own lightweight Elixir process.
+These processes are cheap, isolated, and scheduled by the BEAM VM, which allows the system to handle massive concurrency without thread contention or shared state issues.”
+
+🔥 If interviewer asks “Isn’t that expensive?”
+
+Answer:
+
+“No. Elixir processes are extremely lightweight—on the order of kilobytes—and are much cheaper than OS threads.”
+

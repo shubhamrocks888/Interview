@@ -1,0 +1,194 @@
+🧩 Level 0 — Super basic (no nesting, just scalars)
+Params
+params = {
+  user_id: 1,
+  title: "Hello",
+  status: "draft"
+}
+
+Code
+user = User.find(params[:user_id])
+post = user.posts.create(
+  title: params[:title],
+  status: params[:status]
+)
+
+
+🧠 Thought process:
+
+I need a user
+
+I need title + status
+
+Done
+
+🧩 Level 1 — One post, nested params (real API style)
+Params
+params = {
+  user_id: 1,
+  post: {
+    title: "Hello",
+    status: "draft"
+  }
+}
+
+Code
+user = User.find(params[:user_id])
+post = user.posts.create(params.require(:post).permit(:title, :status))
+
+
+🧠 Thought process:
+
+Extract post hash
+
+Permit only allowed keys
+
+Pass directly
+
+🧩 Level 2 — Multiple posts (array, no nesting)
+Params
+params = {
+  user_id: 1,
+  posts: [
+    { title: "Post 1", status: "draft" },
+    { title: "Post 2", status: "published" }
+  ]
+}
+
+Code
+user = User.find(params[:user_id])
+
+posts = user.posts.create(
+  params[:posts].map { |p| p.slice(:title, :status) }
+)
+
+
+🧠 Thought process:
+
+posts is an array
+
+sanitize each hash
+
+create many at once
+
+🧩 Level 3 — Multiple posts with strong params (INTERVIEW SAFE)
+Params
+params = {
+  user_id: 1,
+  posts: [
+    { title: "Post 1", status: "draft" },
+    { title: "Post 2", status: "published" }
+  ]
+}
+
+Code
+def posts_params
+  params.require(:posts).map do |p|
+    ActionController::Parameters.new(p).permit(:title, :status)
+  end
+end
+
+user = User.find(params[:user_id])
+user.posts.create!(posts_params)
+
+
+🧠 Thought process:
+
+Array ≠ hash
+
+Strong params don’t auto-handle arrays
+
+Wrap each element manually
+
+💡 This is where most people get stuck — totally normal
+
+🧩 Level 4 — User + posts together (nested attributes)
+Params
+params = {
+  user: {
+    email: "test@test.com",
+    full_name: "Shubham",
+    posts_attributes: [
+      { title: "Post 1", status: "draft" },
+      { title: "Post 2", status: "published" }
+    ]
+  }
+}
+
+Model
+class User < ApplicationRecord
+  has_many :posts
+  accepts_nested_attributes_for :posts
+end
+
+Controller
+User.create!(
+  params.require(:user)
+        .permit(:email, :full_name,
+                posts_attributes: [:title, :status])
+)
+
+
+🧠 Thought process:
+
+Parent owns children
+
+Let Rails handle association wiring
+
+🧩 Level 5 — Complex real-world params (filters + meta + data)
+Params
+params = {
+  meta: { source: "mobile" },
+  data: {
+    user_id: 1,
+    posts: [
+      { title: "A", status: "draft", temp: true },
+      { title: "B", status: "published", debug: false }
+    ]
+  }
+}
+
+Code
+user = User.find(params.dig(:data, :user_id))
+
+posts = params.dig(:data, :posts).map do |p|
+  {
+    title: p[:title],
+    status: p[:status]
+  }
+end
+
+user.posts.create!(posts)
+
+
+🧠 Thought process:
+
+Ignore meta
+
+Dig to real data
+
+Whitelist manually
+
+🔑 One mental formula (this removes panic)
+
+When you see params, ask in order:
+
+Is this a hash or array?
+
+Where is the actual data I need?
+
+Who owns whom?
+
+Can Rails wire this automatically?
+
+🚫 Biggest mistake (you might be doing this)
+
+Trying to write code before understanding params shape.
+
+👉 Always puts params.to_unsafe_h in dev
+👉 Read structure first
+👉 Then write code
+
+🎯 Interview one-liner (gold)
+
+“I first normalize params into a clean structure, then create associated records via the parent association.”

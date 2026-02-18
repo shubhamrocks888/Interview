@@ -1,0 +1,326 @@
+Partitioning
+
+Definition:
+	Partitioning is splitting a table into smaller pieces, usually within the same database/server, to improve performance, manageability, or storage.
+
+	Each piece is called a partition.
+
+	The database still sees it as one logical table.
+
+Common types:
+
+Range partitioning – rows split by value ranges
+
+	Orders 2024-01-01 - 2024-06-30 → Partition 1
+	Orders 2024-07-01 - 2024-12-31 → Partition 2
+
+
+List partitioning – rows split by discrete values
+
+Hash partitioning – distribute rows evenly across partitions
+
+Key points:
+
+Single database/server
+
+Table still looks like one table to queries
+
+Used for query performance & management
+
+Example: PostgreSQL table partitioning, MySQL partitioning
+
+
+Problem:
+
+You have a big orders table and most queries are like:
+
+“Give me orders from January 2025”
+
+	Instead of scanning the entire table, we partition by date.
+
+1️⃣ Normal table (NO partitioning)
+	SELECT *
+	FROM orders
+	WHERE created_at >= '2025-01-01'
+	  AND created_at <  '2025-02-01';
+
+	What DB does ❌
+
+	Scans entire orders table
+
+	Even rows from 2020, 2021, 2022…
+
+	Slow when table is huge
+
+2️⃣ Partitioned table (BY created_at)
+
+	Assume internally DB created partitions like:
+
+	orders_2024
+	orders_2025_01
+	orders_2025_02
+
+
+You still run the SAME query:
+
+SELECT *
+FROM orders
+WHERE created_at >= '2025-01-01'
+  AND created_at <  '2025-02-01';
+
+What DB does ✅
+
+	Looks at partition rules
+
+	Only scans orders_2025_01
+
+	Skips all other partitions
+
+	This skipping is called partition pruning ⭐
+
+3️⃣ How it looks internally (mental model)
+
+	orders (logical table)
+	│
+	├── orders_2024        ❌ skipped
+	├── orders_2025_01     ✅ scanned
+	├── orders_2025_02     ❌ skipped
+
+
+You don’t change your query — DB is smart.
+
+4️⃣ Another simple example (by user_id)
+
+	Partition rule
+	users with id 1–1_000   → partition_1
+	users with id 1001–2000 → partition_2
+
+	Query
+	SELECT *
+	FROM users
+	WHERE id = 1200;
+
+	DB behavior
+
+	Knows id=1200 → partition_2
+
+	Scans only that partition
+
+5️⃣ Key takeaway (one line)
+
+	Partitioning does NOT change how you query — it changes how the database executes the query internally.
+
+6️⃣ Interview-ready summary ⭐
+	Without partition		With partition
+	Full table scan	Only 	relevant partition scanned
+	Slow for large data		Fast
+	Same query				Same query
+
+
+
+Interview one-liner ⭐
+
+Partitioning improves query performance on large datasets but adds operational complexity, insert overhead, and can slow queries that don’t use the partition key.
+
+
+❌ Cons of Partitioning (Important)
+
+	1️⃣ More complexity (biggest con)
+
+		You now manage many tables instead of one
+
+		Need to:
+
+		Create new partitions regularly (monthly / yearly)
+
+		Drop old partitions
+
+		Mistakes can cause:
+
+		Data going into wrong partition
+
+		Inserts failing
+
+		👉 Operational overhead increases
+
+	2️⃣ Inserts can be slower
+
+		When inserting a row:
+
+		INSERT INTO orders (created_at, amount) VALUES (...);
+
+
+		DB must:
+
+		Check partition rules
+
+		Decide which partition to insert into
+
+		For high-write systems:
+
+		This extra step can slightly slow inserts
+
+
+	3️⃣ Queries without partition key become slower
+
+		Partitioning helps only if your WHERE clause uses the partition key.
+
+		-- GOOD (uses partition key)
+		WHERE created_at >= '2025-01-01'
+
+		-- BAD (does NOT use partition key)
+		WHERE amount > 1000
+
+
+		In the bad case:
+
+		DB must scan all partitions
+
+		Can be slower than a normal indexed table
+
+
+	4️⃣ Index management overhead
+
+		Each partition has its own index
+
+		Instead of 1 index → you may have dozens
+
+		More:
+
+		Disk usage
+
+		Index maintenance cost
+
+	5️⃣ Cross-partition queries are expensive
+
+		Queries like:
+
+		SELECT COUNT(*) FROM orders;
+
+
+		Must scan every partition
+
+		Aggregations can be slower than expected
+
+
+	6️⃣ Foreign keys & constraints limitations
+
+		In many databases (esp. older Postgres versions):
+
+		Foreign keys referencing partitioned tables are tricky
+
+		Unique constraints must include the partition key
+
+		Example ❌:
+
+		UNIQUE(email)
+
+
+		Must be:
+
+		UNIQUE(email, created_at)
+
+
+		This can affect data design.
+
+
+	7️⃣ Harder schema changes
+
+		Altering a partitioned table:
+
+		ALTER TABLE orders ADD COLUMN status TEXT;
+
+
+		May require updating all partitions
+
+		Can lock tables longer
+
+		Risky in production
+
+
+	8️⃣ Over-partitioning hurts performance
+
+		Too many partitions = bad:
+
+		Query planner overhead
+
+		Slower planning time
+
+		Memory overhead
+
+		Rule of thumb:
+
+		Hundreds of partitions = okay
+		Thousands = danger zone
+
+
+⚖️ When partitioning is NOT worth it
+
+	❌ Small tables (< few million rows)
+	❌ Queries don’t use partition key
+	❌ Write-heavy systems with no read benefit
+
+✅ When partitioning is worth it
+
+	✔ Very large tables (10M+ rows)
+	✔ Time-based data (logs, orders, events)
+	✔ Queries almost always filter by date
+
+
+
+########### PROS
+
+1️⃣ Faster queries when using partition key (main benefit)
+		WHERE created_at BETWEEN '2025-01-01' AND '2025-01-31'
+
+
+		➡️ DB scans only 1 partition
+		➡️ Massive performance gain
+
+
+2️⃣ Easier data management (often overlooked)
+
+	Example:
+
+	DROP TABLE orders_2023;
+
+
+	Instead of:
+
+	DELETE FROM orders WHERE created_at < '2024-01-01';
+
+
+	Benefits:
+
+	Instant deletes
+
+	Easy archival
+
+	Easy retention policies
+
+	This is a huge win for logs, events, orders.
+
+
+	5️⃣ Why DELETE is worse (real reason)
+		DELETE FROM orders WHERE created_at < '2024-01-01';
+
+
+		Problems:
+
+		Row-by-row delete
+
+		Long locks
+
+		Massive WAL
+
+		Slow vacuum
+
+		Can kill production DB
+
+		Partition drop:
+
+		Metadata-only operation
+
+		Instant
+
+		Safe

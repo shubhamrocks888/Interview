@@ -1,0 +1,245 @@
+PostgreSQL supports:
+
+Composite types
+
+CREATE TYPE address AS (
+  street TEXT,
+  city TEXT
+);
+
+
+MySQL ❌ does not support reusable composite types.
+
+
+#######
+
+1️⃣ What is a Composite Type in PostgreSQL?
+
+A composite type is a custom data type made of multiple fields, like a struct / object.
+
+CREATE TYPE address AS (
+  street TEXT,
+  city   TEXT
+);
+
+
+Think of it as:
+
+Address = Struct.new(:street, :city)
+
+
+but inside the database.
+
+2️⃣ How composite types are used
+✅ Use as a column type
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name TEXT,
+  home_address address
+);
+
+
+Now home_address is not JSON, not separate columns — it’s a typed object.
+
+✅ Insert data
+INSERT INTO users (name, home_address)
+VALUES (
+  'Shubham',
+  ROW('MG Road', 'Bangalore')
+);
+
+
+or explicitly:
+
+INSERT INTO users (name, home_address)
+VALUES (
+  'Shubham',
+  ('MG Road', 'Bangalore')
+);
+
+✅ Query composite fields
+SELECT
+  name,
+  (home_address).street,
+  (home_address).city
+FROM users;
+
+
+👉 Dot notation works because Postgres knows the structure.
+
+✅ Update part of a composite value
+UPDATE users
+SET home_address.city = 'Pune'
+WHERE name = 'Shubham';
+
+3️⃣ Why composite types are powerful
+🔹 Strong typing (unlike JSON)
+
+Postgres validates structure at write time.
+
+❌ JSON:
+
+{ "street": 123 }
+
+
+✅ Composite:
+
+ERROR: invalid input syntax for type text
+
+
+So:
+
+fixed schema
+
+predictable fields
+
+safer than JSON
+
+🔹 Reusability
+
+Define once, reuse everywhere:
+
+CREATE TABLE orders (
+  shipping_address address
+);
+
+CREATE TABLE vendors (
+  office_address address
+);
+
+
+Change structure once, all tables benefit.
+
+🔹 Performance
+
+Stored in binary format
+
+Faster than JSON parsing
+
+Smaller storage footprint
+
+4️⃣ Composite types vs JSON / JSONB
+Feature Composite Type  JSONB
+Schema enforced ✅ Yes ❌ No
+Reusable  ✅ Yes ❌ No
+Indexing  Limited Excellent
+Flexibility Low High
+ORM support Weak  Good
+
+👉 Use composite when:
+
+structure is stable
+
+fields are well-defined
+
+👉 Use JSONB when:
+
+schema evolves often
+
+semi-structured data
+
+5️⃣ MySQL ❌ does NOT support reusable composite types
+What MySQL supports instead
+
+Basic column types
+
+JSON
+
+Embedded column groups (manual)
+
+But NO equivalent of CREATE TYPE (...).
+
+❌ What you cannot do in MySQL
+CREATE TYPE address AS (
+  street TEXT,
+  city TEXT
+);
+
+
+⛔ Syntax error — feature doesn’t exist.
+
+MySQL workaround patterns
+🔸 Option 1: Duplicate columns everywhere (bad)
+users(street, city)
+orders(street, city)
+vendors(street, city)
+
+
+❌ Repetition
+❌ Hard to change
+❌ Error-prone
+
+🔸 Option 2: JSON (most common)
+address JSON
+
+
+Pros:
+
+flexible
+
+schema-less
+
+Cons:
+
+no enforced structure
+
+harder validation
+
+weaker relational semantics
+
+🔸 Option 3: Separate table (relational way)
+addresses(id, street, city)
+users(address_id)
+orders(address_id)
+
+
+✔ normalized
+✔ reusable
+❌ joins required
+
+6️⃣ Why PostgreSQL can do this but MySQL can’t
+PostgreSQL design philosophy
+
+Object-relational database
+
+First-class types
+
+Extensible type system
+
+Postgres lets you define:
+
+composite types
+
+enums
+
+ranges
+
+custom operators
+
+MySQL design philosophy
+
+Simpler relational model
+
+Fewer type abstractions
+
+JSON instead of schema types
+
+7️⃣ Interview-ready explanation (short)
+
+“PostgreSQL supports reusable composite types using CREATE TYPE, which lets you define structured, strongly-typed objects like addresses and reuse them across tables. MySQL doesn’t have an equivalent feature, so you must either duplicate columns, use JSON, or normalize into separate tables.”
+
+8️⃣ Rails / ORM reality check ⚠️
+
+ActiveRecord:
+
+❌ No native support for composite types
+
+You must use execute SQL
+
+Manual casting / SQL queries
+
+So in Rails apps:
+
+composite types = rare
+
+normalized tables or JSONB = common

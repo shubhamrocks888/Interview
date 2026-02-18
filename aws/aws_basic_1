@@ -1,0 +1,177 @@
+###########
+
+AWS is a cloud platform that provides on-demand compute, storage, networking, and managed services to build scalable applications.
+
+###
+
+	🖥 EC2 — Compute
+
+	Virtual servers.
+
+	Use case:
+
+	Run Rails / Phoenix app
+	Docker containers
+	Background workers
+
+	Interview line:
+
+	“EC2 is used to run application servers and workers.”
+
+
+
+####
+
+📦 S3 — Object Storage
+
+	Files
+	Images
+	Logs
+	Backups
+
+Key points:
+
+Highly durable
+Cheap
+Not a database
+
+Say this:
+
+“S3 is used for static assets and file storage.”
+
+####RDS — Managed Database
+
+	PostgreSQL
+	MySQL
+
+	Why RDS?
+
+	Backups
+	Replication
+	Monitoring
+
+	Interview line:
+
+	“RDS removes operational overhead for relational databases.”
+
+
+###	🔐 IAM — Security (VERY IMPORTANT)
+
+Controls:
+Who can access what
+Roles > users for services
+
+Golden line:
+“AWS IAM uses roles and policies to provide least-privilege access.”
+
+
+####  Scaling in AWS (Connect to Elixir!)
+
+Vertical scaling:
+	Bigger EC2 instance
+
+Horizontal scaling:
+	More EC2 instances
+
+	Auto Scaling Group
+
+	Adds/removes instances based on load
+
+	Say this:
+
+	“Auto Scaling allows the system to handle traffic spikes automatically.”
+
+
+
+##### Load Balancing (Almost always asked)
+
+ALB (Application Load Balancer)
+
+Routes traffic to multiple EC2 instances
+Health checks
+
+Interview line:
+
+“ALB distributes traffic and removes unhealthy instances.”
+
+######	Docker on AWS (Your JD mentions Docker)
+
+Typical setup
+Client → ALB → EC2 → Docker → App
+
+
+Docker ensures:
+Same environment
+Easy deployments
+
+Say:
+
+“Docker provides consistent environments across development and production.”
+
+
+######CI/CD – Jenkins + AWS
+Flow
+GitHub → Jenkins → Build Docker image → Deploy to EC2
+
+
+Jenkins:
+
+Runs tests
+Builds images
+Deploys
+
+Interview line:
+
+“Jenkins automates build, test, and deployment pipelines.”
+
+
+####### Messaging / Kafka on AWS (High relevance)
+
+Kafka options:
+
+Self-hosted on EC2
+
+MSK (Managed Streaming for Kafka)
+
+Say:
+
+“AWS MSK provides managed Kafka with less operational overhead.”
+
+
+####  Security Basics (Don’t skip)
+Best practices
+
+No hard-coded credentials
+Use IAM roles
+
+Security Groups as firewall
+
+Golden line:
+
+“Security Groups act as virtual firewalls controlling inbound and outbound traffic.”
+
+
+
+#########
+
+
+How Elixir + AWS scale together (IMPRESSIVE)
+Architecture
+ALB
+ ↓
+Multiple EC2 nodes (Phoenix / Elixir)
+ ↓
+Millions of lightweight processes
+
+
+Say this:
+
+“AWS scales infrastructure horizontally, while Elixir scales concurrency within each node.”
+
+🔥 This connects AWS + Elixir beautifully.
+
+
+
+##########
+
+“In AWS, our application runs on EC2 instances behind a load balancer, uses RDS for data storage, S3 for files, IAM for security, and Auto Scaling for traffic spikes. Docker and Jenkins help ensure reliable deployments.”

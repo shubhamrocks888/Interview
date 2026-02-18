@@ -1,0 +1,65 @@
+sidekiq internally uses redis list structure as FIFO so first one first serves
+
+also in sidekiq there is queue mode we can define other queue mode as critical ,low and also assign weight to them
+
+Exactly — you’re on the right track! 👍 You’re now talking about ordering + priority, which is exactly what architects expect at this stage. Let’s refine this to architect-grade clarity and point out the nuances they will probe.
+
+Step 1 — FIFO at basic level
+
+“Sidekiq uses Redis lists internally, which guarantees FIFO ordering per queue.”
+
+✅ This is true, and you can say it first.
+
+Step 2 — Multiple queues & priority
+
+“For jobs that have different priorities, we can define multiple queues such as critical, default, low, and assign weights to each queue in Sidekiq. Workers then pick jobs based on queue priority and weight, allowing high-priority jobs to run before low-priority ones.”
+
+This is exactly what the interviewer wants to hear.
+
+Step 3 — Architect-level nuance
+
+Here’s where most candidates get stuck — an architect will push:
+
+FIFO is per queue, not global
+
+If you have multiple queues, there’s no global ordering guarantee.
+
+So critical jobs may overtake older default jobs.
+
+Concurrency and ordering
+
+Multiple workers processing the same queue can execute jobs in near-FIFO, but true strict ordering may not hold if jobs are long-running and multiple threads pull simultaneously.
+
+Solution if strict ordering is needed
+
+Single worker for the queue
+
+Or implement sequence numbers and re-order at processing layer
+
+Or batch jobs and process sequentially
+
+Step 4 — Example you can give in interview
+
+“For example, payment processing jobs may go into a critical queue with higher weight, while email notifications go into low. Sidekiq workers respect queue weights, so critical jobs are executed first. If strict ordering is required within critical jobs, I can run a single worker or enforce sequence IDs.”
+
+Step 5 — Optional bonus points
+
+Mention dedicated queues for retries vs normal jobs
+
+Mention Sidekiq Pro / Enterprise features like:
+
+Rate-limited queues
+
+Batch jobs with callbacks
+
+Architects love when you tie tool knowledge to architecture.
+
+One-line killer answer
+
+“Sidekiq guarantees FIFO per queue, and multiple queues with assigned weights allow prioritization. For strict ordering across queues, we need controlled workers or sequence enforcement at the job level.”
+
+💡 Next possible grill they might throw:
+
+Interviewer:
+
+What happens to job ordering if a job fails and retries?

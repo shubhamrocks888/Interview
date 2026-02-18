@@ -1,0 +1,497 @@
+Tip for You (Interview Prep)
+
+Since this JD mentions Elixir + Kafka + AWS, expect questions on:
+
+Ruby vs Elixir (OOP vs Functional)
+
+Kafka consumers, partitions, offsets
+
+AWS basics (EC2, S3, RDS, IAM)
+
+Docker + CI/CD (Jenkins pipelines)
+
+If you want, I can:
+
+Map JD → likely interview questions
+
+Create a 30-day Elixir crash plan
+
+Help you write a tailored resume summary for this JD
+
+
+
+
+########
+
+
+7️⃣ Quick Connections to Your JD
+
+Ruby / Elixir apps can store user uploads or reports in S3
+
+CloudFront + S3 → fast content delivery
+
+Logs from EC2, RDS, Kafka can be archived to S3
+
+If you want, I can next cover S3 vs EBS vs EFS vs RDS storage in one easy table, which is another classic interview trap.
+
+Do you want me to do that?
+
+
+######
+
+Next (choose ONE — highest ROI)
+
+1️⃣ AWS + system design question
+2️⃣ Kafka on AWS (very likely)
+3️⃣ AWS security deep dive
+4️⃣ Common AWS interview traps
+
+
+###
+
+🔥 Common Interview Follow-up Questions
+
+Be ready for:
+
+Docker vs VM
+
+Docker vs ECS
+
+What is ECR?
+
+How Docker helps CI/CD
+
+How you scale Docker containers
+
+
+
+######
+
+Likely Follow-Up Questions
+Be ready for:
+
+
+Why containers are faster than VMs
+
+
+Can Docker replace VMs completely? (Answer: No)
+
+
+Docker security vs VM security
+
+
+
+If you want, next we can do:
+
+
+Docker + Jenkins CI/CD flow
+
+
+ECS vs EC2
+
+
+Kafka basics (also in your JD)
+
+
+👉 What should we hit next?
+
+
+#####
+
+If you want, next we can do:
+
+Jenkins pipeline stages
+
+Failure handling & rollbacks
+
+Kafka basics (still in your JD)
+
+👉 What’s next?
+
+
+You’re now asking architect-level questions — this is very strong 💪
+
+Next Kafka topics interviewers usually ask:
+
+Topics & partitions (simple)
+
+Consumer groups
+
+Exactly-once vs at-least-once
+
+👉 Which one do you want next?
+
+
+Bonus (If interviewer probes)
+
+“Kafka allows multiple consumers to read the same event independently.”
+
+Next likely Kafka questions:
+
+What is a topic?
+
+What is a partition?
+
+What is a consumer group?
+
+👉 Which one next?
+
+
+
+################
+
+f you want, I can give tricky interview questions around find_each vs each, in_batches, or offset vs cursor-based iteration.
+
+
+########
+
+If you want, I can now:
+
+Show real production bug examples
+
+Compare find_each vs in_batches
+
+Explain why created_at is unsafe for batching
+
+Just tell me.
+
+########
+
+f you want, I can give you 5 interview traps around select vs pluck next.
+
+######
+
+f you want next, I can give:
+1️⃣ Ultra-tricky Ruby + Rails combined MCQs
+2️⃣ ActiveRecord performance checklist
+3️⃣ Interview coding round problems using group/having/pluck
+4️⃣ Rails memory-leak patterns
+
+
+########
+
+
+If you want next:
+
+🔥 find_each vs in_batches
+
+🔥 Why each can kill production
+
+🔥 Rails memory-leak interview questions
+
+Just say next
+
+
+###########
+
+If you want, next I can give:
+
+🔥 ids vs find_each(&:id)
+
+🔥 pluck vs select_all
+
+🔥 ActiveRecord performance gotchas
+
+###
+
+If you want, next I can:
+
+Show actual PostgreSQL partition DDL
+
+Explain partition pruning vs index scan
+
+Give a Rails + partitioning real-world example
+
+###
+
+if you want next:
+
+Cache stampede incident timeline
+
+Double-charge bug caused by missing Redis lock
+
+delete_matched bringing prod down
+
+Why caching ActiveRecord objects is risky
+
+##
+
+If you want, next I can explain:
+
+Redis persistence vs DB
+
+Why Redis still isn’t a database
+
+What happens during Redis eviction
+
+How Sidekiq relies on Redis safely
+
+
+######
+
+If you want next:
+
+Internal Redis behavior
+
+What happens if recomputation fails
+
+Why race_condition_ttl still isn’t a lock
+
+Comparison with Redis locks
+
+###
+
+1️⃣ Redis persistence (RDB vs AOF)
+2️⃣ Redis transactions & atomicity
+3️⃣ Redis pub/sub
+4️⃣ Redis + Rails caching best practices
+5️⃣ Redis memory eviction strategies
+
+######
+
+1️⃣ Redis TTL + eviction strategies
+2️⃣ Rate limiting example in Rails
+3️⃣ Redis transactions (MULTI)
+4️⃣ How Sidekiq uses Redis internally
+
+###
+
+🧠 How Sidekiq stores queues in Redis (lists)
+
+🔁 Retry vs dead queue
+
+⚙️ sidekiq.yml vs CLI config
+
+💥 Starvation problems & best practices
+
+🧪 MCQs with traps
+
+
+####
+
+
+🔁 Retry & dead queue
+
+⏰ Scheduled jobs (perform_in)
+
+⚙️ Sidekiq vs ActiveJob callbacks
+
+🧠 MCQs interview style
+
+🧪 Real Redis data structure for queues
+
+###
+
+jobs are pushed to redis by active job???
+when UserMailer.welcome_mail(user).deliver_later? ---> when to use deliver later
+ 
+
+
+##############
+🔁 Job retries & exceptions
+
+⏰ perform_in / set(wait:)
+
+🧪 MCQs with traps
+
+⚙️ ActiveJob callbacks
+
+🧠 Serialization rules
+
+###
+
+ow Sidekiq serializes jobs internally
+
+🔁 Retry behavior with deleted records
+
+⚙️ Custom serializers
+
+🧪 Serialization MCQs (interview traps)
+
+🔥 Difference between Active Job & Sidekiq args
+###
+
+Devise vs JWT vs OAuth
+
+
+########
+
+
+If you want, next we can:
+
+Draw sequence diagram
+
+Explain why frontend cannot create order
+
+Show what breaks if we skip order creation
+
+Cover payment failure + retry flow
+
+
+#####
+
+➡️ Process linking & monitoring
+➡️ GenServer lifecycle
+➡️ Supervisors
+
+
+##### how do u handle exception
+
+###########
+
+scenarios multiple users has created report generation
+
+but there are multiple threads
+
+and we can want each user should have report, solve how?
+
+
+###
+
+They want to see if you understand:
+
+Job starvation
+
+Fair scheduling
+
+Redis as a coordination layer
+
+Sidekiq ≠ magic fairness
+
+### how rails handle exceptions
+
+
+
+#############
+
+🔥 Rapid-fire follow-up questions interviewers ask
+
+Be ready for these:
+
+rescue vs rescue_from?
+
+Why not rescue everything?
+
+How do you handle payment failures?
+
+Where should business exceptions be handled?
+
+How do you avoid inconsistent data?
+
+How does Rails show exceptions in production?
+
+What happens if a background job fails?
+
+How do you retry safely?
+
+If you want, next I can:
+
+give buggy exception-handling code to fix
+
+simulate exception handling interview round
+
+show real production patterns
+
+Sidekiq retry & dead job traps
+
+Just say “next” 🚀
+
+
+
+#######
+postgres vs mysql
+ruby 2.0 vs ruby 3.0
+pros and cons of ruby and rails
+tls hndshake
+rails server start
+rspec
+
+
+### how would you make custom execeptions
+
+#### how hash implemntation works in ruby
+
+#### what are the design patterns?
+
+
+
+#### courses & programs
+
+videos
+bulk insert andu update
+
+
+### 
+new_relic
+include,preclude, preload
+if your databse is bottle neck, what will you do
+locking
+whats the query that you optimized most
+
+throttling  --> third party api mustbe hit 50 times per hourr nad you are getting 5pp request per hour
+
+## domain listing, ip address blacklisting if you are creds are stolen
+
+###  load shedding.
+## back pressure handling
+
+### how to avoid re-duplication of jobs
+### idempotent jobs
+### rails server vs sidekiq server
+###  Token bucket
+
+Leaky bucket
+program course reassignment
+## bulk operation
+### throttling
+
+###
+
+implement a throttler in Ruby
+
+explain token bucket vs leaky bucket
+
+design OTP throttling (very popular question)
+
+###
+implement token bucket in Ruby
+
+write Rack middleware throttler
+
+design OTP throttling system
+
+########
+
+design system design where user can come on ur system and make custom function
+
+#### closet number question
+
+input n=4 and arr=[6,4,2,9]
+
+minimal diffr is 2 , so the o/p are (2,4) and (4,6)  (they should be in ascending order)
+
+
+
+######
+
+ruby -c your_file.rb
+
+
+
+### whats your approach when you want to scalabilty, when databbase grows
+
+### what active rcord structure you use for complex active record queries
+
+## coding queston you take step 1 or 2 at a time..howdo you do that
+
+### s = "[1,2,3], [4,5,1],[6,2,1]"..a 2-d matrix you can have atleast one row or one column you can go rigght or down at a time..whats the cost of from reaching to-left to bottom-right?
+
+## postgres vs mysql in rail app?
+
+### sinngleton --> with one instance and example
+
+### frozen liertal --> 
+
+## custom middleware withexample
+
+## kamal orkamla

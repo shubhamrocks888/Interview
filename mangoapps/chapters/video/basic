@@ -1,0 +1,204 @@
+1️⃣ High-level approach (start here)
+
+“Videos are heavy, long-running, and expensive to serve, so we never store them directly in the application server or database.
+We use object storage + streaming + async processing.”
+
+Key decisions:
+
+❌ No video files in DB
+
+❌ No video served from Rails
+
+✅ Cloud object storage
+
+✅ Streaming-friendly format
+
+✅ Track progress separately
+
+2️⃣ Video upload flow (Instructor / Admin)
+Step 1: Request upload
+
+Instructor uploads a video while creating a video chapter.
+
+Rails API:
+
+POST /videos/presign
+
+
+Rails returns a pre-signed URL.
+
+Why?
+
+Large files don’t go through Rails
+
+Prevents server overload
+
+Secure, time-limited upload
+
+Step 2: Direct upload to storage
+
+Frontend uploads directly to:
+
+AWS S3 / GCP Storage / Azure Blob
+
+Browser → Object Storage (via pre-signed URL)
+
+
+Rails is not in the path.
+
+Architect phrase:
+
+“We offload heavy uploads directly to object storage using pre-signed URLs.”
+
+3️⃣ Database structure
+videos table
+videos
+------
+id
+chapter_id
+storage_key        # s3 path
+duration_seconds
+status             # uploaded, processing, ready, failed
+thumbnail_url
+created_at
+
+chapters table
+chapters
+--------
+id
+course_id
+chapter_type       # video / quiz / reading
+position
+content_id         # polymorphic (video_id)
+
+
+Polymorphic association:
+
+class Chapter < ApplicationRecord
+  belongs_to :content, polymorphic: true
+end
+
+4️⃣ Video processing (Async)
+
+Once upload completes:
+
+Step 1: Storage event triggers job
+
+S3 → Event → Background Job
+
+Step 2: Transcoding
+
+We convert raw video into:
+
+Multiple resolutions (360p, 720p, 1080p)
+
+Streaming format (HLS / DASH)
+
+Why streaming?
+
+Adaptive bitrate
+
+Resume playback
+
+Efficient bandwidth
+
+Step 3: Update status
+video.update!(
+  status: "ready",
+  duration_seconds: extracted_duration
+)
+
+5️⃣ Video delivery (Playback)
+
+User clicks play.
+
+Step 1: Authorization
+
+Rails checks:
+
+User enrolled?
+
+Chapter unlocked?
+
+Step 2: Signed playback URL
+
+Rails generates short-lived signed URL.
+
+CDN → Video segments
+
+
+Rails never streams video.
+
+Architect phrasing:
+
+“Rails only authorizes access; video delivery is handled by CDN.”
+
+6️⃣ Tracking video progress (VERY IMPORTANT)
+video_progress table
+video_progresses
+----------------
+user_id
+video_id
+last_watched_second
+completed_at
+percentage
+
+Frontend heartbeat
+
+Every ~10 seconds:
+
+{
+  "video_id": 12,
+  "current_time": 345
+}
+
+
+Rails updates progress:
+
+progress.update!(
+  last_watched_second: current_time,
+  percentage: (current_time / video.duration_seconds) * 100
+)
+
+7️⃣ Completion logic
+
+Rules (example):
+
+≥ 90% watched → chapter completed
+
+Chapter completed → course progress updated
+
+All mandatory chapters completed → course completed
+
+All courses completed → program completed
+
+This ties back to your program completion percentage question earlier 🔥
+
+8️⃣ Resume & device switching
+
+Because progress is stored server-side:
+
+User can resume on another device
+
+No dependency on browser state
+
+Architect phrase:
+
+“Progress is user-centric and persisted, not client-dependent.”
+
+9️⃣ Security considerations (they LOVE this)
+
+Signed URLs with expiry
+
+No public bucket access
+
+Authorization before URL generation
+
+Optional DRM / tokenized playback
+
+🔟 Final interview summary (say this confidently)
+
+“For video chapters, we use object storage with direct uploads via pre-signed URLs.
+Videos are processed asynchronously into streaming formats and delivered via CDN.
+Rails only handles authorization, metadata, and progress tracking.
+User progress is tracked at the video level and rolled up into course and program completion.”

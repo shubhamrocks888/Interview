@@ -1,0 +1,100 @@
+📘 Where do Chapters fit in the LMS?
+Hierarchy (clear mental model)
+Program
+  └── Course
+        └── Chapter
+              └── Content (video / quiz / reading)
+
+
+Programs do not directly own chapters.
+Chapters belong to courses.
+
+Say this sentence confidently — it’s important.
+
+🧱 Data Modeling with Chapters
+chapters
+id
+course_id
+title
+position
+
+
+course_id → FK to courses
+
+position → order within course
+
+Optional: chapter_contents
+id
+chapter_id
+content_type (video, quiz, doc)
+position
+duration
+
+
+This keeps chapters clean and extensible.
+
+🧠 Why chapters belong to courses (not programs)
+
+“Chapters are course-specific learning units.
+Since courses can be reused across programs, attaching chapters to programs would cause duplication and inconsistencies.”
+
+That line = architect-approved ✅
+
+🎯 Tracking Chapter Progress
+❓ Where does chapter completion live?
+✅ Correct place:
+
+On user ↔ chapter relationship
+
+chapter_progress
+id
+user_id
+chapter_id
+status (not_started, in_progress, completed)
+completion_percentage
+completed_at
+
+🔁 How progress rolls up (important)
+Chapter → Course → Program
+
+Chapter progress updates
+
+Course progress recalculated
+
+Program progress recalculated
+
+“Progress rolls up hierarchically but is stored at enrollment levels for performance.”
+
+🔥 Senior-level phrasing.
+
+🔍 Likely interview follow-ups
+“Why not store chapter progress inside course_enrollments?”
+
+Answer:
+
+“Because chapters are independent units and storing per-chapter state inside a course enrollment would be unscalable and hard to query.”
+
+“How do you calculate course completion?”
+
+Answer:
+
+“Course completion is derived from chapter completion—either via simple average, weighted average, or mandatory rules.”
+
+“What if chapters are reordered?”
+
+Answer:
+
+“Ordering is handled via a position column, and reordering doesn’t affect progress because progress is chapter-based.”
+
+⚠️ Common mistakes to avoid
+
+❌ chapters under programs
+
+❌ JSON blobs for progress
+
+❌ progress only in frontend
+
+🧠 20-second summary (say this if short on time)
+
+“Chapters belong to courses, not programs.
+We tracked chapter-level progress per user and rolled it up to course and program progress, persisting aggregated values for fast reads.”

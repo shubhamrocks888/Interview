@@ -1,0 +1,74 @@
+1️⃣ What bigint actually is
+
+bigint = 8 bytes integer
+
+Range:
+
+Signed: -9,223,372,036,854,775,808 → 9,223,372,036,854,775,807
+
+Unsigned (some DBs) goes up to 18,446,744,073,709,551,615
+
+Compared to integer (4 bytes):
+
+integer max: ~2.1 billion
+
+bigint max: ~9 quintillion ✅ huge difference
+
+2️⃣ Why use bigint for foreign keys in Rails
+t.bigint :following_id, null: false
+t.bigint :follower_id, null: false
+
+Context
+
+In Rails 5+ (default) primary keys are bigint
+
+create_table :users do |t|
+  t.string :name
+  # id is bigint by default
+end
+
+
+Foreign keys must match the type of the primary key:
+
+user.id = bigint
+
+follow.follower_id = bigint
+
+✅ This ensures proper indexing and joins without type conflicts.
+
+3️⃣ Why not integer?
+
+If you used integer (4 bytes) for follower_id:
+
+Max ID = 2,147,483,647
+
+If your app grows beyond 2 billion users → database error
+
+Join operations may fail or require implicit casting → performance hit
+
+Modern apps scale to billions of records, so Rails defaults to bigint.
+
+4️⃣ Rails 5+ default behavior
+rails g model Follow follower:references following:references
+
+
+Generates:
+
+t.bigint :follower_id, null: false
+t.bigint :following_id, null: false
+
+
+Because Rails sets primary_key :id, :bigint for all new tables.
+
+5️⃣ TL;DR
+
+| Column         | Type   | Reason                                     |
+| -------------- | ------ | ------------------------------------------ |
+| `following_id` | bigint | Matches user.id, safe for large IDs        |
+| `follower_id`  | bigint | Matches user.id, safe for large IDs        |
+| integer        | ❌      | May overflow if app scales beyond 2B users |
+
+
+✅ Key Interview Point
+
+Always match foreign key type with the referenced primary key. Rails defaults to bigint to avoid overflow for very large datasets.

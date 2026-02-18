@@ -1,0 +1,75 @@
+List Shows of a Movie
+
+GET /movies/:id/shows
+
+Internal Flow
+
+Receive movie id
+
+Check if movie exists
+
+Fetch all shows for that movie
+
+Return:
+
+Show time
+
+Total seats
+
+Available seats
+
+Why Available Seats?
+
+Frontend needs to:
+
+Display whether show is almost full
+
+Disable booking if available_seats = 0
+
+{
+  "movie_id": 5,
+  "title": "Avengers",
+  "shows": [
+    {
+      "show_id": 10,
+      "show_time": "2026-02-15T18:00:00Z",
+      "total_seats": 100,
+      "available_seats": 25,
+      "is_full": false
+    },
+    {
+      "show_id": 11,
+      "show_time": "2026-02-15T21:00:00Z",
+      "total_seats": 100,
+      "available_seats": 0,
+      "is_full": true
+    }
+  ]
+}
+
+
+
+####
+
+class MoviesController < ApplicationController
+  def shows
+    movie = Movie.includes(:shows).find_by(id: params[:id])
+    return render json: { errors: "Movie not found" }, status: :not_found unless movie
+
+    result = movie.shows.order(:show_time).map do |show|
+      {
+        show_id: show.id,
+        show_time: show.show_time,
+        total_seats: show.total_seats,
+        available_seats: show.available_seats,
+        is_full: show.available_seats == 0
+      }
+    end
+
+    render json: {
+      movie_id: movie.id,
+      title: movie.title,
+      shows: result
+    }, status: :ok
+  end
+end

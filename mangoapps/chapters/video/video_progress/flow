@@ -1,0 +1,171 @@
+▶️ How video progress is tracked (end-to-end)
+1️⃣ User starts video playback
+
+Browser loads the HLS player
+
+Player starts fetching .m3u8 and .ts segments
+
+Video begins playing
+
+At this point:
+
+Rails knows nothing yet
+
+All playback is client-side
+
+2️⃣ Frontend listens to player time
+
+The video player exposes:
+
+currentTime   // seconds played
+duration
+
+
+Frontend sets a heartbeat timer.
+
+Example:
+
+setInterval(() => {
+  sendProgress(videoId, player.currentTime)
+}, 10_000) // every 10 seconds
+
+
+Why heartbeat?
+
+Avoid spamming backend
+
+Still accurate enough
+
+3️⃣ Frontend sends progress to backend
+
+API call:
+
+POST /video_progress
+
+
+Payload:
+
+{
+  "video_id": 55,
+  "current_time": 345
+}
+
+
+Important:
+
+Frontend sends seconds watched
+
+Not percentage (backend calculates)
+
+4️⃣ Backend validates progress update
+
+Rails does:
+
+a) Authenticate user
+current_user
+
+b) Authorize access
+
+User enrolled?
+
+Chapter unlocked?
+
+c) Validate data
+
+current_time <= video.duration
+
+Ignore jumps that look suspicious
+
+Architect phrase:
+
+“Client data is treated as a signal, not as truth.”
+
+5️⃣ Persist progress in DB
+📄 video_progresses table
+video_progresses
+----------------
+user_id
+video_id
+last_watched_second
+percentage
+completed_at
+
+
+Rails logic:
+
+progress.last_watched_second = [
+  progress.last_watched_second,
+  current_time
+].max
+
+
+Why max?
+
+Prevent rewind abuse
+
+Prevent fake jumps backward
+
+6️⃣ Completion rules
+
+Example rule:
+
+percentage = last_watched_second / video.duration * 100
+
+if percentage >= 90
+  progress.completed_at ||= Time.current
+end
+
+
+Why not 100%?
+
+Last seconds often skipped
+
+Real-world tolerance
+
+7️⃣ Resume playback
+
+Next time user opens video:
+
+Rails sends last_watched_second
+
+Player starts from there
+
+8️⃣ Handling seeks & skips (important!)
+Problem:
+
+User drags seek bar to the end.
+
+Solution:
+
+Track continuous watch time
+
+Only count forward progress in small increments
+
+Optionally verify segment sequence
+
+Architect-level line:
+
+“We track progressive playback, not absolute seek position.”
+
+9️⃣ Rolling up progress (course & program)
+
+Chapter completed → course progress recalculated
+
+All mandatory chapters completed → course completed
+
+All courses completed → program completed
+
+This uses the same progress table.
+
+🔁 Flow diagram (simple)
+Player
+  ↓ (heartbeat)
+Rails API
+  ↓
+video_progresses
+
+🧠 One-paragraph interview answer (memorize)
+
+“Video progress is tracked using a heartbeat mechanism from the frontend player.
+The client periodically sends the current playback time, and the backend validates and persists the maximum watched duration.
+Completion is derived server-side based on business rules, ensuring accuracy and preventing manipulation.”

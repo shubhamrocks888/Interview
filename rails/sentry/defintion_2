@@ -1,0 +1,142 @@
+1️⃣ What Sentry is
+
+Sentry is an error monitoring platform
+
+Tracks exceptions in real time for your apps (Rails, JS, Python, etc.)
+
+Gives stack trace, context, user info, environment
+
+Interview line: “Sentry is a tool to monitor errors and get detailed context about production exceptions.”
+
+2️⃣ Integrating Sentry in Rails
+Step 1: Add Sentry Gem
+# Gemfile
+gem 'sentry-ruby'
+gem 'sentry-rails'   # Rails integration
+gem 'sentry-sidekiq' # If you use Sidekiq
+
+bundle install
+
+Step 2: Configure Sentry
+# config/initializers/sentry.rb
+Sentry.init do |config|
+  config.dsn = ENV['SENTRY_DSN']          # Provided by Sentry project
+  config.breadcrumbs_logger = [:active_support_logger, :http_logger]
+
+  config.traces_sample_rate = 0.5         # For performance monitoring (optional)
+  config.environment = Rails.env
+  config.release = "myapp@#{ENV['APP_VERSION']}"
+end
+
+
+DSN is the Sentry “connection key” — tells your app where to send errors
+
+Step 3: Automatically capture Rails exceptions
+
+Sentry automatically captures unhandled exceptions in Rails controllers
+
+Example: a NoMethodError or RecordNotFound in production will appear in Sentry
+
+3️⃣ Manually capturing exceptions
+
+Use Sentry.capture_exception in rescue blocks:
+
+begin
+  Payment.charge!(order)
+rescue Payment::Failed => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)   # Send error to Sentry
+  render json: { error: "Payment failed" }, status: :payment_required
+end
+
+
+This is useful when you want custom handling or reporting
+
+You can add extra context:
+
+Sentry.capture_exception(e) do |scope|
+  scope.set_user(id: current_user.id, email: current_user.email)
+  scope.set_tags(order_id: order.id, environment: Rails.env)
+end
+
+4️⃣ Tracking additional context in Sentry
+
+User info: scope.set_user(...)
+
+Custom tags: scope.set_tags(...)
+
+Extra data: scope.set_extra(:key, value)
+
+Example:
+
+Sentry.capture_exception(e) do |scope|
+  scope.set_user(id: current_user.id)
+  scope.set_tags(order_id: order.id)
+  scope.set_extra(:cart, current_cart.items)
+end
+
+
+This gives full context for debugging in Sentry UI
+
+5️⃣ Background Jobs & Sidekiq
+# config/initializers/sentry.rb
+Sentry.init do |config|
+  config.breadcrumbs_logger = [:active_support_logger, :http_logger]
+  config.traces_sample_rate = 0.5
+  config.environment = Rails.env
+end
+
+
+For Sidekiq:
+
+# in worker
+class PaymentJob < ApplicationJob
+  def perform(order_id)
+    order = Order.find(order_id)
+    Payment.charge!(order)
+  rescue Payment::Failed => e
+    Sentry.capture_exception(e, tags: { job: "PaymentJob" })
+    raise
+  end
+end
+
+
+Sentry captures job errors and shows retry info
+
+6️⃣ Monitoring in Sentry Dashboard
+
+Once integrated:
+
+Go to Sentry project → exceptions appear in Issues
+
+You see:
+
+Stack trace
+
+Environment (production, staging)
+
+User info (if sent)
+
+Tags and extra context
+
+Can set alerts:
+
+Email / Slack / Teams
+
+Triggered for new or recurring errors
+
+7️⃣ Interview Talking Points
+
+“In Rails, I integrate Sentry using sentry-ruby and sentry-rails. It automatically captures unhandled exceptions, and I also use Sentry.capture_exception in rescue blocks for expected errors, adding context such as user info, order ID, and tags. This allows monitoring, debugging, and alerting without exposing sensitive data to users.”
+
+✅ Optional: Example of full rescue with Sentry
+begin
+  order = Orders::CreateOrder.new(order_params).call
+rescue ActiveRecord::RecordInvalid => e
+  Sentry.capture_exception(e) do |scope|
+    scope.set_user(id: current_user.id)
+    scope.set_tags(order_id: order.id)
+    scope.set_extra(:params, order_params)
+  end
+  render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
+end

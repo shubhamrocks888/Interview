@@ -1,0 +1,177 @@
+1️⃣ Rescue expected errors only
+
+StandardError includes most runtime errors, like:
+ActiveRecord::RecordNotFound, ActiveRecord::RecordInvalid, Payment::Failed, Net::ReadTimeout
+
+These are errors your app can recover from or handle gracefully
+
+Example:
+
+begin
+  order = Order.find(params[:id])
+  Payment.charge!(order)
+rescue ActiveRecord::RecordNotFound => e
+  render json: { error: "Order not found" }, status: :not_found
+rescue Payment::Failed => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+  render json: { error: "Payment failed" }, status: :payment_required
+end
+
+
+You rescue expected, handleable exceptions only.
+
+2️⃣ Don’t rescue unexpected errors
+
+Examples: NoMethodError, NameError, ArgumentError
+
+These indicate programmer bugs, misconfigurations, or invalid code
+
+If you rescue them blindly:
+
+Your app hides the bug
+
+You might return a fake “success” to the user
+
+Production monitoring is broken
+
+Correct behavior: let these bubble up. Rails will:
+
+Log them in production
+
+Report them to monitoring (Sentry/Bugsnag)
+
+Return a 500 Internal Server Error to the client
+
+Interview line: “Unexpected errors should crash fast so we can fix the root cause.”
+
+3️⃣ General pattern in Rails
+rescue_from ActiveRecord::RecordNotFound, with: :not_found
+rescue_from Payment::Failed, with: :payment_failed
+# No rescue for NoMethodError, NameError, etc.
+
+
+Or in service objects:
+
+def call
+  do_something
+rescue ActiveRecord::RecordInvalid => e
+  Rails.logger.error(e.message)
+  raise
+end
+
+✅ TL;DR Interview Answer
+
+“I rescue expected errors like RecordNotFound, validation errors, or payment failures. Unexpected errors, such as NoMethodError or NameError, indicate programmer bugs and should be allowed to bubble up, so they are logged, monitored, and fixed. This ensures we handle recoverable errors gracefully without hiding real bugs.”
+
+If you want, I can make a ready-to-quote Rails API exception-handling template that follows this principle — exactly what you can say in an interview.
+
+Do you want me to do that?
+
+what are the errors that StandardError covers
+
+Ah, now this is a classic Ruby / Rails interview trap — interviewers love to ask this because most people think StandardError covers “everything.” It doesn’t. Let’s break it down carefully.
+
+1️⃣ The Ruby Exception Hierarchy (simplified)
+Exception
+├── SystemExit
+├── SignalException
+├── Interrupt
+├── SecurityError
+├── StandardError
+│   ├── ArgumentError
+│   ├── NoMethodError
+│   ├── RuntimeError
+│   ├── NameError
+│   ├── IndexError
+│   ├── KeyError
+│   ├── ZeroDivisionError
+│   ├── IOError
+│   ├── TypeError
+│   └── ...many others
+└── ScriptError
+    ├── LoadError
+    └── SyntaxError
+
+2️⃣ Key points about StandardError
+
+It is the default for rescue:
+
+begin
+  # code
+rescue
+  # same as rescue StandardError
+end
+
+
+It does NOT include fatal errors like:
+
+SystemExit → when exit is called
+
+NoMemoryError
+
+SignalException → e.g., Ctrl+C
+
+Interrupt → Ctrl+C
+
+SecurityError
+
+SyntaxError / LoadError / NotImplementedError (some exceptions outside StandardError)
+
+It covers the errors you usually want to rescue in app logic:
+
+ArgumentError
+
+RuntimeError
+
+NoMethodError
+
+NameError
+
+IndexError
+
+KeyError
+
+ZeroDivisionError
+
+IOError
+
+TypeError
+
+3️⃣ Interview trap explanation
+
+“People often rescue StandardError blindly thinking it catches everything, but it doesn’t. Critical exceptions like SystemExit, Interrupt, or NoMemoryError bypass StandardError. These are meant to crash the program.”
+
+4️⃣ Rails context
+
+When you write:
+
+rescue => e
+
+
+You are actually rescuing StandardError
+
+You will not rescue fatal errors
+
+This is usually safe for handling recoverable errors
+
+✅ Correct pattern:
+
+Rescue only expected errors
+
+Let fatal/unexpected errors crash and get logged/reported
+
+5️⃣ Quick Table (for interview)
+
+| Category             | Example                                 | Rescued by `StandardError`? |
+| -------------------- | --------------------------------------- | --------------------------- |
+| Programmer errors    | NoMethodError, NameError, ArgumentError | ✅                           |
+| Validation errors    | RecordInvalid                           | ✅                           |
+| External API errors  | Net::ReadTimeout                        | ✅                           |
+| Fatal system errors  | SystemExit, Interrupt                   | ❌                           |
+| Syntax / load errors | SyntaxError, LoadError                  | ❌                           |
+| Memory errors        | NoMemoryError                           | ❌                           |
+
+✅ Perfect interview answer (30 sec)
+
+“StandardError is the base for most Ruby errors we expect in app logic, like ArgumentError, NoMethodError, RecordInvalid, or RuntimeError. It does not include fatal errors such as SystemExit, Interrupt, SyntaxError, or NoMemoryError. That’s why rescuing StandardError handles recoverable errors safely without hiding serious system-level problems.”

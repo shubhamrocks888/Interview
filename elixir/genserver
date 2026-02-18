@@ -1,0 +1,139 @@
+send/2 vs GenServer.call/2
+High-level difference (say this first)
+
+send is low-level, asynchronous message passing, while GenServer.call is a high-level, synchronous request–response abstraction built on top of message passing.
+
+1️⃣ send(pid, message)
+What it is
+
+Primitive BEAM operation
+
+Sends a message to a process’s mailbox
+
+Does not wait for any response
+
+Example
+send(pid, {:event, data})
+
+Key properties
+
+🔹 Asynchronous (fire-and-forget)
+
+🔹 No guarantee the message is handled
+
+🔹 No built-in reply mechanism
+
+🔹 Sender continues immediately
+
+When to use
+
+Event notifications
+
+Logging
+
+Metrics
+
+Signals (no response needed)
+
+Rails analogy
+
+Like pushing a job to Sidekiq without caring about the result.
+
+2️⃣ GenServer.call(pid, message)
+What it is
+
+OTP abstraction
+
+Built on top of send/receive
+
+Implements request–response
+
+Example
+GenServer.call(pid, {:get_state})
+
+What happens internally
+
+Sends a message to the GenServer
+
+Caller blocks
+
+GenServer processes message
+
+GenServer sends a reply
+
+Caller resumes
+
+Key properties
+
+🔹 Synchronous
+
+🔹 Guarantees a reply (or timeout)
+
+🔹 Safer for shared state access
+
+🔹 Handles timeouts & failures
+
+When to use
+
+Reading state
+
+Updating state and needing confirmation
+
+Business logic that depends on result
+
+Rails analogy
+
+Like calling a service object and waiting for the return value.
+
+3️⃣ Side-by-side comparison (MEMORIZE)
+Feature	send	GenServer.call
+Level	Low-level	High-level
+Blocking	❌ No	✅ Yes
+Reply	❌ Manual	✅ Built-in
+Safety	Low	High
+OTP compliant	❌	✅
+4️⃣ What about GenServer.cast?
+
+(Interviewers often check this next)
+
+GenServer.cast(pid, {:increment, 1})
+
+
+Asynchronous
+
+No reply
+
+OTP-managed
+
+👉 Think of it as:
+
+send with structure + safety
+
+5️⃣ How to choose (INTERVIEW ANSWER)
+
+I use GenServer.call when I need a reliable response or state consistency, and GenServer.cast or send for asynchronous events where I don’t need a reply.
+
+6️⃣ Common follow-up questions (with answers)
+❓ Can GenServer.call block forever?
+
+No, it has a configurable timeout. If the GenServer doesn’t reply, the caller exits.
+
+❓ Why not always use send?
+
+Because it lacks structure, error handling, and reply guarantees. OTP abstractions make systems safer and easier to maintain.
+
+7️⃣ One-liner summary (VERY IMPORTANT)
+
+send is raw asynchronous messaging, while GenServer.call is a synchronous, OTP-managed abstraction that ensures safe request–response communication.
+
+Final interview tip 🧠
+
+If you explain:
+
+Blocking vs non-blocking
+
+Safety vs flexibility
+
+OTP abstraction
+
+👉 You sound like someone who understands Elixir design, not just syntax.

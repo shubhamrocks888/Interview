@@ -1,0 +1,115 @@
+1️⃣ autoload_paths vs eager_load_paths — what they mean
+🔹 autoload_paths
+
+Rails loads constants on demand
+
+File is loaded only when the constant is first used
+
+Faster boot, but loading happens at runtime
+
+🔹 eager_load_paths
+
+Rails loads everything at boot time
+
+All classes/modules are loaded upfront
+
+Slower boot, but safer for concurrency
+
+2️⃣ What happens in Production (important)
+Default production config
+# config/environments/production.rb
+config.cache_classes = true
+config.eager_load = true
+
+Effect
+Feature	Development	Production
+autoload	✅ Yes	❌ No (mostly ignored)
+eager load	❌ No	✅ Yes
+class reloading	✅ Yes	❌ No
+
+👉 In production, Rails eager-loads code and does not autoload on demand.
+
+3️⃣ Why production disables autoloading
+❌ Autoloading problems in prod
+
+Race conditions (multi-threaded servers)
+
+Constants loaded twice
+
+Random NameError under load
+
+✅ Eager loading advantages
+
+Thread-safe
+
+Predictable behavior
+
+Faster request handling (no loading during request)
+
+4️⃣ What paths are actually eager-loaded?
+
+Rails eager-loads:
+
+app/models
+app/controllers
+app/jobs
+app/helpers
+app/mailers
+
+
+Anything in autoload_paths but not in eager_load_paths may not load in prod.
+
+5️⃣ Common production bug (very important)
+Code works in dev ❌ fails in prod
+# lib/my_service.rb
+class MyService
+end
+
+
+Development:
+
+Autoloads when referenced → works
+
+Production:
+
+Not eager-loaded → ❌ NameError
+
+6️⃣ Correct way to fix this
+Option 1️⃣ Move code under app/
+app/services/my_service.rb
+
+
+Rails eager-loads this automatically (Rails 6+).
+
+Option 2️⃣ Add to eager_load_paths
+# config/application.rb
+config.eager_load_paths << Rails.root.join('lib')
+
+7️⃣ Zeitwerk (Rails 6+)
+
+Rails 6 uses Zeitwerk, which:
+
+Uses eager_load_paths strictly
+
+Enforces file-name ↔ constant-name matching
+
+Fails fast in production
+
+Check with:
+
+rails zeitwerk:check
+
+8️⃣ autoload_paths ≠ eager_load_paths (key takeaway)
+Aspect	autoload_paths	eager_load_paths
+Loaded when	On first use	App boot
+Thread safe	❌ No	✅ Yes
+Used in prod	❌ No	✅ Yes
+Recommended for prod	❌	✅
+🎯 Interview-ready one-liner
+
+In production, Rails disables autoloading and eager-loads all code at boot to ensure thread safety and predictable behavior. Only paths in eager_load_paths are loaded.
+
+🧠 Memory trick
+
+Dev = lazy loading
+Prod = load everything, once

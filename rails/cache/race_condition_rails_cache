@@ -1,0 +1,139 @@
+Rails.cache.fetch( 
+	"expensive_data", 
+	expires_in: 10.minutes, 
+	race_condition_ttl: 5.seconds 
+	) 
+	do 
+		heavy_computation 
+	end 
+	
+	Prevents cache stampede.
+
+
+
+First: what problem are we solving?
+	Cache stampede (a.k.a. thundering herd)
+
+	Scenario:
+
+	Cache key expires
+
+	100 requests hit at the same time
+
+	All 100 recompute heavy_computation
+
+	DB/API melts 🔥
+
+
+Without race_condition_ttl
+Rails.cache.fetch("expensive_data", expires_in: 10.minutes) do
+  heavy_computation
+end
+
+
+Timeline
+T=0    cache expires
+T=0.1  request #1 → MISS → recompute
+T=0.1  request #2 → MISS → recompute
+T=0.1  request #3 → MISS → recompute
+...
+T=0.1  request #100 → MISS → recompute
+
+
+❌ 100 expensive calls
+
+
+With race_condition_ttl
+Rails.cache.fetch(
+  "expensive_data",
+  expires_in: 10.minutes,
+  race_condition_ttl: 5.seconds
+) do
+  heavy_computation
+end
+
+
+What race_condition_ttl REALLY does
+
+It allows serving a slightly stale value for a short window while one request recomputes the cache.
+
+Timeline (this is the key 🔑)
+T=0     cache expires
+T=0–5s  race_condition window
+
+
+Request behavior
+🔹 Request #1 (winner)
+
+	Sees expired key
+	Allowed to recompute
+	Runs heavy_computation
+	Writes new value
+
+🔹 Request #2–#100 (losers)
+
+	See expired key
+	BUT race window is active
+	Rails serves stale cached value
+	Do NOT recompute
+
+
+Visual model
+	Expired
+	│
+	├── One request recomputes
+	│
+	└── Others temporarily use old value
+
+
+Why this works
+
+Old value is better than nothing
+Prevents DB / API storm
+Small staleness (5s) is acceptable
+
+Important clarifications 🚨
+	❗ It does NOT:
+
+	Lock Redis
+	Block threads
+	Make others wait
+
+	❗ It DOES:
+
+	Serve stale data briefly
+	Allow only one recomputation
+
+
+Real-world example
+	Without protection
+
+	Dashboard loads → DB spike
+	App becomes slow
+
+With protection
+
+One request recomputes
+Others get slightly old data
+App stays healthy
+
+When should you use it?
+
+✅ Expensive queries
+✅ Read-heavy endpoints
+✅ Dashboards
+✅ Aggregations
+
+
+❌ Payments
+❌ User balances
+❌ Critical real-time data
+
+How to choose value?
+
+Rule of thumb:
+
+race_condition_ttl ≈ 2 × computation time
+
+
+If query takes ~2 seconds → use ~5 seconds.

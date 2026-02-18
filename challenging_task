@@ -1,0 +1,10 @@
+“One of the most challenging tasks I’ve done was integrating a payment gateway into our Rails app. I hadn’t worked with Razorpay before, so I had to understand their API, handle webhooks, and make sure payments and refunds were processed correctly. I broke the problem into smaller steps: creating orders, handling payment callbacks, and testing edge cases like refunds. In the end, the integration was successful, and I gained confidence in handling external APIs and building secure, reliable payment workflows.”
+
+
+
+“While CCAvenue could handle basic payments, Razorpay was preferred because it offered a more developer-friendly API, easy webhook handling, and built-in subscription management. This made integration with our Rails backend faster and more maintainable.”
+
+
+“At 4moles, being an India-based company, we needed a payment gateway that could handle INR transactions securely and reliably. While CCAvenue could have done basic payments, we chose Razorpay because it offered a modern, developer-friendly API, easy webhook handling for real-time payment updates, and built-in support for subscriptions and refunds. This made integration with our Rails backend faster, more maintainable, and gave us a smoother developer experience overall. For US or international customers, we would typically use gateways like Stripe or PayPal that support USD and international cards.”
+
+

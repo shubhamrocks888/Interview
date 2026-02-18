@@ -1,0 +1,220 @@
+Your code:
+
+def perform(user)
+end
+
+
+This works, but is NOT recommended.
+
+Why?
+
+Jobs are serialized
+
+Passing full objects can break
+
+Object may be stale
+
+Best practice:
+def perform(user_id)
+  user = User.find(user_id)
+end
+
+
+Interviewers LOVE this.
+
+
+
+##########
+
+
+❌ Active Job does NOT use Marshal.dump like Rails.cache
+✅ It uses GlobalID–based serialization
+
+Let’s break this from zero.
+
+1️⃣ What does “Jobs are serialized” mean?
+
+When you call:
+
+WelcomeEmailJob.perform_later(user)
+
+
+Rails must:
+
+Convert arguments into JSON-safe data
+
+Store them in Redis
+
+Rebuild them later in another process
+
+This process = serialization → deserialization
+
+2️⃣ Does Active Job use Marshal.dump?
+❌ NO
+
+Active Job does not use Marshal.
+
+Why not Marshal?
+
+Ruby-version dependent
+
+Unsafe for untrusted input
+
+Not language-agnostic
+
+Breaks across deployments
+
+Rails intentionally avoids it for jobs.
+
+3️⃣ What DOES Active Job use then?
+✅ GlobalID (gid://)
+
+Rails serializes Active Record objects using GlobalID.
+
+4️⃣ Example (very important)
+Code:
+WelcomeEmailJob.perform_later(user)
+
+What gets stored in Redis:
+{
+  "arguments": [
+    {
+      "_aj_globalid": "gid://myapp/User/42"
+    }
+  ]
+}
+
+
+📌 Not the object
+📌 Only a reference (class + id)
+
+5️⃣ How is the object rebuilt?
+
+When the job runs:
+
+def perform(user)
+  # user is reloaded from DB
+end
+
+
+Rails does internally:
+
+GlobalID::Locator.locate("gid://myapp/User/42")
+# → User.find(42)
+
+6️⃣ Why can objects become stale?
+
+Because:
+
+Job might run minutes or hours later
+
+Database row may have changed
+
+Or deleted
+
+Example:
+
+user.name = "Old Name"
+WelcomeEmailJob.perform_later(user)
+
+# later...
+user.update(name: "New Name")
+
+
+Job sees "New Name", not "Old Name".
+
+That’s what stale data means.
+
+7️⃣ Why passing full objects can still break
+a) Object deleted
+User.destroy(42)
+
+
+➡️ Job fails with ActiveRecord::RecordNotFound
+
+b) Object changed
+
+Business logic becomes inconsistent
+
+c) Non-ActiveRecord objects
+perform(OpenStruct.new)
+
+
+❌ Cannot be serialized
+
+8️⃣ What arguments ARE allowed in Active Job?
+✅ Safe types:
+
+String
+
+Integer
+
+Float
+
+Boolean
+
+Nil
+
+Hash / Array (with safe types)
+
+ActiveRecord objects (via GlobalID)
+
+❌ Unsafe:
+
+Procs
+
+Lambdas
+
+IO objects
+
+OpenStruct
+
+File handles
+
+Sockets
+
+9️⃣ So why still prefer user_id?
+
+Even though GlobalID exists?
+
+Best practice reasons:
+
+Explicit
+
+Avoid stale expectations
+
+Clear failure handling
+
+Easier retries
+
+Less magic
+
+Recommended:
+def perform(user_id)
+  user = User.find_by(id: user_id)
+  return unless user
+end
+
+
+Interviewers LOVE this pattern.
+
+🔟 Comparison: Active Job vs Rails.cache
+Feature Active Job  Rails.cache
+Serialization GlobalID / JSON Marshal
+Safe across versions  ✅ ❌
+Object reload Yes No
+Human-readable  Yes No
+1️⃣1️⃣ Interview killer one-liners
+
+💬 Does Active Job use Marshal?
+➡️ No, it uses GlobalID for ActiveRecord objects.
+
+💬 Why not Marshal?
+➡️ Unsafe, version-dependent, and not portable.
+
+💬 What happens if record is deleted?
+➡️ Job raises RecordNotFound.
+
+🧠 Mental model to lock it in
+
+Active Job stores references, not objects.

@@ -1,0 +1,95 @@
+Problem: Valid Anagram
+
+Question:
+
+Given two strings s and t, return true if t is an anagram of s, and false otherwise.
+
+An anagram means:
+
+Both strings have the same characters
+
+Each character occurs the same number of times
+
+Order does not matter
+
+Examples
+s = "anagram"
+t = "nagaram"
+Output: true
+
+s = "rat"
+t = "car"
+Output: false
+
+s = ""
+t = ""
+Output: true
+
+Key points
+
+Strings must be of equal length. If not → return false
+
+Count the frequency of each character
+
+Compare counts → if all match → valid anagram
+
+Approach 1: Sort and Compare
+
+Sort both strings → check if equal
+
+s.chars.sort == t.chars.sort
+
+
+Time Complexity: O(n log n)
+
+Space Complexity: O(n)
+
+✅ Simple, works in most interviews
+
+Approach 2: Hash Map / Frequency Count (Optimal)
+
+Count occurrences of each character in s
+
+Count occurrences in t
+
+Compare the two hashes
+
+Time Complexity: O(n)
+
+Space Complexity: O(n)
+
+Ruby Code Using Hash
+def valid_anagram(s, t)
+  return false if s.length != t.length
+
+  count = Hash.new(0)
+
+  s.each_char { |char| count[char] += 1 }
+  t.each_char { |char| count[char] -= 1 }
+
+  count.values.all? { |v| v == 0 }
+end
+
+# Tests
+p valid_anagram("anagram", "nagaram")  # => true
+p valid_anagram("rat", "car")          # => false
+p valid_anagram("", "")                 # => true
+
+How it works
+
+Count each char in s → add 1
+
+Count each char in t → subtract 1
+
+If all counts are zero → strings have same characters in same frequency → valid anagram
+
+✅ Efficient, O(n) time, O(n) space
+
+Interview explanation
+
+“I count characters in the first string, then subtract counts using the second string. If all counts are zero, the strings are anagrams. This is O(n) time and O(n) space. Alternatively, sorting both strings works in O(n log n).”
+
+
+#####
+
+s1.chars.tally == s2.chars.tally

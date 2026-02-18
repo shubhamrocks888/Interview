@@ -1,0 +1,127 @@
+Short, direct answer
+
+❌ No — the job is NOT stored inside a Redis hash keyed by jid.
+
+✔️ The job is stored as a raw JSON string value inside different Redis data structures (list / sorted set), and jid is just a field inside that JSON.
+
+There is no Redis key like:
+
+job:<jid> -> {job data}
+
+How Redis actually stores the job
+Example job JSON (string)
+"{\"class\":\"MyJob\",\"args\":[1],\"jid\":\"a1b2c3\",\"queue\":\"default\"}"
+
+
+This entire string is the value stored in Redis.
+
+1️⃣ Pending job (queue)
+Redis structure
+LIST
+
+Redis key
+queue:default
+
+Stored like this
+LPUSH queue:default "<job_json_string>"
+
+
+👉 Each list element = one full job JSON
+
+No hash. No jid-based key.
+
+2️⃣ Scheduled / Retry job
+Redis structure
+SORTED SET (ZSET)
+
+Redis key
+schedule
+retry
+
+Stored like this
+ZADD retry <timestamp> "<job_json_string>"
+
+
+Score = run time
+
+Member = full job JSON
+
+Again: job JSON is the member itself.
+
+3️⃣ Dead (failed permanently)
+Redis structure
+SORTED SET
+
+Redis key
+dead
+
+ZADD dead <timestamp> "<job_json_string>"
+
+4️⃣ Running job (monitoring only)
+
+Here jid does appear in a hash — but this is NOT job storage.
+
+Redis structure
+HASH
+
+Redis key
+workers
+
+
+Example:
+
+HSET workers "pid:thread" "<job_json_string>"
+
+
+Purpose:
+
+Web UI
+
+Heartbeats
+
+Graceful shutdown
+
+⚠️ If the process crashes, this entry disappears.
+
+Key distinction (very important)
+
+| Redis Data      | Purpose            | Persistent? |
+| --------------- | ------------------ | ----------- |
+| `queue:*` list  | Job waiting to run | ✅           |
+| `retry` ZSET    | Retry later        | ✅           |
+| `schedule` ZSET | Run later          | ✅           |
+| `dead` ZSET     | Failed jobs        | ✅           |
+| `workers` hash  | Currently running  | ❌           |
+
+
+So where is jid stored?
+
+Inside the JSON itself:
+
+{
+  "jid": "a1b2c3"
+}
+
+
+That’s it.
+
+Redis does not:
+
+Index jobs by jid
+
+Look up jobs by jid
+
+Store job separately per jid
+
+Why Sidekiq chose this design?
+Performance & memory efficiency
+
+Redis excels at pushing/popping lists
+
+Indexing by jid would double storage
+
+Most jobs are fire-and-forget
+
+Interview-ready one-liner 💡
+
+Sidekiq stores the entire job as a single JSON string inside Redis lists or sorted sets; jid is just metadata inside that JSON and is not used as a Redis key or hash index.

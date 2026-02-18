@@ -1,0 +1,82 @@
+1️⃣ Real-life context
+
+Imagine you’re building a new API endpoint every day, like:
+
+POST /users
+GET /posts
+PATCH /orders/:id
+
+
+You need the endpoint to work correctly ✅
+
+You also want it to behave as expected by clients ✅
+
+Now, do you treat this as TDD or BDD?
+
+2️⃣ TDD approach
+
+Focus: Implementation correctness
+
+Write unit tests for methods first, then code.
+
+Example (Rails service class)
+# tdd: test first
+RSpec.describe UserCreator do
+  it "creates a new user with valid params" do
+    params = { email: "test@example.com", password: "123456" }
+    user = UserCreator.new(params).call
+
+    expect(user).to be_persisted
+    expect(user.email).to eq("test@example.com")
+  end
+end
+
+
+You’re testing the class/method works correctly
+
+Low-level, developer-focused
+
+Good for internal logic, services, or complex calculations
+
+3️⃣ BDD approach
+
+Focus: Behavior / API outcome
+
+Write specs that describe what API should do from client’s perspective.
+
+Example (Rails request spec)
+RSpec.describe "POST /users", type: :request do
+  it "creates a user successfully" do
+    post "/users", params: { user: { email: "test@example.com", password: "123456" } }
+
+    expect(response).to have_http_status(:created)
+    expect(JSON.parse(response.body)["email"]).to eq("test@example.com")
+  end
+end
+
+
+You’re testing behavior the client expects
+
+High-level, readable
+
+Can serve as documentation for the API
+
+4️⃣ Rule of thumb for APIs
+Focus	Use case
+TDD	Internal logic: services, models, jobs, calculations
+BDD	API endpoints, controllers, features, external behavior
+
+So if you are making a new API endpoint every day:
+
+✅ BDD is recommended for the request/response behavior
+✅ You can still use TDD internally for service objects or model methods
+
+5️⃣ TL;DR example
+
+TDD: Test UserCreator service class method for correctness
+
+BDD: Test POST /users endpoint returns 201 + correct JSON
+
+🔑 Interview one-liner
+
+When building APIs, use BDD for endpoints and controller behavior to ensure expected client behavior, and TDD for internal classes/services to ensure correct implementation.

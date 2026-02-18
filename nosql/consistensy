@@ -1,0 +1,108 @@
+1️⃣ What is Consistency (simple)
+
+Consistency means: when you read data, you get the most recent correct value.
+
+Example:
+
+You update order_status = "shipped"
+
+You immediately read it
+
+Consistency = you see "shipped", not old data
+
+2️⃣ Why consistency is hard in NoSQL
+
+NoSQL databases are:
+
+Distributed (multiple nodes)
+
+Data is replicated
+
+Network failures happen
+
+So:
+
+One node may have new data
+
+Another node may still have old data
+
+3️⃣ Strong Consistency
+
+All reads return the latest write.
+
+Writes are confirmed only after all required replicas update
+
+Slower
+
+Harder to scale
+
+Example:
+
+Banking transactions
+
+Inventory count
+
+SQL DBs → usually strongly consistent
+
+4️⃣ Eventual Consistency (Very Common in NoSQL)
+
+Reads may return stale data temporarily, but data becomes consistent over time.
+
+Faster writes
+
+Better availability
+
+More scalable
+
+Example:
+
+Social media likes
+
+Analytics dashboards
+
+Order history showing after a few seconds
+
+5️⃣ Read / Write Consistency (MongoDB example)
+
+MongoDB lets you choose:
+
+Write Concern
+
+How many nodes must confirm a write
+
+{ w: "majority" }
+
+Read Concern
+
+From where data is read (primary vs secondary)
+
+6️⃣ AWS Example (Interview Gold)
+DynamoDB
+
+Default: eventual consistency
+
+Optional: strongly consistent reads
+
+You trade latency vs correctness
+
+7️⃣ Consistency vs Availability (CAP)
+
+During network failure:
+
+Choose Consistency → some requests fail
+
+Choose Availability → some reads may be stale
+
+NoSQL usually chooses:
+
+Availability + Partition tolerance
+
+8️⃣ One-liner Interview Answer
+
+“Consistency in NoSQL refers to whether reads always return the latest data. Most NoSQL systems favor eventual consistency to improve availability and scalability, though some allow tuning for strong consistency when needed.”
+
+9️⃣ Super-short analogy
+
+Strong consistency → asking the main office
+
+Eventual consistency → asking nearby branches (they sync later)

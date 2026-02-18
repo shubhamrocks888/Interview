@@ -1,0 +1,164 @@
+First: Redis does NOT “know” job status
+
+👉 Sidekiq knows. Redis is dumb storage.
+
+Redis never decides:
+
+job completed
+
+job failed
+
+job crashed
+
+Sidekiq decides — Redis just follows commands.
+
+Core idea (one line)
+
+A job is considered completed when Sidekiq explicitly deletes it from Redis.
+
+No delete = not completed
+Delete = completed
+
+That’s it.
+
+Step-by-step: job lifecycle in Redis
+STEP 1 — Job is enqueued
+
+Stored in Redis:
+
+queue:default   (LIST)
+
+STEP 2 — Job is picked up
+
+Sidekiq:
+
+Pops job from queue:default
+
+Records it in:
+
+workers (HASH)
+
+process metadata
+
+Redis now has:
+
+workers → job is running
+
+STEP 3 — Job executes in memory
+
+Important:
+
+Redis is not involved
+
+Job runs fully inside Sidekiq thread
+
+Redis still shows:
+
+workers → job is running
+
+STEP 4 — Job finishes successfully ✅
+
+Now comes the key moment.
+
+Sidekiq does three explicit Redis operations:
+
+1️⃣ Remove worker entry
+
+HDEL workers <process_id>:<thread_id>
+
+
+2️⃣ Update stats (processed count, timing, etc.)
+
+3️⃣ Do NOTHING else with the job payload
+
+👉 No retry
+👉 No history
+👉 No “completed jobs” table
+
+The job payload is simply gone.
+
+So how is “completion” represented?
+
+By absence, not presence.
+
+State	Redis representation
+Waiting	In queue:*
+Running	In workers
+Failed	In retry / dead
+Completed	Nowhere ✅
+This is intentional (design choice)
+
+Imagine if Sidekiq stored completed jobs:
+
+Redis would grow infinitely
+
+Massive memory usage
+
+Slow operations
+
+Instead:
+
+Completed jobs are garbage-collected immediately
+
+If you want history → you must log it yourself.
+
+What if Sidekiq crashes before deletion?
+
+This is the critical part 👇
+
+Case: Job finished, but Sidekiq crashed before cleanup
+
+Job logic ran
+
+DB changes committed
+
+BUT Redis cleanup never happened
+
+Redis still shows:
+
+workers → job running
+
+
+On restart:
+
+Sidekiq sees stale worker
+
+Re-queues the job
+
+Job runs again
+
+👉 That’s why Sidekiq guarantees at-least-once, not exactly-once.
+
+Important interview sentence 🔥
+
+Sidekiq does not track completed jobs. A job is considered complete when Sidekiq removes all references to it from Redis. Completion is represented by deletion, not by a stored success state.
+
+Bonus: How Sidekiq does track success stats
+
+Sidekiq keeps only counters, not job data:
+
+stat:processed
+
+stat:failed
+
+These are numbers, not job records.
+
+If interviewer pushes: “Then how do we audit jobs?”
+
+Correct answers:
+
+Application logs
+
+Database records
+
+Custom middleware
+
+Sidekiq Pro Batches / callbacks
+
+Mental model to remember forever
+Job exists in Redis → not done
+Job does not exist → done
+
+
+Redis never says “completed”.
+Sidekiq proves completion by deleting the job.

@@ -1,0 +1,185 @@
+1️⃣ High-Level Answer (What interviewer expects first)
+
+	Rails handles caching by storing frequently used data or rendered content in fast storage (like memory or Redis) so that repeated requests can be served faster without hitting the database or re-rendering views.
+
+	Rails provides multiple levels of caching, from low-level data caching to full page caching.
+
+2️⃣ Types of Caching in Rails (MOST IMPORTANT)
+	🔹 1. Page Caching (rare now)
+
+	Stores full HTML page
+	Served directly by web server
+	Bypasses Rails completely
+
+	📌 Mostly replaced by HTTP caching / CDN
+
+	🔹 2. Action Caching (deprecated)
+
+		Caches controller action output
+		Still runs filters
+
+		📌 Mention briefly, don’t focus
+
+	🔹 3. Fragment Caching (VERY COMMON)
+
+		Caches parts of views
+
+		<% cache @user do %>
+		  <%= @user.name %>
+		<% end %>
+
+
+		Rails auto-expires cache when object changes.
+
+		📌 Say:
+
+		“Fragment caching is widely used to cache partial UI sections.”
+
+
+	4. Low-Level (Data) Caching
+
+	Used in models/services
+
+	Rails.cache.fetch("users", expires_in: 10.minutes) do
+	  User.all.as_json
+	end
+
+
+	✔ Works with:
+
+	Redis
+	Memcached
+	Memory store
+	File store
+
+	📌 This is what interviewers LOVE.
+
+3️⃣ Cache Stores (Backends)
+
+		Rails supports multiple cache stores:
+
+		| Store           | Use case             |
+		| --------------- | -------------------- |
+		| MemoryStore     | Single server        |
+		| FileStore       | Development          |
+		| MemCacheStore   | Distributed          |
+		| RedisCacheStore | Production (popular) |
+
+
+
+		config.cache_store = :redis_cache_store, { url: ENV["REDIS_URL"] }
+	📌 Say:
+
+	“In production, Redis is commonly used as the cache store.”
+
+4️⃣ Cache Key & Expiration (Important)
+
+
+	🔹 Cache Keys
+
+	Rails uses:
+
+	Object id
+
+	updated_at
+
+	@user.cache_key
+	# users/1-20260110123456
+
+
+	Auto-expires when record updates.
+
+
+	🔹 Expiration
+		expires_in: 10.minutes
+
+
+		Manual or automatic expiration.
+
+		📌 Say:
+
+		“Rails handles cache invalidation using cache keys and timestamps.”
+
+
+5️⃣ Russian Doll Caching (Advanced but impressive)
+
+	Nested fragment caching.
+
+	<% cache @post do %>
+	  <% @post.comments.each do |comment| %>
+	    <% cache comment do %>
+	      <%= comment.body %>
+	    <% end %>
+	  <% end %>
+	<% end %>
+
+
+	Only updated parts expire.
+
+	📌 Say:
+
+	“Rails supports Russian doll caching for efficient partial updates.”
+
+
+
+6️⃣ HTTP Caching (Controller Level)
+	fresh_when(@post)
+	# or
+	stale?(etag: @post, last_modified: @post.updated_at)
+
+
+	Uses:
+
+	ETag
+
+	Last-Modified
+
+	📌 Say:
+
+	“Rails supports HTTP caching to reduce server processing and bandwidth.”
+
+
+
+7️⃣ How Rails Reads/Writes Cache Internally (Good follow-up)
+
+	Rails serializes objects (usually Marshal)
+
+	Stored in cache store
+
+	On read:
+
+	If hit → return cached value
+
+	If miss → execute block → store result
+
+	📌 Mention briefly:
+
+	“Rails uses serialization to store Ruby objects in cache.”
+
+
+
+8️⃣ Common Interview Follow-ups (Be Ready)
+	❓ What is cache invalidation?
+
+	Removing or expiring outdated cache data when underlying data changes.
+
+	❓ Why avoid caching ActiveRecord objects?
+
+	Schema changes or code changes can break deserialization and cause stale data.
+
+
+❓ Redis vs Memcached?
+
+	| Redis                    | Memcached        |
+	| ------------------------ | ---------------- |
+	| Persistent               | In-memory only   |
+	| Supports data structures | Simple key-value |
+	| Slower but flexible      | Faster           |
+
+
+⭐ 30-Second Perfect Answer (MEMORIZE THIS)
+
+“Rails handles caching using multiple strategies like fragment caching, low-level data caching, and HTTP caching.
+It supports different cache stores such as MemoryStore, Memcached, and Redis, with Redis commonly used in production.
+Rails uses cache keys with timestamps to automatically expire cache when records change.
+This helps reduce database queries and improves response time.”

@@ -1,0 +1,101 @@
+Core Difference (1-line answer)
+
+Object-oriented programming organizes code around objects with mutable state, while functional programming organizes code around pure functions and immutable data.
+
+🔹 Key Differences (Ruby vs Elixir)
+	
+	Concept			Object-Oriented (Ruby)				Functional (Elixir)
+	Core unit			Object								Function
+	State				Stored inside objects				Data is immutable
+	Data mutation		Allowed									Not allowed
+	Flow				Method calls							Function composition
+	Concurrency			Harder (shared state)					Easier (no shared state)
+	Side effects		Common									Avoided / controlled
+
+
+
+def increment(count) do
+	count +1
+end
+
+What happens here:
+
+No object
+
+No internal state
+
+Function returns a new value
+
+Safe for concurrency
+
+
+
+########
+
+list = [1,2,3] 
+new_list = list ++ [4]
+
+Original list is unchanged.
+
+Interview line:
+
+“Immutability eliminates side effects and makes concurrent systems predictable.”
+
+
+🔹 How This Affects Concurrency (BIG INTERVIEW POINT)
+	
+	Ruby
+
+	Shared mutable state
+
+	Requires locks, mutexes
+
+	Elixir
+
+	No shared memory
+
+	Processes communicate via messages
+
+	No locks needed
+
+	Golden line:
+
+	“Functional programming makes concurrency safer because there is no shared mutable state.”
+
+
+
+
+###
+
+	Error Handling Philosophy
+Ruby	Elixir
+Rescue exceptions	Let it crash
+Defensive coding	Supervisor restarts
+Try/catch heavy	Fault tolerance
+
+Say this:
+
+“Elixir relies on OTP supervisors to recover from failures instead of preventing every error.”
+
+
+##########
+When to Use Which (Practical Answer)
+Use Ruby (OOP) when:
+
+	Business logic heavy
+
+	CRUD applications
+
+	Faster development
+
+Use Elixir (FP) when:
+
+	High concurrency
+
+	Real-time systems
+
+	Messaging, streaming, Kafka consumers
+
+
+
+	

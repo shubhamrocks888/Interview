@@ -1,0 +1,117 @@
+Problem: Maximum Sum of Subarray of Size k
+
+Question:
+
+Given an array of integers arr and a number k, find the maximum sum of any contiguous subarray of size k.
+
+Example
+arr = [2, 1, 5, 1, 3, 2]
+k = 3
+
+
+Subarrays of size 3:
+
+[2, 1, 5] → sum = 8
+
+[1, 5, 1] → sum = 7
+
+[5, 1, 3] → sum = 9 ✅
+
+[1, 3, 2] → sum = 6
+
+Maximum sum = 9
+
+Brute-force approach (not optimal)
+
+Loop through all subarrays of size k
+
+Compute sum for each
+
+Keep track of maximum
+
+Time Complexity: O(n * k)
+
+Optimal approach: Sliding Window
+
+Idea:
+
+Maintain a window of size k
+
+Keep a running sum of the window
+
+Slide the window forward by 1 element at a time:
+
+Remove the first element of the previous window
+
+Add the next element
+
+Update max sum
+
+Time Complexity: O(n) ✅
+Space Complexity: O(1) ✅
+
+How it works (example)
+arr = [2, 1, 5, 1, 3, 2], k = 3
+
+
+First window sum: 2 + 1 + 5 = 8 → max = 8
+
+Slide window by 1: 1 + 5 + 1 = 7 → max = 8
+
+Slide window by 1: 5 + 1 + 3 = 9 → max = 9 ✅
+
+Slide window by 1: 1 + 3 + 2 = 6 → max = 9
+
+Interview explanation
+
+“I use a sliding window of size k. I calculate the sum of the first window, then for each step I subtract the element leaving the window and add the element entering the window. I keep track of the maximum sum during this process. This approach runs in O(n) time and O(1) space.”
+
+
+
+
+
+#### Solution
+
+
+def max_subarray_sum(arr, k)
+  return 0 if arr.empty? || k <= 0 || k > arr.length
+
+  window_sum = arr[0...k].sum   # Sum of first window
+  max_sum = window_sum
+
+  (k...arr.length).each do |i|
+    # Slide the window: subtract the element leaving, add the element entering
+    window_sum = window_sum - arr[i - k] + arr[i]
+    max_sum = [max_sum, window_sum].max
+  end
+
+  max_sum
+end
+
+# Example usage
+arr = [2, 1, 5, 1, 3, 2]
+k = 3
+p max_subarray_sum(arr, k)  # => 9
+
+arr2 = [2, 3, 4, 1, 5]
+k2 = 2
+p max_subarray_sum(arr2, k2) # => 7
+
+
+#### self method
+
+def max_sum_subarray(arr, k)
+   
+   
+   current_sum = arr[0...k].sum
+ 
+   (1...arr.length).each do |i|
+       if arr[i...i+k].sum > current_sum
+           current_sum = arr[i...i+k].sum
+        end
+  end
+  return current_sum
+end
+
+p max_sum_subarray([1,2,30,4,5,6,7], 3)
+# => [2, 4]

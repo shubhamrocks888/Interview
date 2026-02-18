@@ -1,0 +1,137 @@
+1️⃣ What find_each is designed for
+
+find_each is for batch processing large tables safely.
+
+Its goals are:
+
+  ✅ No missing records
+
+  ✅ No duplicate records
+
+  ✅ Low memory usage
+
+  ✅ Stable iteration even when rows are added/deleted
+
+To achieve this, Rails uses primary-key cursor pagination, not SQL OFFSET.
+
+2️⃣ How find_each actually works (core reason)
+
+  Internally Rails does something like this:
+
+  SELECT * FROM users
+  WHERE id > last_seen_id
+  ORDER BY id ASC
+  LIMIT 1000;
+
+
+Then:
+
+  Remember last_seen_id
+
+  Fetch next batch with id > last_seen_id
+
+  This is called cursor-based pagination.
+
+3️⃣ Why ORDER is ignored ❌
+
+  Problem with custom ORDER
+  User.order(created_at: :desc).find_each
+
+
+  Imagine users are being created while processing:
+
+  Batch 1: newest users
+
+  New user inserted
+
+  Batch 2: ordering changes
+
+  👉 records may be skipped or duplicated
+
+  ⚠️ This breaks data consistency
+
+Rails rule
+
+find_each must always order by primary key ASC
+
+So Rails silently ignores your order.
+
+4️⃣ Why LIMIT is ignored ❌
+  User.limit(10).find_each
+
+  Why this is dangerous
+
+  find_each assumes:
+
+  It controls batch size
+
+  It controls iteration boundaries
+
+  If Rails honored LIMIT 10:
+
+  Only first batch might run
+
+  Cursor logic breaks
+
+  Behavior becomes unpredictable
+
+  Rails decision
+
+Ignore limit
+
+Instead, use batch_size
+
+User.find_each(batch_size: 10)
+
+5️⃣ Why OFFSET is NOT used (important!)
+
+  OFFSET-based pagination ❌
+  SELECT * FROM users ORDER BY id LIMIT 1000 OFFSET 1000;
+
+
+  Problems:
+
+  Very slow on large tables
+
+  Records shift when rows are deleted/inserted
+
+  Causes missing / duplicate records
+
+Cursor-based pagination ✅
+WHERE id > last_id
+
+
+Fast + safe.
+
+6️⃣ Rails explicitly documents this behavior
+
+Rails intentionally ignores:
+
+order
+
+limit
+
+Because honoring them would:
+
+❌ Break batching guarantees
+
+❌ Cause data corruption
+
+❌ Hurt performance
+
+7️⃣ What to do if you NEED order or limit?
+Option 1: Use each (small data only)
+User.order(created_at: :desc).limit(10).each
+
+Option 2: Manual batching (advanced)
+User.order(created_at: :desc).in_batches(of: 100) do |relation|
+  relation.each { |user| heavy_work(user) }
+end
+
+
+⚠️ You are now responsible for correctness.
+
+8️⃣ Interview-ready one-liner ⭐
+
+find_each ignores order and limit because it uses primary-key cursor pagination to guarantee no missing or duplicate records during batch processing.
+

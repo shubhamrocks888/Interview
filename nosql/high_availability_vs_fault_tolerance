@@ -1,0 +1,126 @@
+High availability does NOT guarantee zero data loss.
+Fault tolerance does.
+
+Why data loss can happen in High Availability
+
+High availability focuses on:
+
+Keeping the system up
+
+Serving requests
+
+Minimizing downtime
+
+It does not always guarantee:
+
+All writes are safely replicated before a failure
+
+Example
+
+Primary node receives a write
+
+Before data replicates to secondary nodes
+
+Primary crashes
+
+Secondary takes over without that last write
+
+➡️ System is available, but last data is lost
+
+Fault Tolerance (contrast)
+
+Fault tolerance ensures:
+
+Data is replicated safely
+
+System can recover without losing data
+
+Writes are acknowledged only after replication
+
+➡️ No data loss
+
+| Feature              | High Availability | Fault Tolerance |
+| -------------------- | ----------------- | --------------- |
+| System stays online  | ✅                 | ✅               |
+| Handles node failure | ✅                 | ✅               |
+| Data loss possible   | ⚠️ Yes            | ❌ No            |
+
+
+“High availability ensures uptime, but it may allow some data loss. Fault tolerance ensures correctness and no data loss even during failures.”
+
+
+
+
+#######
+
+
+First: what uptime & downtime mean
+
+Uptime = time the system is available and serving requests
+
+Downtime = time the system is unavailable
+
+Example:
+
+99.9% uptime ≈ ~8.7 hours downtime per year
+
+99.99% uptime ≈ ~52 minutes downtime per year
+
+Now, fix the misunderstanding 👇
+
+❌ “In fault tolerance, uptime is 0”
+✅ No — fault-tolerant systems also aim for very high uptime
+
+Fault tolerance is not about being offline.
+It’s about continuing to work correctly even when failures occur.
+
+Correct comparison
+High Availability (HA)
+
+Goal: Minimize downtime
+
+System stays online by:
+
+Redirecting traffic
+
+Failing over to another node
+
+Might lose a small amount of data
+
+Uptime: Very high
+Downtime: Very small
+
+Fault Tolerance (FT)
+
+Goal: No data loss + correct behavior
+
+System continues operating even during failures
+
+Often requires:
+
+More replicas
+
+Synchronous replication
+
+Stronger guarantees
+
+Uptime: Very high (often same or better than HA)
+Downtime: Near zero
+
+Key correction (important for interview)
+
+Fault tolerance is a superset of high availability, not the opposite.
+
+All fault-tolerant systems are highly available
+
+Not all highly available systems are fault-tolerant
+
+One-line interview answer (memorize)
+
+“High availability minimizes downtime, while fault tolerance ensures the system continues to operate correctly without data loss during failures — both aim for high uptime.”
+
+Ultra-simple analogy
+
+High availability → backup generator turns on quickly (lights may flicker)
+
+Fault tolerance → lights never flicker at a

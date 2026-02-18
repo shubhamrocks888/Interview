@@ -1,0 +1,51 @@
+1️⃣ concurrency in Sidekiq
+Sidekiq.configure_server do |config|
+  config.options[:concurrency] = 10
+end
+
+
+Concurrency = number of threads per Sidekiq process that can execute jobs in parallel.
+
+It does not mean 10 separate OS processes (unless you run multiple Sidekiq processes).
+
+Each thread can pick a job from a queue and execute it simultaneously.
+
+2️⃣ What actually happens
+
+If concurrency = 10, Sidekiq can process up to 10 jobs at the same time in one process.
+
+If you enqueue 20 jobs:
+
+10 will run in parallel
+
+The rest will wait in the Redis queue until a thread becomes free
+
+Visual example
+Sidekiq process (concurrency: 4)
+
+Thread 1 → Job A
+Thread 2 → Job B
+Thread 3 → Job C
+Thread 4 → Job D
+Queue → Job E, Job F, Job G …
+
+
+Once any thread finishes, the next job in the queue starts immediately.
+
+3️⃣ Important notes
+
+Threads share memory inside the same Ruby process.
+
+High concurrency can be limited by:
+
+Ruby GIL (for MRI)
+
+Redis connection pool size
+
+Job workload (CPU vs IO)
+
+If you want more parallelism, you can run multiple Sidekiq processes.
+
+4️⃣ Interview-ready one-liner 💡
+
+config.options[:concurrency] = 10 means that a single Sidekiq process can execute up to 10 jobs in parallel using threads, not separate OS processes.

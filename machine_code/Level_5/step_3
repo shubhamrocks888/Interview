@@ -1,0 +1,60 @@
+3️⃣ Show Model
+Requirements:
+
+Fields: movie_id, show_time, total_seats, available_seats
+
+Associations:
+
+belongs_to :movie
+
+has_many :bookings
+
+Validations:
+
+show_time presence
+
+total_seats and available_seats presence, positive integers
+
+available_seats ≤ total_seats
+
+🧠 Think Before Writing
+
+Should we update available_seats automatically when a show is created? → Yes, we can set available_seats = total_seats in a before_validation callback
+
+Should we destroy bookings if show is deleted? → Yes, use dependent: :destroy
+
+✍️ Task:
+
+Write Show model with:
+
+Associations (belongs_to :movie, has_many :bookings)
+
+Validations
+
+Optional callback to initialize available_seats
+
+Paste your Show model.
+
+
+#####
+
+class Show < ApplicationRecord
+	belongs_to :movie
+	has_many :bookings, dependent: :destroy
+
+	validates :show_time, presence: true
+	validates :total_seats, presence: true, numericality: { greater_than: 0 }
+	validates :available_seats, presence: true, numericality: { greater_than_or_equal_to: 0 }
+
+	validate :check_available_seats
+
+	before_validation :allot_available_seats, on: :create
+
+	def check_available_seats
+		errors.add(:available_seats, "cannot be greater than total seats") if available_seats > total_seats
+	end
+
+	def allot_available_seats
+		self.available_seats = total_seats
+	end
+end

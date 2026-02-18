@@ -1,0 +1,91 @@
+1️⃣ LMS Architecture
+❓ Question they’ll ask
+
+“Can you explain the architecture of your LMS?”
+
+✅ Strong, senior-level answer (say this calmly)
+
+“The LMS was a modular monolithic application.
+At a high level, we had a single backend handling authentication, course and program management, enrollments, and progress tracking.
+
+Internally, the system was divided into clear domains like Users & Roles, Courses, Programs, Enrollments, and Reporting, each with its own models, services, and policies.
+
+We used the database as the source of truth with strong relational modeling, and offloaded heavy or long-running tasks like report generation and notifications to background jobs.
+
+Read-heavy endpoints such as course listings and dashboards were optimized using pagination and caching, while write operations like enrollment and progress updates were transactional to maintain consistency.”
+
+That’s a solid architecture answer — not over-engineered, not junior.
+
+🧠 What this answer signals to them
+
+You understand real-world systems, not toy apps
+
+You didn’t jump to microservices unnecessarily
+
+You think in domains, not controllers/models only
+
+🔍 Very likely follow-ups
+1️⃣ “Why monolith? Why not microservices?”
+
+Answer:
+
+“The domain was tightly coupled and the team size was small, so a modular monolith gave us faster development and simpler deployment.
+We designed domain boundaries cleanly so that if scaling or team size required it later, services like reporting or notifications could be extracted.”
+
+🚫 Never say “because company decided”.
+✅ Say trade-off + future flexibility.
+
+2️⃣ “How did different modules communicate?”
+
+Answer:
+
+“Mostly through well-defined service objects inside the application.
+For async communication—like sending emails, generating reports, or syncing data—we used background jobs so the core user flows stayed fast.”
+
+3️⃣ “Where did authorization live?”
+
+Answer:
+
+“Authorization was handled at the domain level using role-based access.
+Policies ensured that admins, instructors, and coordinators could only access resources they owned or were assigned to.”
+
+4️⃣ “What were the main components?”
+
+Be ready to list:
+
+API / Web layer
+
+Auth & roles
+
+Enrollment engine
+
+Progress tracking
+
+Background jobs
+
+Database + caching
+
+⚠️ Common traps to avoid
+
+Don’t say “it was just Rails default”
+
+Don’t jump into controller-level details
+
+Don’t over-claim microservices unless you truly had them
+
+Architect-level depth (if they push more)
+
+If the architect digs deeper, you can add:
+
+“We were careful to keep business logic out of controllers and models becoming too fat.
+Core workflows like enrollment, unenrollment, and progress updates were encapsulated in services so they were reusable and easier to test.”
+
+That line sounds very senior.
+
+Quick rehearsal (30 seconds version)
+
+If they want it short:
+
+“It was a modular monolith with clearly separated domains—users, courses, programs, and enrollments.
+We used relational modeling for consistency, background jobs for heavy tasks, and caching for read-heavy flows.
+The architecture prioritized simplicity, correctness, and scalability within a single deployable unit.”

@@ -1,0 +1,145 @@
+Short answer (one-liner)
+
+👉 JWT is stateless, so the server cannot invalidate a token once it’s issued.
+Logout becomes a client-side illusion.
+
+What “logout” really means
+In session-based auth (Devise)
+
+Logout = ❌ invalidate session on server
+
+reset_session
+
+
+Immediately:
+
+Cookie useless
+
+Any further request fails
+
+✅ Real logout
+
+In JWT-based auth
+
+Logout = ❌ delete token on client
+
+localStorage.removeItem("token")
+
+
+But…
+
+Server still accepts that JWT
+
+Token is valid until exp
+
+🚨 Anyone holding that token is still logged in
+
+Why server can’t “log out” JWT
+
+JWT verification is:
+
+Verify signature
+Check exp
+Done
+
+
+No DB call.
+No memory.
+No session.
+
+So server has no idea:
+
+Who logged out
+
+Which token should be blocked
+
+That’s the cost of statelessness.
+
+Real-world attack scenario 😬
+
+User logs in
+
+JWT issued (valid for 24h)
+
+Token leaked (XSS / logs / proxy)
+
+User clicks “Logout”
+
+Attacker still uses JWT for 24h
+
+💥 Logout did NOTHING.
+
+Why people say “just blacklist tokens”
+
+Because they realize the problem 😄
+
+But blacklisting means:
+
+Store token IDs in DB/Redis
+
+Check blacklist on every request
+
+Which results in:
+❌ Stateful system
+❌ Extra DB/Redis hit
+❌ Defeats JWT’s main benefit
+
+Common workarounds (all have tradeoffs)
+1️⃣ Short-lived access tokens
+exp = 5–15 minutes
+
+
+Limits damage but:
+
+Still not instant logout
+
+Requires refresh token system
+
+2️⃣ Refresh tokens (more complexity)
+
+Access token short-lived
+
+Refresh token stored server-side
+
+Rotate refresh tokens
+
+Still:
+
+Access token remains valid until expiry
+
+3️⃣ Token versioning
+
+Store:
+
+users.jwt_version
+
+
+JWT payload:
+
+{ "ver": 3 }
+
+
+On request:
+
+Compare DB version
+
+Reject old tokens
+
+Again:
+❌ DB hit every request
+
+Why Devise/session wins here
+Feature	JWT	Devise
+Logout	Weak	Strong
+Immediate invalidation	❌	✅
+Server control	❌	✅
+Simplicity	❌	✅
+Interview-ready explanation 🎯
+
+JWT is stateless, so the server does not track issued tokens. Logout only removes the token from the client, but the server will still accept it until it expires. This makes immediate logout and token revocation difficult without reintroducing server-side state.
+
+One killer closing line 🔥
+
+JWT trades logout control for scalability.
+
+That line alone sounds very senior.

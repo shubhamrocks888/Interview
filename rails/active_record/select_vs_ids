@@ -1,0 +1,116 @@
+The two snippets
+
+
+  User.select(:id).each do |user|
+    # ...
+  end
+
+  VS
+
+  User.ids.each do |id|
+    # ...
+  end
+
+🔥 Key Difference (core idea)
+
+  select(:id) creates ActiveRecord objects
+  ids returns raw integers
+
+  That’s the whole game.
+
+  What actually happens
+  User.select(:id).each
+
+  SQL:
+
+  SELECT users.id FROM users;
+
+
+  Ruby side:
+
+  #<User id=1>
+  #<User id=2>
+
+
+  ➡ ActiveRecord objects are instantiated
+  ➡ Memory + object allocation cost
+  ➡ Slower
+
+  ⚠️ Also: partial objects
+
+  user.name → nil
+
+  user.save → ❌ unsafe
+
+
+User.ids.each
+
+SQL:
+
+SELECT users.id FROM users;
+
+
+Ruby side:
+
+[1, 2, 3]
+
+
+➡ No objects
+➡ Just integers
+➡ Fastest & lowest memory
+
+| Aspect           | `select(:id)` | `ids`  |
+| ---------------- | ------------- | ------ |
+| SQL              | Same          | Same   |
+| AR objects       | ✅ Yes         | ❌ No   |
+| Memory           | 🔴 High       | 🟢 Low |
+| Speed            | Slower        | Faster |
+| Safe persistence | ❌ No          | N/A    |
+
+Interview Verdict 🧠
+Which one should you prefer?
+
+✅ User.ids.each
+
+Why?
+
+Because it avoids ActiveRecord object instantiation and returns raw primary keys directly.
+
+Say this sentence — interviewer will nod.
+
+⚠️ BUT there is a hidden trap (VERY IMPORTANT)
+❌ Both are bad for huge tables
+User.ids.each do |id|
+  heavy_work(id)
+end
+
+
+💥 Loads ALL ids into memory.
+
+✅ Correct pattern for large datasets
+User.find_each do |user|
+  heavy_work(user.id)
+end
+
+
+OR (if you want only IDs, batched):
+
+User.in_batches(pluck: :id) do |ids|
+  ids.each { |id| heavy_work(id) }
+end
+
+When select(:id) IS acceptable
+
+Use it only when:
+
+You need relation chaining
+
+You need scopes later
+
+Dataset is small
+
+User.select(:id).where(active: true)
+
+Final cheat-line (memorize this)
+
+ids is faster than select(:id) because it skips ActiveRecord object creation, but both load everything into memory unless batched.

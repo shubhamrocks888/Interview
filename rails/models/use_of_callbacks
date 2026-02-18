@@ -1,0 +1,255 @@
+🔥 What Are Callbacks?
+
+Callbacks are methods that automatically run at certain points in an ActiveRecord object’s lifecycle.
+
+For example:
+
+Before saving
+
+After saving
+
+Before destroying
+
+After committing to DB
+
+They are defined inside your model.
+
+📌 1️⃣ before_validation
+👉 Runs before validations
+✅ Use case:
+
+Normalize or clean data before validation.
+
+before_validation :normalize_email
+
+def normalize_email
+  self.email = email.strip.downcase if email.present?
+end
+
+
+✔ Ensures email format is consistent
+✔ Runs before valid?
+
+📌 2️⃣ after_validation
+👉 Runs after validations
+✅ Use case:
+
+Log validation results or modify errors.
+
+after_validation :log_validation_errors
+
+def log_validation_errors
+  Rails.logger.info(errors.full_messages) if errors.any?
+end
+
+
+Rarely used.
+
+📌 3️⃣ before_save
+👉 Runs before create & update
+✅ Use case:
+
+Set derived attributes.
+
+before_save :calculate_total
+
+def calculate_total
+  self.total_price = quantity * price
+end
+
+
+⚠ Runs on both create and update.
+
+📌 4️⃣ before_create
+👉 Runs only when record is first created
+✅ Use case:
+
+Generate tokens
+
+before_create :generate_referral_code
+
+def generate_referral_code
+  self.referral_code = SecureRandom.hex(6)
+end
+
+
+Perfect for:
+
+API keys
+
+UUIDs
+
+Default values
+
+📌 5️⃣ after_create
+👉 Runs after record is created
+✅ Use case:
+
+Send welcome email
+
+after_create :send_welcome_email
+
+def send_welcome_email
+  UserMailer.welcome(self).deliver_later
+end
+
+
+⚠ But better practice → use after_commit instead.
+
+📌 6️⃣ before_update
+👉 Runs only when updating existing record
+
+Example:
+
+before_update :prevent_status_change_if_locked
+
+def prevent_status_change_if_locked
+  if locked? && saved_change_to_status?
+    errors.add(:status, "cannot change when locked")
+    throw(:abort)
+  end
+end
+
+📌 7️⃣ after_update
+
+Example:
+
+after_update :notify_status_change, if: :saved_change_to_status?
+
+def notify_status_change
+  NotificationService.notify(self)
+end
+
+📌 8️⃣ after_save
+
+Runs after create + update.
+
+⚠ Still inside transaction.
+
+Not safe for external services.
+
+📌 9️⃣ after_commit ⭐ (MOST IMPORTANT)
+👉 Runs after DB transaction is committed
+✅ Best for:
+
+Sending emails
+
+Enqueuing jobs
+
+Calling external APIs
+
+after_commit :send_completion_email,
+             if: -> { saved_change_to_status? && completed? }
+
+def send_completion_email
+  RideMailer.completed(self).deliver_later
+end
+
+
+Why after_commit?
+
+Because if transaction fails, email won't send.
+
+🔥 This is production-grade practice.
+
+📌 🔟 before_destroy
+👉 Runs before record deletion
+
+Example:
+
+before_destroy :check_if_paid_orders_exist
+
+def check_if_paid_orders_exist
+  if orders.paid.exists?
+    errors.add(:base, "Cannot delete user with paid orders")
+    throw(:abort)
+  end
+end
+
+📌 1️⃣1️⃣ after_destroy
+
+Example:
+
+after_destroy :log_deletion
+
+def log_deletion
+  Rails.logger.info("User #{id} deleted")
+end
+
+📌 1️⃣2️⃣ after_initialize
+
+Runs when object is instantiated.
+
+after_initialize :set_defaults
+
+def set_defaults
+  self.status ||= "requested"
+end
+
+
+Rarely needed.
+
+🧠 Callback Order (Important for Interviews)
+
+Create flow:
+
+before_validation
+after_validation
+before_save
+before_create
+after_create
+after_save
+after_commit
+
+🚨 When NOT to Use Callbacks
+
+Senior-level advice 👇
+
+❌ Don’t put business logic
+❌ Don’t put complex workflows
+❌ Don’t trigger multiple dependent side effects
+
+Instead use:
+
+Service Objects
+
+Command Objects
+
+Interactors
+
+💡 Good Use Cases
+
+✔ Data normalization
+✔ Auto-setting fields
+✔ Logging
+✔ Simple notifications
+✔ Background job enqueue
+
+❌ Bad Use Cases
+
+❌ Payment processing
+❌ Complex workflow state machines
+❌ Multi-model operations
+
+🎯 Clean Production Example
+class Ride < ApplicationRecord
+  enum status: { requested: 0, started: 1, completed: 2 }
+
+  after_commit :send_completion_email, if: :just_completed?
+
+  private
+
+  def just_completed?
+    saved_change_to_status? && completed?
+  end
+
+  def send_completion_email
+    RideMailer.completed(self).deliver_later
+  end
+end
+
+
+✔ Clean
+✔ Safe
+✔ Transaction-safe
+✔ Readable

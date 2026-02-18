@@ -1,0 +1,21 @@
+🎯 Step 3 — Enforce Limit
+
+Now assume:
+
+count = Rails.cache.increment(...)
+
+
+We want:
+
+If count > 100
+
+Raise error so job retries
+
+👉 Write the line that enforces the 100-per-minute limit.
+
+Only that line.
+
+###
+
+
+raise StandardError, "Limit exceeded" if count>100

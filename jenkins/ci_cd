@@ -1,0 +1,116 @@
+1️⃣ What is CI/CD?
+CI — Continuous Integration
+
+Automatically build and test code whenever developers push changes.
+
+Why?
+
+Catch bugs early
+
+Avoid broken main branch
+
+Example
+
+Code pushed → Tests run automatically
+
+
+CD — Continuous Delivery / Deployment
+
+Continuous Delivery → code is always deployable
+
+Continuous Deployment → code is automatically deployed to production
+
+Example
+
+Tests pass → App deployed automatically
+
+Interview One-liner
+
+“CI/CD automates building, testing, and deploying software so changes reach users faster and more reliably.”
+
+
+
+What is Jenkinsfile?
+
+A Jenkinsfile defines the CI/CD pipeline as code.
+
+Stored in repo
+
+Written in Groovy
+
+Version controlled
+
+Why important?
+
+Reproducible
+
+Reviewable
+
+Same pipeline for everyone
+
+Simple Example (conceptual)
+Build → Test → Docker → Deploy
+
+Interview One-liner
+
+“Jenkinsfile defines pipeline stages and steps as code.”
+
+4️⃣ How Jenkins works with Docker
+		Why Docker + Jenkins?
+
+		Clean build environment
+
+		No dependency conflicts
+
+		Same environment every run
+
+		Typical flow
+
+		1️⃣ Jenkins pulls code
+		2️⃣ Runs tests inside Docker
+		3️⃣ Builds Docker image
+		4️⃣ Tags image
+		5️⃣ Pushes image to registry (ECR)
+
+		Jenkins → Docker build → Docker image
+
+		Interview One-liner
+
+		“Jenkins uses Docker to build consistent, isolated images and run tests reliably.”
+
+5️⃣ How Jenkins deploys to AWS
+
+		Common deployment methods
+		🔹 EC2
+
+		Jenkins SSHs into EC2
+
+		Pulls Docker image
+
+		Restarts container
+
+		🔹 ECS
+
+		Jenkins updates ECS task definition
+
+		ECS deploys new containers
+
+		🔹 EKS
+
+		Jenkins updates Kubernetes manifests
+
+		Typical AWS Flow (Most likely)
+		GitHub →
+		Jenkins →
+		Docker →
+		ECR →
+		EC2 / ECS
+
+		Interview One-liner
+
+		“Jenkins deploys to AWS by building Docker images, pushing them to ECR, and updating EC2 or ECS to run the new image.”
+
+🔥 Final Interview Summary (Say this confidently)
+
+	“CI/CD automates integration and deployment. Jenkins uses pipelines defined in Jenkinsfiles to build, test, and deploy applications. It works well with Docker by building container images and integrates with AWS by pushing images to ECR and deploying them to EC2 or ECS.”
+

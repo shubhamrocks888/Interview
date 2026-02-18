@@ -1,0 +1,121 @@
+And yes 👇
+Leaky Bucket / Token Bucket is the canonical answer.
+
+Let me help you connect your answers → his expected answer, so you can explain it confidently next time.
+
+What the architect actually wanted
+
+He wanted you to realize:
+
+“Queueing and delaying are implementation details. The core solution is a rate-limiting algorithm that enforces fairness and prevents starvation.”
+
+That’s where Leaky Bucket comes in.
+
+Leaky Bucket (in simple architect language)
+Mental model
+
+Bucket leaks at a fixed rate → 50 requests/hour
+
+Requests pour in
+
+If bucket overflows → drop or reject
+
+This guarantees:
+
+Constant outflow
+
+No starvation
+
+Bounded memory
+
+🧠 Key point:
+
+Bucket size is finite
+
+That’s what your Sidekiq queue was missing.
+
+Why Leaky Bucket fixes every issue raised
+
+| Problem raised              | Leaky Bucket solves it |
+| --------------------------- | ---------------------- |
+| Queue grows forever         | ❌ bucket has max size  |
+| Delayed jobs starve         | ❌ FIFO drain           |
+| Next request never executes | ❌ fair draining        |
+| Unlimited traffic           | ❌ overflow rejected    |
+
+
+How to explain it in interview (step-by-step)
+
+Step 1: Define bucket
+
+Leak rate = 50/hour
+
+Bucket size = N (say 100)
+
+Step 2: On incoming request
+
+If bucket not full → accept
+
+If full → reject (429)
+
+Step 3: Worker drains bucket
+
+Exactly 50 requests/hour
+
+Constant, predictable flow
+
+How this maps to Rails / Sidekiq (important)
+
+You can say:
+
+“Sidekiq is just the executor. The real control happens before enqueueing using a leaky bucket implemented in Redis.”
+
+Example mapping:
+
+Bucket → Redis list / sorted set
+
+Leak → scheduled worker / rate limiter
+
+Overflow → immediate rejection
+
+This shows abstraction thinking.
+
+If interviewer asks: “Why not Token Bucket?”
+
+Answer:
+
+Token Bucket → allows bursts
+
+Leaky Bucket → smooth, constant rate
+
+Since 3rd-party API has hard limit, leaky bucket is safer.
+
+🔥 That answer is gold.
+
+One-liner you should memorize
+
+“A leaky bucket enforces a fixed outflow rate and bounded queue, preventing starvation and unbounded backlog. Sidekiq can act as the worker, but rate control must happen at the ingress.”
+
+Why your earlier answers weren’t “wrong”
+
+They were:
+
+Implementation-level
+
+Reactive
+
+The architect wanted:
+
+Mathematical correctness
+
+Traffic shaping guarantees
+
+Once leaky bucket enters the picture, everything becomes clean.
+
+Final tip (important for interviews)
+
+If you ever feel stuck again, say this:
+
+“At sustained overload, this becomes a rate-limiting problem, and the correct solution is a leaky or token bucket with bounded capacity.”
+
+That sentence alone can unstick the conversation.

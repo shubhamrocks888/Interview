@@ -1,0 +1,98 @@
+🔐 Devise Auto Logout (Timeoutable / Session Expiry)
+1️⃣ What module handles auto logout?
+devise :timeoutable
+
+
+Automatically logs out users after a period of inactivity
+
+Configurable in config/initializers/devise.rb:
+
+config.timeout_in = 30.minutes
+
+
+Works for session-based login (and indirectly with remember-me)
+
+2️⃣ How auto logout works (high-level)
+
+User logs in → current_user set via Warden
+
+Rails session is created:
+
+session["warden.user.user.key"] = [[user.id], auth_salt]
+session[:last_request_at] = Time.current.to_i
+
+
+On every request, Devise checks:
+
+if session[:last_request_at] < Time.current - timeout_in
+  sign_out(current_user)
+else
+  session[:last_request_at] = Time.current.to_i
+end
+
+
+If timeout exceeded → user automatically logged out
+
+Otherwise → last_request_at updated
+
+3️⃣ Where is this data stored?
+
+Session cookie (browser) → stores user_id, auth_salt, last_request_at
+
+No DB updates required for timeoutable
+
+Unlike trackable, timeoutable doesn’t touch DB. Everything is session memory + cookie-based.
+
+4️⃣ Auto Logout with Remember-Me
+
+Remember-me survives browser restart
+
+If timeoutable is enabled:
+
+After timeout period → session expired
+
+Devise can auto-login again using remember-me cookie
+
+Session recreated automatically
+
+Important: Devise still checks auth_salt to ensure session is valid
+
+5️⃣ Manual Logout (sign_out)
+
+User clicks logout:
+
+DELETE /users/sign_out
+
+
+Devise does:
+
+warden.logout(:user)
+cookies.delete(:remember_user_token)
+session.clear
+
+
+This invalidates session immediately (also clears remember-me)
+
+6️⃣ Timeoutable Flow (Step-by-Step)
+Login request
+     ↓
+Warden authenticates → session created
+     ↓
+User activity → each request updates session[:last_request_at]
+     ↓
+Request received
+     ↓
+Compare last_request_at with current_time
+     ↓
+If timeout exceeded → sign_out → session cleared → redirect to login
+Else → continue → update last_request_at
+
+7️⃣ Interview-Trap Points
+Question	Correct Answer
+Does timeoutable update DB?	❌ No, session-only
+Does it affect remember-me?	✅ Can auto-login if remember-me exists
+Is current_user immediately cleared on timeout?	✅ Yes, next request triggers logout
+Can user extend session by activity?	✅ last_request_at updated on every request
+8️⃣ One-Line Interview Answer
+
+“Devise’s timeoutable module automatically logs out users after a configurable period of inactivity. It tracks last_request_at in the session cookie, and if the user exceeds the timeout, Warden clears the session, logging the user out. No database updates are needed.”

@@ -1,0 +1,44 @@
+⚡ Now Let’s Make It Slightly Harder
+
+Interviewer says:
+
+Add filtering:
+GET /posts?status=published
+
+Return only published posts if param present.
+
+Modify your index method.
+
+Write it. Don't overcomplicate.
+
+
+########
+
+class PostsController < ApplicationController
+
+	def index
+		posts = Post.includes(:user)
+		posts = posts.where(status: params[:status]) if params[:status].present?
+		
+
+		render json: posts,
+         include: { user: { only: [:id, :full_name, :email] } },
+         only: [:id, :title, :status]
+	end
+
+end
+
+
+###
+
+scope :by_status, ->(status) { where(status: status) if status.present? }
+
+posts = Post.includes(:user).by_status(param[:status])
+
+####
+
+allowed_statuses = %w[draft published]
+
+if params[:status].present? && allowed_statuses.include? params[:status]
+   posts = Post.where(status: params[:status]).includes(:user)
+end

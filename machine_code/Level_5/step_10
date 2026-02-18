@@ -1,0 +1,188 @@
+We’ll redesign properly — step by step — like a production booking system.
+
+🎯 Goal: Move from “Seat Count Booking” → “Seat-Level Booking”
+
+Instead of:
+
+seats_booked = 3
+
+
+We now support:
+
+["A1", "A2", "A3"]
+
+
+That means we need to remodel the database.
+
+🧱 Step 1: Identify the Problem in Current Design
+
+Currently:
+
+Show has total_seats
+
+Show has available_seats
+
+Booking stores only seats_booked
+
+Problems:
+
+❌ No idea which seats are booked
+❌ Cannot prevent A1 being booked twice
+❌ Cannot show seat map
+❌ Not realistic
+
+So we redesign.
+
+🏗 Step 2: New Data Model Design
+
+We introduce a new model:
+
+🎬 Seat Model
+
+Fields:
+
+id
+
+show_id
+
+seat_number (A1, A2, B3…)
+
+status (available / booked)
+
+Relationship:
+
+Show has_many :seats
+
+Seat belongs_to :show
+
+🧾 Updated Booking Model
+
+Now booking should:
+
+belong_to :user
+
+belong_to :show
+
+have_many :seats
+
+But how?
+
+We need a join table.
+
+🧩 Step 3: BookingSeat (Join Table)
+
+Because:
+
+One booking can have many seats
+
+One seat belongs to one booking (after booked)
+
+Two design options:
+
+Option A (Simpler & Clean)
+
+Add to Seat table:
+
+booking_id (nullable)
+
+Meaning:
+
+If seat.booking_id = nil → available
+
+If seat.booking_id present → booked
+
+This is simpler.
+
+Option B (More Flexible, Enterprise)
+
+Create separate table:
+
+BookingSeat:
+
+booking_id
+
+seat_id
+
+This allows more complex scenarios later.
+
+For now, Option A is enough.
+
+🏛 Final Redesigned Schema (Simple & Clean)
+Movie
+
+has_many :shows
+
+Show
+
+belongs_to :movie
+
+has_many :seats
+
+has_many :bookings
+
+Seat
+
+belongs_to :show
+
+belongs_to :booking (optional)
+
+seat_number
+
+status (or infer from booking_id)
+
+Booking
+
+belongs_to :user
+
+belongs_to :show
+
+has_many :seats
+
+🧠 Important Design Decision
+
+Do we still need available_seats column?
+
+Answer:
+
+Not required anymore.
+
+Because:
+
+available_seats = seats.where(booking_id: nil).count
+
+
+However…
+
+In high traffic systems, counting every time is expensive.
+
+So production systems:
+
+Keep seat table
+
+ALSO keep available_seats as cached counter
+
+Update it transactionally
+
+That’s advanced thinking.
+
+🚀 New Booking Flow (Seat-Level)
+
+User sends seat numbers: ["A1", "A2"]
+
+Start transaction
+
+Lock those seats
+
+Check if all are unbooked
+
+Create booking
+
+Assign booking_id to seats
+
+Commit
+
+This guarantees:
+
+No double booking
+
+Concurrency safety

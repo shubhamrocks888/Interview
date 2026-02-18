@@ -1,0 +1,20 @@
+Interviewer twist:
+
+Prevent soft-deleted tasks from being updated.
+PATCH /tasks/:id should return 404 if task is soft deleted.
+
+Modify update logic accordingly.
+
+
+###
+
+def update
+  task = Task.active.find_by(id: params[:id])
+
+  return render json: {errors: "Task not found"}, status: :not_found unless task
+
+  if task.update(task_params)
+  else
+  	render json: {msg: "Task updated"} 
+  end
+end

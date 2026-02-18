@@ -1,0 +1,252 @@
+1️⃣ What is Regex (plain English)
+
+Regex = a pattern to match text
+
+You use it to answer questions like:
+
+Does this string look like an email?
+
+Does it contain only numbers?
+
+Does it start with https://?
+
+Can I extract part of it?
+
+Think of it as Ctrl+F on steroids.
+
+2️⃣ Regex in Ruby (the base)
+
+Rails uses Ruby regex, so first Ruby basics.
+
+Create a regex
+/pattern/
+
+
+Example:
+
+/hello/
+
+Match a string
+"hello world".match(/hello/)
+# => #<MatchData "hello">
+
+Boolean match
+"hello".match?(/hello/)
+# => true
+
+
+💡 Rails validations use match? internally → fast & clean.
+
+3️⃣ Most important building blocks
+3.1 Exact characters
+/cat/
+
+
+Matches:
+
+❌ CAT
+
+❌ c a t
+
+✅ cat
+
+Regex is case-sensitive by default.
+
+3.2 Character classes [ ]
+
+Match one character from a set.
+
+/[abc]/
+
+
+Matches a or b or c
+
+/[0-9]/
+
+
+Matches any digit
+
+/[a-zA-Z]/
+
+
+Matches any letter
+
+3.3 Common shortcuts (🔥 memorize these)
+Pattern	Meaning
+\d	digit (0–9)
+\D	not digit
+\w	letter, number, underscore
+\W	not word
+\s	space
+\S	not space
+.	any character
+
+Example:
+
+/\d\d\d/
+
+
+Matches 123
+
+4️⃣ Quantifiers (how many times)
+
+These answer: “how many characters?”
+
+Symbol	Meaning
+*	0 or more
++	1 or more
+?	0 or 1
+{n}	exactly n
+{n,}	at least n
+{n,m}	between n and m
+
+Examples:
+
+/\d+/
+
+
+Matches: 1, 123, 9999
+
+/\d{10}/
+
+
+Matches exactly 10 digits (phone numbers 🔥)
+
+5️⃣ Anchors (VERY important in Rails validations)
+
+Anchors lock start and end of string.
+
+Anchor	Meaning
+^	start of string
+$	end of string
+Without anchors (❌ common mistake)
+"abc123xyz".match?(/\d+/)
+# true
+
+With anchors (✅ correct)
+"123".match?(/^\d+$/)
+# true
+
+"abc123".match?(/^\d+$/)
+# false
+
+
+👉 Rails validations almost always need anchors
+
+6️⃣ Groups ( )
+
+Groups let you:
+
+Extract values
+
+Apply quantifiers together
+
+/(ab)+/
+
+
+Matches:
+
+ab
+
+abab
+
+ababab
+
+Extracting:
+
+match = "2026-02-04".match(/(\d{4})-(\d{2})-(\d{2})/)
+match[1] # year
+match[2] # month
+match[3] # day
+
+7️⃣ Regex in Rails validations (real usage)
+7.1 Email validation (simple & interview-safe)
+validates :email,
+  format: {
+    with: /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/,
+    message: "invalid email"
+  }
+
+
+Why:
+
+\A → start of string (better than ^)
+
+\z → end of string
+
+No spaces
+
+Must contain @ and .
+
+📌 Interview tip:
+
+“We avoid overly complex email regex; let mail servers do the real validation.”
+
+7.2 Phone number (India example)
+validates :phone,
+  format: {
+    with: /\A[6-9]\d{9}\z/
+  }
+
+
+Explanation:
+
+Starts with 6–9
+
+Total 10 digits
+
+7.3 Username
+validates :username,
+  format: {
+    with: /\A[a-zA-Z0-9_]+\z/
+  }
+
+
+Only:
+
+letters
+
+numbers
+
+underscore
+
+8️⃣ \A vs ^ (INTERVIEW GOLD)
+Symbol	Meaning
+^	start of line
+\A	start of string
+$	end of line
+\z	end of string
+
+Rails uses \A and \z because:
+
+Multiline input exists
+
+Safer and predictable
+
+📌 Say this in interviews → instant points.
+
+9️⃣ Common Rails mistakes ❌
+❌ Missing anchors
+/\d{10}/
+
+
+Matches:
+
+abc1234567890xyz ❌
+
+✅ Correct
+/\A\d{10}\z/
+
+❌ Over-engineering regex
+# unreadable monster regex
+
+✅ Simple + readable
+/\A[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\z/i
+
+🔟 Practice (you should try these)
+
+Tell me what matches:
+
+1️⃣ /\A\d+\z/ with "123abc"
+2️⃣ /[a-z]+/ with "123abc456"
+3️⃣ /\A[a-z]+\z/ with "abcDEF"

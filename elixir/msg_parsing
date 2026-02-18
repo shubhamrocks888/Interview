@@ -1,0 +1,186 @@
+How processes interact via message passing in BEAM
+Interview-ready definition (say this first)
+
+In BEAM, processes communicate by sending asynchronous messages to each other’s mailboxes. Each process has its own isolated memory and processes messages sequentially from its inbox.
+
+1️⃣ Every process has a mailbox
+
+When a BEAM process is created:
+
+It gets its own mailbox (message queue)
+
+No other process can access its memory
+
+Think of it like:
+
+Each process = independent worker
+
+Mailbox = private queue
+
+2️⃣ Sending a message (send/2)
+
+Syntax:
+
+send(pid, message)
+
+
+Example:
+
+send(pid, {:process_order, order_id})
+
+
+What happens:
+
+Message is copied
+
+Placed in the receiver’s mailbox
+
+Sender continues immediately (non-blocking)
+
+🔥 Interview line:
+
+Message passing in BEAM is asynchronous and non-blocking.
+
+3️⃣ Receiving a message (receive)
+
+A process handles messages using receive:
+
+receive do
+  {:process_order, order_id} ->
+    process(order_id)
+
+  {:cancel_order, order_id} ->
+    cancel(order_id)
+end
+
+
+Important points:
+
+Messages are pattern-matched
+
+Process handles one message at a time
+
+Order is FIFO (with pattern matching priority)
+
+🔥 Interview line:
+
+Processes consume messages sequentially, which eliminates race conditions.
+
+4️⃣ Pattern matching (VERY important)
+
+Elixir does not just read messages blindly.
+
+It matches based on structure:
+
+{:ok, result}
+{:error, reason}
+
+
+This makes code:
+
+Explicit
+
+Safe
+
+Easy to reason about
+
+Rails comparison:
+
+Instead of checking params manually
+
+Elixir pattern-matches upfront
+
+5️⃣ Synchronous vs Asynchronous messaging
+🔹 Asynchronous (fire-and-forget)
+send(pid, {:event, data})
+
+
+No reply expected
+
+Like pushing a job to Sidekiq
+
+🔹 Synchronous (request–response)
+
+Usually via GenServer.call:
+
+GenServer.call(pid, {:get_state})
+
+
+Under the hood:
+
+Sends a message
+
+Waits for reply
+
+🔥 Interview line:
+
+GenServer abstracts message passing by providing synchronous and asynchronous APIs.
+
+6️⃣ GenServer (REAL-world usage)
+
+In production, you rarely use raw send/receive.
+
+You use GenServer:
+
+GenServer.cast(pid, {:increment, 1})   # async
+GenServer.call(pid, :get_count)         # sync
+
+
+Internally:
+
+Messages go to mailbox
+
+GenServer processes them one by one
+
+Rails analogy:
+
+GenServer ≈ Sidekiq worker + state + mutex-free safety
+
+7️⃣ Why this model is powerful
+✅ No shared memory
+
+No locks
+
+No mutexes
+
+No race conditions
+
+✅ Fault isolation
+
+If one process crashes → others continue
+
+✅ Scalability
+
+Millions of processes possible
+
+🔥 Interview line:
+
+Message passing allows BEAM to scale safely without shared mutable state.
+
+8️⃣ Example in real system (Kafka consumer)
+
+You can say:
+
+In a Kafka-based system, each partition consumer can be modeled as a GenServer. Messages from Kafka are sent to the GenServer mailbox, processed sequentially, and failures are handled by supervisors.
+
+This ties directly to their JD 🔥
+
+9️⃣ Comparison with Rails (VERY INTERVIEW-FRIENDLY)
+
+| Rails           | Elixir                |
+| --------------- | --------------------- |
+| Shared memory   | Isolated processes    |
+| Locks needed    | No locks              |
+| Sidekiq retries | Supervisor restarts   |
+| Threads         | Lightweight processes |
+
+1️⃣0️⃣ One-liner summary (MEMORIZE)
+
+Processes in BEAM interact by sending immutable messages to each other’s mailboxes, where messages are processed sequentially using pattern matching.
+
+If interviewer pushes deeper
+❓ “What happens if a process crashes while processing a message?”
+
+Answer:
+
+The process crashes, the message is lost, and the supervisor restarts the process. The system remains stable.

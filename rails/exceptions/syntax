@@ -1,0 +1,180 @@
+1️⃣ Basic begin-rescue-end Syntax
+begin
+  # code that might raise an exception
+rescue SomeErrorClass => e
+  # handle the exception
+  puts e.message
+end
+
+
+SomeErrorClass is the exception type you expect (e.g., ActiveRecord::RecordNotFound)
+
+e is the exception object
+
+Only exceptions that match SomeErrorClass are rescued
+
+Others bubble up
+
+2️⃣ Rescue Multiple Exceptions
+begin
+  risky_operation
+rescue IOError, SystemCallError => e
+  puts "File or system error: #{e.message}"
+end
+
+
+Use commas to rescue multiple expected exceptions in one block
+
+e gives access to the exception instance
+
+3️⃣ Rescue Without Exception Class
+begin
+  risky_operation
+rescue => e
+  puts "Caught an error: #{e.message}"
+end
+
+
+Equivalent to rescue StandardError => e
+
+Catches most runtime errors but NOT fatal ones like SystemExit or Interrupt
+
+Interview trap: Avoid blindly rescuing like this
+
+4️⃣ Ensure (Always runs)
+begin
+  do_something
+rescue SomeError => e
+  puts e.message
+ensure
+  puts "Cleanup code runs always"
+end
+
+
+Code in ensure always runs, whether an exception occurred or not
+
+Great for:
+
+Closing files
+
+Releasing locks
+
+Cleaning resources
+
+5️⃣ Else (Runs only if no exception)
+begin
+  do_something
+rescue SomeError => e
+  puts "Error: #{e.message}"
+else
+  puts "Success! No exception occurred."
+end
+
+
+else runs only if no exception was raised
+
+Useful to separate happy path logic
+
+6️⃣ Efficient Usage Tips (Interview Points)
+✅ 1. Keep begin blocks small
+# BAD
+begin
+  do_a
+  do_b
+  do_c
+rescue => e
+end
+
+# GOOD
+begin
+  do_a
+rescue SomeError => e
+end
+
+begin
+  do_b
+rescue AnotherError => e
+end
+
+
+Why: Avoid rescuing unrelated errors
+
+Makes debugging easier
+
+✅ 2. Rescue only expected exceptions
+begin
+  order = Order.find(params[:id])
+rescue ActiveRecord::RecordNotFound => e
+  render json: { error: "Order not found" }, status: :not_found
+end
+
+
+Don’t use rescue blindly
+
+Avoid hiding programmer mistakes
+
+✅ 3. Logging & Reporting
+begin
+  risky_operation
+rescue Payment::Failed => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+  raise
+end
+
+
+Always log or report if needed
+
+Re-raise if you want higher-level handling
+
+✅ 4. Use ensure for cleanup
+file = File.open("data.txt")
+begin
+  file.read
+rescue IOError => e
+  Rails.logger.error(e.message)
+ensure
+  file.close
+end
+
+
+Guarantees resources are released
+
+Avoids leaks
+
+✅ 5. Use else to separate happy path
+begin
+  user = User.create!(params)
+rescue ActiveRecord::RecordInvalid => e
+  render json: { error: e.record.errors.full_messages }
+else
+  render json: user
+end
+
+
+Keeps happy path logic clean and readable
+
+7️⃣ One-line Rescue (Ruby Idiom)
+value = risky_operation rescue default_value
+
+
+Only use for trivial cases
+
+Avoid for production-critical code
+
+Interviewers may frown on overusing this
+
+8️⃣ Summary Table (for Interviews)
+
+| Feature         | Syntax                                    | Runs When                       |
+| --------------- | ----------------------------------------- | ------------------------------- |
+| begin-rescue    | `begin ... rescue SomeError => e ... end` | Exception occurs                |
+| rescue multiple | `rescue AError, BError => e`              | One of listed exceptions occurs |
+| else            | `else ...`                                | No exception occurs             |
+| ensure          | `ensure ...`                              | Always runs                     |
+| one-line        | `risky_operation rescue default`          | Only if exception occurs        |
+
+
+🏁 Interview Answer (30 sec)
+
+“In Ruby, begin-rescue-end lets you handle exceptions safely. I rescue only expected exceptions, log or report them, use ensure for cleanup, and else for happy paths. I avoid rescuing StandardError blindly and keep rescue blocks small to prevent hiding bugs.”

@@ -1,0 +1,87 @@
+if we need to take first email address not the last one whats the approach
+
+Ah! This is an important subtlety. By default, upsert_all always takes the last occurrence of a duplicate key because it just writes whatever is in the batch, overwriting previous rows. If you want to keep the first email occurrence instead of the last, you have to handle it before sending data to upsert_all, because the DB itself doesn’t know which one came “first” in the CSV.
+
+Here’s the approach:
+
+1️⃣ Use a Hash but Only Keep the First Occurrence
+
+Instead of overwriting the value in the hash, check if it already exists:
+
+valid_rows = {}  # email => row hash
+
+rows.each do |row|
+  email = row['email']
+  next if email.blank?
+
+  # Only add if email not already seen in this batch
+  valid_rows[email] ||= {
+    name: row['name'],
+    email: row['email'],
+    age: row['age'].to_i
+  }
+end
+
+
+✅ ||= ensures the first occurrence is kept. Later duplicates in the same batch are ignored.
+
+2️⃣ Across Multiple Batches
+
+If the same email appears in different batches, the first occurrence in the CSV may have already been inserted in a previous batch. To handle this:
+
+Maintain a Set of seen emails across batches:
+
+seen_emails = Set.new
+
+CSV.foreach(file_path, headers: true).each_slice(batch_size) do |rows|
+  valid_rows = {}
+  
+  rows.each do |row|
+    email = row['email']
+    next if email.blank?
+
+    # Only process if we haven't seen this email yet
+    next if seen_emails.include?(email)
+
+    errors = validate_row(row)
+    if errors.empty?
+      valid_rows[email] = { name: row['name'], email: email, age: row['age'].to_i }
+      seen_emails.add(email)  # mark as seen
+    else
+      # handle invalid rows
+    end
+  end
+
+  User.upsert_all(valid_rows.values, unique_by: :email) if valid_rows.any?
+end
+
+
+✅ This way:
+
+First occurrence of email wins
+
+Later duplicates are ignored
+
+Upsert will not overwrite previous inserts
+
+3️⃣ Key Notes
+
+DB uniqueness constraint (unique index on email) still required — prevents race conditions.
+
+Memory usage: Set grows with the number of unique emails in CSV. For 1M+ users, this is usually fine (~tens of MBs).
+
+If the CSV is truly enormous, you can persist seen_emails in Redis to avoid keeping it fully in memory.
+
+If you want, I can rewrite the full 1M-user batch-processing workflow with:
+
+First occurrence wins
+
+Hash + Set for duplicates
+
+Chunked batches
+
+Custom validation
+
+Upsert to DB
+
+It’ll be production-ready and interview-ready.

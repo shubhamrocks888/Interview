@@ -1,0 +1,144 @@
+1️⃣ Simplest phone number regex (digits only)
+Requirement
+
+Only numbers
+
+Any length
+
+/\A\d+\z/
+
+Meaning
+
+\A → start of string
+
+\d+ → one or more digits
+
+\z → end of string
+
+✅ 12345
+❌ 123abc
+
+2️⃣ Exactly 10-digit phone number (most common)
+Requirement
+
+Exactly 10 digits
+
+/\A\d{10}\z/
+
+Meaning
+
+{10} → exactly 10 digits
+
+✅ 9876543210
+❌ 987654321
+❌ 98765432101
+
+3️⃣ India phone number regex (interview favorite 🇮🇳)
+Requirement
+
+Starts with 6–9
+
+Total 10 digits
+
+/\A[6-9]\d{9}\z/
+
+Breakdown
+
+[6-9] → first digit
+
+\d{9} → remaining 9 digits
+
+✅ 9876543210
+❌ 1234567890
+❌ 5987654321
+
+Rails validation
+validates :phone,
+  format: { with: /\A[6-9]\d{9}\z/ }
+
+
+📌 Say this in interviews:
+
+“For India numbers, mobile numbers start from 6 to 9.”
+
+4️⃣ Allow country code (+91)
+Requirement
+
+Allow +91
+
+Or without it
+
+/\A(\+91)?[6-9]\d{9}\z/
+
+Breakdown
+
+(\+91)? → optional +91
+
+? → zero or one time
+
+✅ +919876543210
+✅ 9876543210
+❌ +911234567890
+
+5️⃣ Allow spaces or hyphens (user-friendly input)
+Accept:
+
+9876543210
+
++91 98765 43210
+
++91-98765-43210
+
+/\A(\+91[-\s]?)?[6-9]\d{4}[-\s]?\d{5}\z/
+
+
+📌 This is okay for UX, but…
+
+6️⃣ BEST PRACTICE (important 🚨)
+Don’t fight regex too hard
+
+Real apps usually do this:
+
+Normalize input
+
+Then validate
+
+Example
+before_validation :normalize_phone
+
+def normalize_phone
+  self.phone = phone.gsub(/\D/, "") if phone.present?
+end
+
+
+Now validate:
+
+validates :phone,
+  format: { with: /\A[6-9]\d{9}\z/ }
+
+
+📌 Interview gold:
+
+“We normalize phone numbers first, then apply a simple regex.”
+
+7️⃣ Common mistakes ❌
+❌ Missing anchors
+/\d{10}/
+
+
+Matches:
+
+abc9876543210xyz ❌
+
+❌ Using ^ and $
+/^[6-9]\d{9}$/
+
+
+Risky with multiline input.
+
+8️⃣ Quick cheat sheet (memorize this)
+Use case	Regex
+Digits only	/\A\d+\z/
+10 digits	/\A\d{10}\z/
+India mobile	/\A[6-9]\d{9}\z/
++91 optional	/\A(\+91)?[6-9]\d{9}\z/

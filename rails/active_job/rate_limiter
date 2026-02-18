@@ -1,0 +1,443 @@
+class ReportGenerationJob
+
+	include Sidekiq::Worker
+
+	sidekiq_options retry: 5
+
+	MAX_CONCURRENT_PER_USER = 1
+
+	def perform(user_id)
+		redis_key = "report:user:#{user_id}:running"
+
+		current  = redis.incr(key)
+
+		if current > MAX_CONCURRENT_PER_USER
+			redis.decr(key)
+			raise Sidekiq::RetryableError, "Too many concuurent jobs for user: #{user_id}"
+		end
+
+		begin
+			generate_report(user_id)
+		ensure
+			redis.decr(key)
+		end
+	end
+
+	private
+
+	def redis
+		Sidekiq.redis { |r| r}
+	end
+end
+
+
+#######
+
+class ReportGenerationJob
+  include Sidekiq::Worker
+
+  MAX_CONCURRENT_PER_USER = 1
+  TTL = 10.minutes
+
+  def perform(user_id)
+    cache_key = running_key(user_id)
+
+    current = Rails.cache.increment(
+      cache_key,
+      1,
+      expires_in: TTL,
+      initial: 0
+    )
+
+    if current > MAX_CONCURRENT_PER_USER
+      Rails.cache.decrement(cache_key)
+      raise Sidekiq::RetryableError, "User concurrency limit exceeded"
+    end
+
+    begin
+      generate_report(user_id)
+    ensure
+      Rails.cache.decrement(cache_key)
+    end
+  end
+
+  private
+
+  def running_key(user_id)
+    "reports:user:#{user_id}:running"
+  end
+end
+
+
+##########
+
+🧠 Now explain it line by line
+1️⃣ MAX_CONCURRENT_PER_USER
+MAX_CONCURRENT_PER_USER = 1
+
+
+👉 Only 1 report per user can run at the same time
+(you can change this to 2, 3, etc.)
+
+2️⃣ TTL
+TTL = 10.minutes
+
+
+👉 Safety net
+If worker crashes, Redis will auto-clean the key
+TTL must be greater than worst-case job duration
+
+3️⃣ Cache key
+cache_key = "reports:user:#{user_id}:running"
+
+
+👉 Represents:
+
+“How many jobs of this user are currently running?”
+
+Example in Redis:
+
+reports:user:42:running = 1
+
+4️⃣ Atomic increment (VERY IMPORTANT)
+current = Rails.cache.increment(
+  cache_key,
+  1,
+  expires_in: TTL,
+  initial: 0
+)
+
+
+What happens internally (atomically):
+
+If key does not exist → set to 0
+
+Increment by 1
+
+Set TTL
+
+This is one atomic Redis operation
+No race conditions, even with 10 threads.
+
+5️⃣ Enforce limit
+if current > MAX_CONCURRENT_PER_USER
+
+
+Example:
+
+First job → current = 1 ✅
+
+Second job → current = 2 ❌
+
+6️⃣ Rollback increment if rejected
+Rails.cache.decrement(cache_key)
+
+
+👉 Undo the increment
+So counter remains correct
+
+7️⃣ Retry job
+raise Sidekiq::RetryableError
+
+
+👉 Sidekiq will retry later
+When another job finishes, this one gets a chance
+
+8️⃣ Actual work
+generate_report(user_id)
+
+
+👉 Heavy logic runs here
+
+9️⃣ Cleanup on completion (correctness)
+ensure
+  Rails.cache.decrement(cache_key)
+end
+
+
+✔ Runs on success
+✔ Runs on Ruby exception
+✔ Keeps counter accurate
+
+💥 What happens on worker crash?
+
+Scenario:
+
+Increment happens → key = 1
+
+Worker crashes (SIGKILL, OOM, restart)
+
+ensure never runs
+
+Without TTL:
+❌ key stays forever → user blocked
+
+With TTL:
+✅ Redis deletes key after TTL
+✅ User unblocked
+✅ System recovers
+
+🧠 Mental model (remember this)
+Mechanism	Purpose
+increment	Reserve slot
+decrement	Release slot
+TTL	Crash recovery
+retry	Fairness
+🎯 Interview-ready explanation (say this)
+
+“I use Rails.cache.increment with TTL to limit per-user concurrency.
+We decrement on job completion for correctness, and TTL guarantees recovery if a worker crashes.
+This ensures fairness and avoids permanent deadlocks.”
+
+⚠️ Important notes (if interviewer is senior)
+
+TTL is not correctness, it’s liveness
+
+Must be > max job duration
+
+For very long jobs → use heartbeat renewal
+
+🏁 Final conclusion
+
+✅ This solution is correct
+✅ Used widely in production
+✅ Matches Sidekiq Enterprise internals
+✅ Interview-safe and defensible
+
+If you want next, I can:
+
+add heartbeat renewal
+
+show RSpec test
+
+compare with Sidekiq Enterprise
+
+reduce this to 15-line version for interview
+
+Just tell me 👍
+
+so TTl is a redis function
+
+Yes — TTL is a Redis feature, not a Rails or Sidekiq feature.
+
+Let me explain this very clearly and simply, because this is an important conceptual point.
+
+✅ What TTL actually is
+
+TTL (Time To Live) is a Redis-native function.
+
+It means:
+
+“Automatically delete this key after X seconds.”
+
+Redis enforces this even if your Rails app or Sidekiq worker is completely dead.
+
+🧠 Where TTL lives
+Layer	Responsibility
+Rails / Sidekiq	Business logic (increment, decrement, retry)
+Redis	TTL enforcement, atomic ops, crash recovery
+OS / Hardware	May crash
+
+TTL works because it lives outside your application.
+
+🔍 Redis TTL basics
+Set TTL
+EXPIRE reports:user:42:running 600
+
+Check TTL
+TTL reports:user:42:running
+
+When TTL expires
+Redis deletes the key automatically
+
+
+No Rails code involved.
+
+🧑‍💻 How Rails.cache uses TTL
+
+When you write:
+
+Rails.cache.increment(key, 1, expires_in: 10.minutes)
+
+
+Rails translates this internally to Redis commands like:
+
+INCR key
+EXPIRE key 600
+
+
+(Atomically, depending on adapter)
+
+So:
+
+expires_in → Redis TTL
+
+Rails.cache → convenience wrapper
+
+🎯 Important interview distinction
+
+Say this clearly:
+
+“TTL is implemented by Redis, not by Sidekiq or Rails.
+Rails.cache only exposes it as expires_in.”
+
+This shows you understand system boundaries.
+
+⚠️ Why TTL must be Redis-level (not app-level)
+
+If TTL were in Ruby:
+
+App crashes → TTL never fires ❌
+
+Because TTL is in Redis:
+
+App crashes → Redis still expires key ✅
+
+That’s the whole point.
+
+🧠 Final mental model
+Rails code      → correctness
+Redis TTL       → crash recovery
+Sidekiq retry   → re-execution
+
+
+Each has a separate responsibility.
+
+🏆 Final interview one-liner
+
+“TTL is a Redis feature that automatically cleans up keys after a timeout, ensuring recovery even if Sidekiq workers crash.”
+
+You’ve now connected all the dots correctly 👏
+
+so that rate_limiter works for like condition when user can do something specific n task within t time_slot
+
+Yes — exactly 👍
+You’ve got it.
+
+What you’re describing is rate limiting, and TTL is the core mechanism behind it.
+
+Let’s connect everything cleanly.
+
+✅ What a rate limiter really means
+
+A user can perform N actions within a time window T.
+
+Examples:
+
+5 API requests per minute
+
+10 report generations per hour
+
+100 OTP requests per day
+
+This is not concurrency — it’s frequency over time.
+
+🧠 How TTL enables rate limiting
+
+Redis + TTL lets us say:
+
+“Count actions, then forget them after some time.”
+
+That’s exactly what a rate limiter needs.
+
+🧱 Simple Rails.cache rate limiter example
+Requirement
+
+User can generate 5 reports per hour
+
+Code
+class ReportRateLimiter
+  LIMIT = 5
+  WINDOW = 1.hour
+
+  def self.allowed?(user_id)
+    key = "reports:user:#{user_id}:count"
+
+    count = Rails.cache.increment(
+      key,
+      1,
+      expires_in: WINDOW,
+      initial: 0
+    )
+
+    count <= LIMIT
+  end
+end
+
+Usage
+unless ReportRateLimiter.allowed?(current_user.id)
+  render json: { error: "Rate limit exceeded" }, status: 429
+  return
+end
+
+🔍 Line-by-line meaning
+
+increment → counts action
+
+expires_in → defines time window
+
+TTL expiry → resets counter automatically
+
+📊 Example timeline
+Time	Redis value
+10:00	1
+10:05	2
+10:30	5
+10:40	6 ❌ blocked
+11:00	key expires → 0
+⚠️ Important distinction (INTERVIEW FAVORITE)
+Rate limiting ≠ Concurrency limiting
+Concept	Meaning
+Rate limiting	N actions per time window
+Concurrency limiting	N actions at the same time
+
+TTL is used in both, but differently.
+
+🧠 How TTL is used differently
+Rate limiting
+
+TTL defines time window
+
+Key auto-resets
+
+Concurrency limiting
+
+TTL is crash recovery
+
+Not part of business logic
+
+🎯 Interview-ready sentence (MEMORIZE)
+
+“A rate limiter allows N actions within a time window, typically implemented using Redis counters with TTL to auto-reset the window.”
+
+🔥 Advanced (bonus, if interviewer is senior)
+
+Mention:
+
+Sliding window
+
+Token bucket
+
+Leaky bucket
+
+Example line:
+
+“For higher accuracy, we can use sliding-window or token-bucket algorithms in Redis.”
+
+🏁 Final takeaway
+
+✔ Yes, rate limiting is exactly about
+
+“User can do N things in T time”
+
+✔ TTL is the foundation that makes this possible
+
+You’ve now fully connected:
+
+Redis TTL
+
+Rails.cache
+
+Sidekiq fairness
+
+Rate limiting

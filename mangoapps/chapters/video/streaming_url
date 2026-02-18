@@ -1,0 +1,88 @@
+What is streaming_url?
+
+streaming_url is the URL of the HLS master playlist (.m3u8) that the video player loads to start streaming.
+
+It is NOT:
+
+❌ the raw uploaded video
+
+❌ a single .mp4 file
+
+❌ a Rails endpoint
+
+How it fits into the flow
+
+After processing, you have:
+
+S3
+ └── videos/
+     └── video_123/
+         ├── master.m3u8        ← THIS is streaming_url
+         ├── 360p/
+         │   ├── segment_000.ts
+         │   ├── segment_001.ts
+         ├── 720p/
+         └── 1080p/
+
+
+With CDN (CloudFront) in front:
+
+https://cdn.example.com/videos/video_123/master.m3u8
+
+
+That URL is what we store as streaming_url.
+
+What happens when frontend uses it
+<video src="streaming_url" controls />
+
+
+or with a JS player (hls.js, video.js):
+
+Player requests master.m3u8
+
+Playlist tells:
+
+available resolutions
+
+segment URLs
+
+Player fetches .ts segments dynamically
+
+CDN serves everything
+
+Rails is out of the data path.
+
+Why store streaming_url in DB?
+
+Three reasons architects like:
+
+1️⃣ Decoupling
+
+Backend doesn’t need to compute paths every time
+
+2️⃣ Flexibility
+
+CDN domain change? Update once.
+
+Multi-region? Different URLs.
+
+3️⃣ Security
+
+Can store signed URL (expiring)
+
+Or store path + sign dynamically
+
+Typical videos table fields
+id
+chapter_id
+status           (uploading | processing | ready | failed)
+streaming_url    (master.m3u8)
+duration
+created_at
+updated_at
+
+Interview-ready explanation (use this)
+
+“The streaming URL points to the HLS master playlist hosted on our CDN. The video player loads this playlist and fetches adaptive bitrate segments directly from the CDN, keeping Rails out of the streaming path.”
+
+That sentence alone signals real-world experience.

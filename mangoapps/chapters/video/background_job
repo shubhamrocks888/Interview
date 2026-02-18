@@ -1,0 +1,197 @@
+🧵 What exactly does the background worker do?
+First: what is a background worker?
+
+A background worker is a separate process that runs outside the web request cycle and executes long-running or heavy tasks asynchronously.
+
+Why architects care:
+
+Web requests must be fast
+
+Video processing can take minutes
+
+Failures must be retryable
+
+🟢 Step 1: Upload finishes → event happens
+
+After frontend uploads the raw video to object storage:
+
+videos/2026/02/uuid.mp4
+
+
+Object storage emits an event:
+
+“A new file was created”
+
+That event triggers:
+
+A queue message
+
+Or a webhook
+
+Or polling (simplest case)
+
+👉 This is NOT frontend-driven anymore
+
+🟢 Step 2: Background job is enqueued
+
+Rails enqueues a job:
+
+VideoProcessingJob.perform_later(video_id)
+
+
+What this means:
+
+Job is stored in Redis
+
+Worker will pick it up
+
+User does not wait
+
+🟢 Step 3: Worker starts execution
+
+Sidekiq worker:
+
+class VideoProcessingJob
+  include Sidekiq::Worker
+
+  def perform(video_id)
+    video = Video.find(video_id)
+
+
+At this moment:
+
+We are inside backend
+
+Fully trusted environment
+
+Can use CPU, memory, disk
+
+🟢 Step 4: Mark video as processing
+video.update!(status: "processing")
+
+
+Why?
+
+UI can show “Processing…”
+
+Prevent playback
+
+Avoid duplicate jobs
+
+Architect phrase:
+
+“State transitions are explicit and persisted.”
+
+🟢 Step 5: Download raw video
+raw_file = Storage.download(video.storage_key)
+
+
+Why download?
+
+FFmpeg needs a local file
+
+Streaming tools don’t work on partial uploads
+
+This happens on:
+
+Worker machine
+
+Or ephemeral container
+
+🟢 Step 6: Extract metadata (duration, resolution)
+metadata = FFmpeg.probe(raw_file)
+duration = metadata.duration
+resolution = metadata.resolution
+
+
+Why this step matters:
+
+Duration is required for:
+
+Progress %
+
+Completion rules
+
+Frontend cannot be trusted for this
+
+🟢 Step 7: Transcode into streaming formats
+FFmpeg.transcode(
+  raw_file,
+  formats: [
+    { resolution: "360p", bitrate: "800k" },
+    { resolution: "720p", bitrate: "2500k" },
+    { resolution: "1080p", bitrate: "5000k" }
+  ],
+  output: :hls
+)
+
+
+What comes out:
+
+.m3u8 manifest
+
+Hundreds of small .ts files
+
+This enables:
+
+Adaptive bitrate
+
+Seeking
+
+Resume playback
+
+🟢 Step 8: Upload processed output
+Storage.upload(processed_files, destination: video.streaming_path)
+
+
+Now storage contains:
+
+Raw file (private)
+
+Processed streaming files (CDN-backed)
+
+🟢 Step 9: Update DB as READY
+video.update!(
+  status: "ready",
+  duration_seconds: duration,
+  playback_url: video.streaming_manifest
+)
+
+
+This is the most important transition.
+
+Meaning:
+
+Video is playable
+
+Metadata is reliable
+
+Progress tracking can start
+
+🟢 Step 10: Cleanup & exit
+cleanup_temp_files
+
+
+Worker finishes.
+
+If worker crashes:
+
+Job retries automatically
+
+No user impact
+
+❌ What worker does NOT do
+
+❌ Serve video
+
+❌ Handle permissions
+
+❌ Talk to frontend
+
+❌ Block user requests
+
+🧠 One-paragraph interview answer (memorize)
+
+“Once a raw video is uploaded, a background worker picks up the job asynchronously.
+It downloads the file, extracts metadata like duration, transcodes it into streaming formats with multiple bitrates, uploads the processed output back to storage, and updates the database state to ready.
+This keeps heavy processing out of the request lifecycle and makes the system scalable and fault-tolerant.”

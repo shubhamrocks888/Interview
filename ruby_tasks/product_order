@@ -1,0 +1,55 @@
+
+
+class Product
+  attr_reader :name, :price
+  attr_accessor :stock_quantity
+
+  def initialize(name, price, stock_quantity)
+    raise ArgumentError, "Invalid price" if price <= 0
+    raise ArgumentError, "Invalid stock quantity" if stock_quantity < 0
+
+    @name = name
+    @price = price
+    @stock_quantity = stock_quantity
+  end
+end
+
+
+class Order
+  attr_reader :items, :checked_out
+
+  def initialize
+    @items = {} # { product => quantity }
+    @checked_out = false
+  end
+
+  def add_product(product, quantity)
+    raise "Order already checked out" if @checked_out
+    raise ArgumentError, "Quantity must be positive" if quantity <= 0
+    raise "Not enough stock" if quantity > product.stock_quantity
+
+    @items[product] ||= 0
+    @items[product] += quantity
+  end
+
+  def total_price
+    @items.sum { |product, quantity| product.price * quantity }
+  end
+
+  def checkout
+    raise "Order already checked out" if @checked_out
+    raise "Order is empty" if @items.empty?
+
+    @items.each do |product, quantity|
+      raise "Insufficient stock for #{product.name}" if quantity > product.stock_quantity
+    end
+
+    # Deduct stock
+    @items.each do |product, quantity|
+      product.stock_quantity -= quantity
+    end
+
+    @checked_out = true
+    total_price
+  end
+end

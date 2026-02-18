@@ -1,0 +1,77 @@
+🔁 What “heartbeat” really means
+
+A heartbeat is a lightweight, periodic signal sent from the video player to the backend to say:
+
+“The user is still watching, and this is where they are.”
+
+Example:
+
+Every 5–15 seconds
+
+Very small payload
+
+Fire-and-forget style
+
+🧱 Concrete example
+Frontend
+setInterval(() => {
+  fetch("/video_progress", {
+    method: "POST",
+    body: JSON.stringify({
+      video_id: 55,
+      current_time: player.currentTime
+    })
+  })
+}, 10000)
+
+Backend
+progress.last_watched_second =
+  [progress.last_watched_second, current_time].max
+
+progress.save!
+
+🤔 Why not update on every second?
+
+Architect reasons:
+
+Too many DB writes
+
+Too much network chatter
+
+No real accuracy gain
+
+10 seconds is usually good enough.
+
+Interview line:
+
+“We trade millisecond accuracy for system efficiency.”
+
+🛡️ Important safeguards (mention these)
+
+Heartbeat is trusted but verified:
+
+Ignore time jumps that are too large
+
+Cap progress increase per heartbeat
+
+Never decrease last_watched_second
+
+Validate against video duration
+
+This prevents cheating.
+
+🧠 One-sentence interview answer
+
+If they ask:
+
+“What do you mean by heartbeat?”
+
+Say:
+
+“A heartbeat is a periodic API call from the video player that sends the current playback position so the backend can persist progress reliably.”
+
+🚀 Extra credit (optional but impressive)
+
+You can add:
+
+“Heartbeat frequency is configurable and may be increased or decreased based on traffic and accuracy needs.”

@@ -1,0 +1,51 @@
+🚀 Final Step for This Feature
+
+Implement:
+
+POST /rides/:id/cancel
+
+
+Rules:
+
+Rider can cancel if ride is:
+
+requested
+
+accepted
+
+Cannot cancel if completed
+
+If cancelled while accepted → ride status becomes cancelled
+
+Write it clean.
+
+
+####
+
+def cancel
+  ride = Ride.find_by(id: params[:id])
+  return render json: { errors: "Ride not found" }, status: :not_found unless ride
+
+  rider = User.find_by(id: params[:rider_id], role: "rider")
+  return render json: { errors: "Rider not found" }, status: :not_found unless rider
+
+  ActiveRecord::Base.transaction do
+    ride.lock!
+
+    unless ride.rider_id == rider.id
+      raise StandardError, "Rider not assigned to this ride"
+    end
+
+    unless ride.requested? || ride.accepted?
+      raise StandardError, "Ride cannot be cancelled"
+    end
+
+    ride.update!(status: :cancelled)
+  end
+
+  render json: { message: "Ride cancelled" }, status: :ok
+
+rescue StandardError => e
+  render json: { errors: e.message }, status: :unprocessable_entity
+end
+

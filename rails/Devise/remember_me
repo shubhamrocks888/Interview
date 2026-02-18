@@ -1,0 +1,123 @@
+🔐 Devise Remember Me Flow
+1️⃣ What is “remember me”?
+
+Remember me allows a user to stay logged in even after closing the browser, by storing a persistent cookie on the client side.
+
+Normal session: lasts until browser closes (or session expires)
+
+Remember-me: lasts weeks or months (configurable via Devise)
+
+2️⃣ DB Field for Remember Me
+
+If rememberable module is enabled:
+
+devise :rememberable
+
+
+It adds (or expects):
+
+remember_created_at :datetime
+
+
+Tracks when the remember token was created
+
+Can be used to expire old tokens
+
+Optional: you can have multiple tokens if using Devise Token Auth, but default only uses cookie + timestamp.
+
+3️⃣ Cookies vs Session (Important Difference)
+Feature	Session	Remember Me
+Duration	Short-lived (browser close / server expiry)	Long-lived (weeks/months)
+Storage	Rails session (usually encrypted cookie)	Separate signed & encrypted cookie
+DB Update	Only if trackable	Updates remember_created_at
+Auto-login	Only while session valid	Survives browser restart
+4️⃣ How Remember-Me Works: Step-by-Step Flow
+4.1 Login with “remember me” checked
+
+User submits login form:
+
+POST /users/sign_in
+params = {
+  user: {
+    email: "test@example.com",
+    password: "secret123",
+    remember_me: "1"
+  }
+}
+
+
+Devise authenticates user via Warden (like normal login)
+
+Warden sets the session (user_id + auth_salt)
+
+Devise also creates a remember-me token:
+
+signed_cookie_value = remember_me_token(user)
+cookies.signed[:remember_user_token] = {
+  value: signed_cookie_value,
+  expires: 2.weeks.from_now
+}
+
+
+Updates DB:
+
+user.update!(remember_created_at: Time.current)
+
+4.2 User closes browser
+
+Session cookie disappears (normal session ended)
+
+Remember-me cookie still exists in browser
+
+4.3 User returns after days
+
+Browser sends remember-me cookie
+
+Devise checks:
+
+Decrypts cookie
+
+Finds corresponding user in DB
+
+Checks that remember_created_at is still valid (not expired)
+
+If valid:
+
+Sets new session (user_id + auth_salt) automatically
+
+Sets current_user
+
+💡 This is why the user appears automatically logged in.
+
+4.4 Logout or Password Change
+
+Logout:
+
+cookies.delete(:remember_user_token)
+
+
+Password change:
+
+auth_salt changes → existing session invalid
+
+
+Remember-me cookie is invalidated too (because Devise validates auth_salt on auto-login)
+
+5️⃣ Key Differences from Session Cookie
+Feature	Session	Remember Me
+Stored in	Rails session	Separate cookie (remember_user_token)
+Lifespan	Short (expires on browser close)	Long (configurable, e.g., 2 weeks)
+DB Update	Only trackable fields	Updates remember_created_at
+Auto-login	No	Yes (on browser reopen)
+Security Check	auth_salt	auth_salt + optional token validity
+6️⃣ Interview-Trap Points
+
+Remember-me is not just a session extension → It’s a separate persistent cookie
+
+auth_salt is still checked → If password changed, auto-login fails
+
+Session is re-created from remember-me cookie → Session and remember-me work together
+
+7️⃣ One-Line Interview Answer (Perfect)
+
+“Remember-me allows persistent login across browser restarts. Devise stores a separate signed cookie with a remember token and remember_created_at. On each visit, Devise validates the cookie, fetches the user, and recreates the session, making current_user available even after the session expired.”

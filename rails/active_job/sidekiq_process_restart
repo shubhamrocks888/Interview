@@ -1,0 +1,117 @@
+First, clear the terms (very important)
+🔹 Sidekiq process
+
+An OS process
+
+Has its own PID
+
+Has its own thread pool (e.g. 10 threads)
+
+🔹 Sidekiq threads
+
+Worker threads inside a process
+
+Controlled by -c / concurrency
+
+Example:
+
+bundle exec sidekiq -c 10
+
+
+👉 1 process × 10 threads
+
+Can you start another process while Sidekiq is running?
+✅ YES
+
+You can start another Sidekiq process anytime:
+
+bundle exec sidekiq -c 10
+
+
+Now you have:
+
+2 Sidekiq processes
+20 total worker threads
+
+
+No restart. No downtime.
+
+How Sidekiq handles this internally
+1️⃣ New process boots
+
+Registers itself in Redis under processes
+
+Starts heartbeating
+
+Subscribes to queues
+
+2️⃣ Redis becomes the coordinator
+
+All processes pull from the same Redis queues
+
+Atomic pop ensures:
+
+No job is taken by two threads
+
+3️⃣ Load is naturally shared
+
+Any free thread from any process can take the next job
+
+This is how Sidekiq scales horizontally 🚀
+
+You scale Sidekiq by:
+
+Adding more processes
+
+Not by “restarting” anything
+
+That’s why in production you often see:
+
+web dynos
+sidekiq dynos (multiple)
+
+Example scenario (easy to visualize)
+
+Before:
+
+1 process
+- PID 1111
+- 10 threads
+
+
+After starting another:
+
+PID 1111 → 10 threads
+PID 2222 → 10 threads
+Total = 20 workers
+
+
+Both visible in:
+
+Sidekiq UI
+
+Redis processes key
+
+What you CANNOT do
+
+❌ You cannot dynamically increase threads inside an existing process
+
+Concurrency is fixed at boot
+
+To increase threads:
+
+# stop
+# restart with higher -c
+bundle exec sidekiq -c 20
+
+Interview-ready answer 🔥
+
+Yes, Sidekiq allows multiple processes to run concurrently. You can start additional Sidekiq processes at any time without restarting existing ones. Each process registers itself in Redis and shares the same job queues, enabling horizontal scaling.
+
+Bonus (production tip)
+
+Instead of manually starting processes:
+
+Use systemd / Docker / Kubernetes / Heroku dynos
+
+Scale Sidekiq workers independently of web servers

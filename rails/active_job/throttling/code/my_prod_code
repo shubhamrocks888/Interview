@@ -1,0 +1,28 @@
+class Throttler
+    
+    def initialize(limit:, period:)
+        @limit = limit
+        @period = period
+    end
+    
+    def allow?(key)
+        current = Rails.cache.read(cache_key(key))
+        
+        if @current < limit
+            Rails.cache.increment(
+                cache_key, 
+                1, initial: 0, 
+                expires_in: @period)
+            true
+        else
+            false
+        end
+        
+    end
+    
+    private
+    
+    def cache_key(key)
+        "throttler:#{key}"
+    end
+end

@@ -1,0 +1,143 @@
+First: what does “duplicate enqueue later” mean?
+
+It means the same business action is added to Sidekiq more than once.
+
+Not retry.
+Not crash.
+But someone enqueued the job again.
+
+Real example (business action)
+
+👉 Business action:
+“Credit ₹100 to user 42 for Order #ORD123”
+
+This action should happen only once.
+
+Step-by-step timeline (IMPORTANT)
+🟢 Step 1: Job is enqueued (first time)
+CreditJob.perform_async(42)
+
+
+Sidekiq creates:
+
+jid = abc123
+
+
+Job runs:
+
+Transaction.create!(
+  user_id: 42,
+  job_id: abc123,
+  amount: 100
+)
+
+
+✔ Money credited
+✔ Transaction stored
+
+🟢 Step 2: Later… SAME ACTION is enqueued again
+
+This can happen because of:
+
+User double-clicks “Pay”
+
+API client retries request
+
+Webhook sent twice
+
+Bug / race condition
+
+CreditJob.perform_async(42)
+
+
+Sidekiq creates a NEW job:
+
+jid = xyz789
+
+
+Job runs again:
+
+Transaction.create!(
+  user_id: 42,
+  job_id: xyz789,
+  amount: 100
+)
+
+
+💥 Money credited AGAIN
+💥 Duplicate transaction
+
+🔴 Why did this happen?
+
+Because:
+
+Sidekiq sees this as a brand-new job
+
+jid is always new for every enqueue
+
+Sidekiq has no idea this represents the same business action
+
+Now let’s fix this with request_id
+Same timeline using request_id
+🟢 Step 1: Enqueue with business ID
+request_id = "ORD123"
+CreditJob.perform_async(42, request_id)
+
+
+DB constraint:
+
+UNIQUE (job_id)
+
+
+Job runs:
+
+Transaction.create!(
+  user_id: 42,
+  job_id: "ORD123",
+  amount: 100
+)
+
+
+✔ Money credited
+✔ Transaction stored
+
+🟢 Step 2: SAME ACTION enqueued again
+CreditJob.perform_async(42, "ORD123")
+
+
+New Sidekiq job:
+
+jid = new_jid_999
+
+
+But inside job:
+
+Transaction.create!(
+  job_id: "ORD123"
+)
+
+
+💥 DB rejects duplicate
+✔ Job safely exits
+✔ Money NOT credited again
+
+🔥 Key mental model (THIS IS THE CLICK)
+Concept	Means
+jid	This job execution
+request_id	This business action
+
+Sidekiq only understands jobs.
+Your system must understand business actions.
+
+One sentence that locks it in
+
+Retries reuse the same jid. Duplicate enqueues create new jids. Only a business-level id (request_id) can protect against both.
+
+Final summary
+
+| Situation                     | Using `jid` | Using `request_id` |
+| ----------------------------- | ----------- | ------------------ |
+| Job retry                     | ✅ Safe      | ✅ Safe             |
+| Redis crash                   | ✅ Safe      | ✅ Safe             |
+| Same job enqueued again       | ❌ Unsafe    | ✅ Safe             |
+| Double-click / webhook replay | ❌ Unsafe    | ✅ Safe             |

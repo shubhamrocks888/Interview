@@ -1,0 +1,151 @@
+ActiveSupport – Important Methods (Cheat Sheet)
+1️⃣ Object extensions (Object, NilClass, Blank)
+Presence / blank checks ⭐⭐⭐
+.blank?
+.present?
+.presence
+
+
+Examples:
+
+"".blank?        # true
+nil.present?     # false
+"abc".presence   # "abc"
+
+2️⃣ String extensions
+Case & formatting ⭐⭐⭐
+underscore
+camelize
+titleize
+dasherize
+parameterize
+pluralize
+singularize
+
+"UserProfile".underscore     # "user_profile"
+"user_name".camelize         # "UserName"
+"hello world".parameterize   # "hello-world"
+
+Checks
+starts_with?
+ends_with?
+
+3️⃣ Hash extensions ⭐⭐⭐
+Key / value transforms
+transform_keys
+transform_values
+deep_transform_keys
+deep_symbolize_keys
+deep_stringify_keys
+
+Access helpers
+with_indifferent_access
+slice
+except
+compact
+
+h[:a] == h["a"]  # true (with_indifferent_access)
+
+4️⃣ Array extensions
+extract_options!
+in_groups_of
+from
+to
+second
+third
+
+[1,2,3].second   # 2
+
+5️⃣ Numeric extensions ⭐⭐⭐
+Time helpers (VERY important)
+1.day
+2.hours
+3.minutes
+5.seconds
+
+5.minutes.from_now
+2.days.ago
+
+6️⃣ Time / Date / DateTime ⭐⭐⭐
+Time.current
+Date.current
+beginning_of_day
+end_of_day
+beginning_of_month
+end_of_month
+
+Time.current.zone
+
+7️⃣ Enumerable extensions
+index_by
+group_by
+pluck
+many?
+
+users.index_by(&:id)
+users.pluck(:email)
+
+8️⃣ Module / Class helpers
+delegate
+delegate_missing_to
+concern
+
+delegate :name, to: :user
+
+9️⃣ Rails-specific helpers
+Class loading
+constantize
+safe_constantize
+
+"User".constantize
+
+🔟 Core utility helpers
+try
+try!
+tap
+
+user.try(:name)
+
+1️⃣1️⃣ JSON / serialization
+as_json
+to_json
+
+1️⃣2️⃣ Callbacks & notifications (advanced)
+ActiveSupport::Notifications.instrument
+
+
+Used for:
+
+performance tracking
+
+logging
+
+monitoring
+
+⭐ Most important methods to remember for interviews
+
+If you remember only these, you’re good:
+
+blank? present? presence
+underscore camelize parameterize
+deep_transform_keys
+with_indifferent_access
+1.day.from_now
+Time.current
+delegate
+constantize
+
+How to explore the full list (pro tip)
+
+In Rails console:
+
+String.instance_methods.grep(/case/)
+Hash.instance_methods.grep(/transform/)
+
+
+Or official docs:
+👉 ActiveSupport Core Extensions
+
+Interview killer line 🧠
+
+ActiveSupport extends Ruby core classes like String, Hash, Array, Time, and Numeric with convenience methods for formatting, time calculations, key transformations, and presence checks, making Rails code more expressive.

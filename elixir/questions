@@ -1,0 +1,35 @@
+what is ERLang VM?
+
+how otp handles let it crash?
+
+what is genserver?
+
+how process intereact via message parsing?
+
+What kind of Elixir code interviewers usually ask
+
+They typically check:
+
+Pattern matching
+
+Immutability
+
+GenServer basics
+
+Message passing
+
+Simple data transformations
+
+###
+
+Next logical step 🚀
+
+Once you’re comfortable with this, next we should cover:
+
+Processes (spawn, self)
+
+send / receive
+
+GenServer lifecycle
+
+Tell me when you’re ready 👍

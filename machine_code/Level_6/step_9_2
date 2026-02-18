@@ -1,0 +1,88 @@
+✅ Step 1 — Add Retry Control
+
+You are using ApplicationJob with Sidekiq adapter.
+
+Inside RideCompletionJob, we want:
+
+Limit retries to 5 attempts
+
+Use exponential backoff (default behavior is fine)
+
+👉 Write the line inside the job class that controls retry attempts.
+
+
+###
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :default
+
+	retry_on StandardError, attempts: 5
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+		RideMailer.ride_completed(ride).deliver_now
+	end
+end
+
+✅ Step 2 Complete — Custom Queue Added
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :mailers
+
+	retry_on StandardError, attempts: 5
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+		RideMailer.ride_completed(ride).deliver_now
+	end
+end
+
+🚀 Step 3 — Add Idempotency Protection
+
+	Requirement:
+
+	Do NOT send email if completion_email_sent is already true
+
+	After successful email delivery → mark it true
+
+	Prevent race condition
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :mailers
+
+	retry_on StandardError, attempts: 5
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+		return if ride.completion_email_sent
+		RideMailer.ride_completed(ride).deliver_now
+		ride.update!(completion_email_sent: true)
+	end
+end
+
+
+### race condition improvement
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :mailers
+
+	retry_on StandardError, attempts: 5
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+
+		ride.with_lock do
+			return if ride.completion_email_sent
+			RideMailer.ride_completed(ride).deliver_now
+			ride.update!(completion_email_sent: true)
+		end
+	end
+end

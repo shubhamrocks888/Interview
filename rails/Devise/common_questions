@@ -1,0 +1,272 @@
+🔥 Top Devise Interview Questions (Must-Know)
+1️⃣ What is Devise?
+✅ Short answer
+
+Devise is a Rails authentication framework built on top of Warden that handles login, logout, password encryption, sessions, and user management.
+
+🔍 Deep explanation
+
+Authentication = verifying identity
+
+Devise wraps Warden (Rack middleware)
+
+Provides helpers like current_user, authenticate_user!
+
+2️⃣ Is Devise authentication or authorization?
+✅ Short answer
+
+Devise is for authentication, not authorization.
+
+🔍 Deep explanation
+
+Authentication → who are you?
+
+Authorization → what can you do?
+
+Authorization is handled by Pundit / CanCanCan
+
+3️⃣ How does Devise store passwords?
+✅ Short answer
+
+Devise uses bcrypt to store encrypted passwords in the encrypted_password column.
+
+🔍 Deep explanation
+
+Plain passwords are never stored
+
+Uses one-way hashing
+
+BCrypt::Password.create(password)
+
+Compared during login, never decrypted
+
+4️⃣ Where does Devise store logged-in user information?
+✅ Short answer
+
+Devise stores the user ID in the session via Warden.
+
+🔍 Deep explanation
+
+Uses cookies → session → Warden
+
+Internally:
+
+env['warden'].set_user(user)
+
+
+Session cookie contains session ID, not user data
+
+5️⃣ How does current_user work?
+✅ Short answer
+
+current_user fetches the logged-in user from Warden using session data.
+
+🔍 Deep explanation
+
+Reads user ID from session
+
+Fetches record from DB
+
+Memoized per request
+
+Equivalent to:
+
+env['warden'].user
+
+6️⃣ What is Warden?
+✅ Short answer
+
+Warden is a Rack-based authentication middleware that Devise is built on.
+
+🔍 Deep explanation
+
+Runs before Rails controller
+
+Handles authentication strategies
+
+Manages session storage
+
+Devise = Rails wrapper around Warden
+
+7️⃣ What is authenticate_user!?
+✅ Short answer
+
+It’s a Devise before_action that ensures a user is logged in.
+
+🔍 Deep explanation
+
+Checks current_user
+
+Redirects to login if nil
+
+Sets flash message
+
+Internally calls Warden
+
+8️⃣ What happens when a user logs in?
+✅ Short answer
+
+Devise authenticates credentials, stores user in session, and makes current_user available.
+
+🔍 Deep explanation (step-by-step)
+
+User submits login form
+
+Devise controller receives params
+
+Warden verifies credentials
+
+Password compared via bcrypt
+
+User ID stored in session
+
+9️⃣ What is rememberable?
+✅ Short answer
+
+It allows users to stay logged in using cookies even after session expiry.
+
+🔍 Deep explanation
+
+Generates a remember token
+
+Stores hashed token in DB
+
+Stores signed cookie in browser
+
+Re-authenticates user automatically
+
+🔟 Difference between session and remember me?
+✅ Short answer
+
+Session is short-lived; remember me is persistent using cookies.
+
+🔍 Deep explanation
+Session	Remember Me
+Stored in server session	Stored in browser cookie
+Cleared on browser close	Persists for weeks
+Faster	More secure tokens
+1️⃣1️⃣ What is recoverable?
+✅ Short answer
+
+It handles password reset functionality.
+
+🔍 Deep explanation
+
+Generates reset token
+
+Sends email
+
+Token expires
+
+Password updated securely
+
+1️⃣2️⃣ What is confirmable?
+✅ Short answer
+
+It requires email confirmation before allowing login.
+
+🔍 Deep explanation
+
+Sends confirmation email
+
+Blocks login until confirmed
+
+Prevents fake signups
+
+1️⃣3️⃣ What is lockable?
+✅ Short answer
+
+It locks user accounts after multiple failed login attempts.
+
+🔍 Deep explanation
+
+Prevents brute-force attacks
+
+Tracks failed attempts
+
+Unlock via email or time
+
+1️⃣4️⃣ What is timeoutable?
+✅ Short answer
+
+It automatically logs out users after inactivity.
+
+🔍 Deep explanation
+
+Uses last_activity_at
+
+Compares with timeout window
+
+Clears session
+
+1️⃣5️⃣ What database fields does Devise add?
+✅ Short answer
+
+Devise adds fields like email, encrypted_password, tokens, timestamps depending on enabled modules.
+
+🔍 Common fields
+encrypted_password
+reset_password_token
+remember_created_at
+confirmation_token
+failed_attempts
+
+1️⃣6️⃣ Can Devise work in API-only apps?
+✅ Short answer
+
+Yes, but usually combined with JWT or token-based authentication.
+
+🔍 Deep explanation
+
+Sessions not ideal for APIs
+
+Devise + JWT or Devise Token Auth
+
+Uses headers instead of cookies
+
+1️⃣7️⃣ How do you customize Devise controllers?
+✅ Short answer
+
+By generating Devise controllers and overriding them.
+
+rails generate devise:controllers users
+
+1️⃣8️⃣ How do you add extra fields (like username)?
+✅ Short answer
+
+By permitting parameters using before_action.
+
+devise_parameter_sanitizer.permit(:sign_up, keys: [:username])
+
+1️⃣9️⃣ Devise vs Custom Authentication?
+✅ Short answer
+
+Devise is safer and faster to implement; custom auth offers flexibility but higher risk.
+
+🔍 Deep explanation
+
+Devise handles edge cases
+
+Custom auth easy to break security
+
+Devise is production-tested
+
+2️⃣0️⃣ Biggest drawbacks of Devise?
+✅ Short answer
+
+Less flexibility, heavy abstraction, harder debugging.
+
+🔍 Deep explanation
+
+Magic methods
+
+Hidden Warden behavior
+
+Overkill for simple apps
+
+🎯 FINAL INTERVIEW CHEAT SUMMARY (Say This Confidently)
+
+“Devise is a Rails authentication framework built on Warden.
+It securely handles login, sessions, password encryption, remember-me, and account management.
+Passwords are stored using bcrypt, users are stored in sessions, and current_user is fetched via Warden.
+Devise handles authentication only, while authorization is handled separately.”

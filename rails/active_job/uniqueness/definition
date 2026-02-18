@@ -1,0 +1,120 @@
+What is Uniqueness?
+
+Uniqueness = ensuring that a job is only enqueued once (or once per key).
+
+Why it’s needed:
+
+Avoid duplicate processing of same data
+
+Avoid sending the same email twice
+
+Avoid race conditions with concurrent jobs
+
+
+How Sidekiq handles this
+
+By default:
+
+No rate limiting → jobs are processed as fast as threads allow
+
+No uniqueness → you can enqueue same job multiple times
+
+We need extra gems or Sidekiq Enterprise features to enforce these.
+
+
+
+
+#
+
+STEP 5 — Uniqueness
+Option 1: Sidekiq Enterprise unique jobs
+class WelcomeWorker
+  include Sidekiq::Worker
+  sidekiq_options unique: :until_executed
+
+  def perform(user_id)
+    UserMailer.welcome_email(User.find(user_id)).deliver_now
+  end
+end
+
+
+unique: options:
+
+| Option                       | Meaning                                     |
+| ---------------------------- | ------------------------------------------- |
+| `:until_executed`            | Job cannot be enqueued again until executed |
+| `:until_and_while_executing` | Prevent duplicates while executing too      |
+| `:until_expired`             | Job is unique until key expires             |
+
+
+Option 2: Using sidekiq-unique-jobs gem (open-source)
+# Gemfile
+gem 'sidekiq-unique-jobs'
+
+# worker
+class WelcomeWorker
+  include Sidekiq::Worker
+  sidekiq_options unique: :until_executed,
+                  lock_expiration: 1.hour
+
+  def perform(user_id)
+    UserMailer.welcome_email(User.find(user_id)).deliver_now
+  end
+end
+
+
+lock_expiration → automatically expires uniqueness lock
+
+Prevents duplicate jobs even after crash or restart
+
+🧠 STEP 6 — Combining Rate Limiting + Uniqueness
+class WelcomeWorker
+  include Sidekiq::Worker
+  sidekiq_options unique: :until_executed,
+                  queue: :mailers,
+                  retry: 5
+
+  sidekiq_rate_limiter :user_id, threshold: 5, period: 60
+
+  def perform(user_id)
+    UserMailer.welcome_email(User.find(user_id)).deliver_now
+  end
+end
+
+
+Max 5 emails per user per minute
+
+Job can’t be enqueued twice until executed
+
+🧠 STEP 7 — Mental model
+Redis queue
+│
+├─ Sidekiq sees uniqueness lock? ──> skip / delay
+├─ Sidekiq checks rate limiter? ──> skip / delay
+├─ Thread picks job → executes
+
+
+✅ Guarantees:
+
+No duplicate jobs
+
+Controlled execution rate
+
+🧠 STEP 8 — Interview one-liner
+
+“Sidekiq supports uniqueness via locks and rate limiting via gems or enterprise features.
+This ensures jobs are not duplicated and are executed within safe limits for resources or APIs.”
+
+🧠 STEP 9 — Bonus pro tips
+
+Always pass IDs, not objects, for uniqueness to work correctly
+
+Combine rate limiting and uniqueness for email sending / API calls
+
+Monitor Sidekiq Web UI to see delayed/rejected jobs
+
+Set lock expiration to prevent stuck jobs if process crashes
+
+If you want, I can now make a full master diagram showing everything we covered so far:
+
+Controller → ActiveJob → Redis → Sidekiq threads → Retry/Backoff → Rate limiting → Uniqueness → Job execution

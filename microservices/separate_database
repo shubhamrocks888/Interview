@@ -1,0 +1,109 @@
+Interview Answer (Direct)
+
+It is not compulsory for every microservice to have its own database, but in a true microservices architecture, each service should own its data to avoid tight coupling.
+
+Why “own database per service” is recommended
+1️⃣ Loose coupling
+
+If two services share the same database:
+
+Schema changes affect multiple services
+
+One service can break another
+
+👉 This defeats the purpose of microservices.
+
+2️⃣ Independent deployment
+
+Each service can:
+
+Change its schema
+
+Migrate data
+
+Deploy without coordination
+
+3️⃣ Independent scaling
+
+Order service might need high write throughput
+
+User service might need heavy reads
+
+Different DBs → different scaling strategies.
+
+What happens if services share a database?
+
+⚠️ This is often called a Distributed Monolith
+
+Problems:
+
+Tight coupling
+
+Hard to deploy independently
+
+Cross-service joins
+
+One DB outage impacts all services
+
+Interviewers don’t like this unless justified.
+
+When sharing a database is acceptable
+
+✔ Early-stage systems
+
+Startup MVP
+
+Small team
+
+Low traffic
+
+✔ Migration phase
+
+Breaking monolith → microservices gradually
+
+Temporary shared DB
+
+✔ Read-only access
+
+Service exposes data via API, not direct DB access
+
+👉 Best practice:
+Other services should access data only via API, not DB queries.
+
+Correct Principle (Important Term)
+
+📌 Database per Service
+
+Each service is the single owner of its data, even if physically stored in the same DB server.
+
+This means:
+
+No other service directly reads/writes its tables
+
+Communication happens via APIs/events
+
+Physical DB vs Logical DB (Good Interview Point)
+Logical Ownership	Physical DB
+Required ✅	Optional ❌
+Each service owns schema	Can be same DB instance
+No cross access	Different schemas/tables
+
+So you can say:
+
+“Services may share the same DB instance, but not the same tables.”
+
+How data consistency is handled then?
+
+Since no joins:
+
+API calls
+
+Events (Kafka, RabbitMQ)
+
+Eventual consistency
+
+Saga pattern
+
+15-Second Interview Answer (Best)
+
+It’s not compulsory, but in microservices each service should logically own its data. Sharing databases creates tight coupling and turns the system into a distributed monolith. Services can share a DB instance but should never share tables.

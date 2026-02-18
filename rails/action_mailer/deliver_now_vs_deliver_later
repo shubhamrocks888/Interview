@@ -1,0 +1,65 @@
+1️⃣ Where deliver_now and deliver_later come from
+
+deliver_now and deliver_later are instance methods added to Mail::Message objects by Action Mailer.
+
+When you call a mailer method like:
+
+email = UserMailer.welcome_email(user)
+
+
+email is a Mail::Message object (from the mail gem
+).
+
+Rails extends Mail::Message with deliver methods via ActionMailer::MessageDelivery.
+
+2️⃣ How it works under the hood
+UserMailer.welcome_email(user) 
+# => returns ActionMailer::MessageDelivery object
+
+
+MessageDelivery is a Rails wrapper that:
+
+knows which mailer (UserMailer)
+
+knows which method (welcome_email)
+
+When you call:
+
+UserMailer.welcome_email(user).deliver_now
+
+
+Rails actually:
+
+Calls the mailer method → creates Mail::Message object
+
+Calls deliver! on it immediately
+
+Similarly:
+
+UserMailer.welcome_email(user).deliver_later
+
+
+Enqueues the delivery as an ActiveJob job to run asynchronously
+
+3️⃣ Difference between deliver_now and deliver_later
+Method	When it runs	Notes
+deliver_now	Immediately	Blocks request thread, no job queue
+deliver_later	Async via ActiveJob	Requires queue adapter (sidekiq, async, etc.)
+4️⃣ Minimal diagram
+UserMailer.welcome_email(user)
+          │
+          ▼
+  ActionMailer::MessageDelivery object
+          │
+          ├─ deliver_now → sends immediately
+          └─ deliver_later → enqueues job
+
+5️⃣ Online test shortcut
+
+If asked “where does deliver_now come from?”
+
+✅ Correct answer:
+
+It is a method on the ActionMailer::MessageDelivery object returned by the mailer method.
+
+It ultimately calls Mail::Message#deliver! to send the email.

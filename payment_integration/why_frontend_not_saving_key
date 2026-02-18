@@ -1,0 +1,119 @@
+Short answer (clear & correct)
+
+👉 Yes, the Razorpay key_id does not change.
+👉 Frontend can store it.
+👉 But many backends still send it with the order response for architectural and security reasons.
+
+Now let’s go deeper.
+
+What is this key actually used for?
+new Razorpay({
+  key: "rzp_test_xxxxx",  // this key
+  order_id: "order_123"
+})
+
+
+🔹 This is PUBLIC key (key_id)
+🔹 It is used only to:
+
+Identify which Razorpay merchant
+
+Load Razorpay Checkout
+
+📌 It cannot create orders, refunds, or verify payments
+
+So yes ✅ it’s safe for frontend.
+
+Why backend sends key with every order (even if static)?
+1️⃣ Environment flexibility (MOST COMMON REAL REASON)
+
+Different environments use different keys:
+
+Environment	Key
+Local	rzp_test_xxx
+Staging	rzp_test_yyy
+Production	rzp_live_zzz
+
+By sending from backend:
+
+Frontend stays environment-agnostic
+
+No hardcoding
+
+No redeploy frontend if key changes
+
+📌 Interview line:
+
+Backend is the source of truth for configuration.
+
+2️⃣ Frontend simplicity & safety
+
+Frontend logic becomes:
+
+Call create_order → get everything needed → open checkout
+
+
+Frontend does NOT need to:
+
+Read env variables
+
+Manage secrets
+
+Know which key to use
+
+Less config = fewer bugs
+
+3️⃣ Multi-merchant / multi-tenant systems
+
+Imagine:
+
+One Rails app
+
+Multiple sellers
+
+Each seller has their own Razorpay account
+
+Then:
+
+key = merchant.razorpay_key_id
+
+
+Sending key dynamically is mandatory.
+
+📌 Interview killer line:
+
+Dynamic key support enables multi-merchant systems.
+
+4️⃣ Security policy consistency
+
+Rule followed in most companies:
+
+Frontend never owns payment configuration
+
+Even public keys are:
+
+Served by backend
+
+Controlled centrally
+
+Is it WRONG for frontend to store the key?
+
+❌ Not wrong
+❌ Not insecure
+
+But:
+
+Less flexible
+
+Less scalable
+
+Less enterprise-friendly
+
+Interview-Perfect Answer (MEMORIZE)
+
+Although the Razorpay key_id is static and public, it is usually sent from the backend so that frontend remains environment-agnostic, configuration is centralized, and the system can support multiple merchants or key rotations without frontend changes.
+
+Final Mental Model 🧠
+Secret key → server only
+Public key → frontend uses
+But backend still DISTRIBUTES it

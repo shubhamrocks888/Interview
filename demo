@@ -1,0 +1,79 @@
+### roles
+id name
+1 admin
+2 instructor
+
+
+#### permissions
+id  name
+1    update_course_content
+2     delete_users
+
+
+#### role_permissions
+role_id permission_id
+3       1
+3        2
+
+### users
+id  role_id
+
+### course_assignments (scope control)
+user_id course_id
+
+###rails model
+
+class User < ApplicationRecord
+	belongs_to :role
+	has_many :permissions, through: :role
+	has_many :course_assignments
+end   
+ 
+
+class Role < ApplicationRecord
+	has_many :role_permissions
+	has_many :permissions, through: :role_permissions
+end
+
+class Permission < ApplicationRecord
+end
+
+class CourseAssignment < ApplicationRecord
+   belongs_to :user
+   belongs_to :course
+end
+
+### CoursePolicy
+
+class CoursePolicy
+	attr_reader :user, :course
+	
+	def initialize(user, course)
+	end
+
+	def update_course_content?
+	end
+
+	def view_permission?
+		has_permission?("") && 
+	end
+
+	private
+
+	def has_permission?(permission)
+    	user.permissions.exists? (name: permission)
+	end
+
+	def assigned_course?
+		user.course_assignments.exists?(course_id: course.id)
+	end
+
+##
+
+class CoursesController < ApplicationControlle
+
+	def update
+
+		authorize course, :update?
+	end
+end

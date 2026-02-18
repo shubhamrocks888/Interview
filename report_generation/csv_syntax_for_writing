@@ -1,0 +1,74 @@
+✅ Basic Ruby CSV (row by row, with headers)
+require "csv"
+
+CSV.open("users.csv", "wb", write_headers: true, headers: ["id", "email"]) do |csv|
+  User.find_each(batch_size: 1000) do |user|
+    csv << [user.id, user.email]
+  end
+end
+
+What this does
+
+Opens CSV as a stream
+
+Writes headers once
+
+Writes each row immediately
+
+Uses find_each → memory safe
+
+✅ Explicit header row (most common & clear)
+CSV.open("users.csv", "wb") do |csv|
+  csv << ["id", "email"]   # header row
+
+  User.find_each do |user|
+    csv << [user.id, user.email]
+  end
+end
+
+
+This is the most readable and widely used version.
+
+✅ Using hashes (header-safe, order guaranteed)
+CSV.open("users.csv", "wb", headers: true) do |csv|
+  csv << ["id", "email"]
+
+  User.find_each do |user|
+    csv << {
+      "id" => user.id,
+      "email" => user.email
+    }
+  end
+end
+
+
+Good when data comes as hashes.
+
+✅ Writing to a temp file (real-world export flow)
+file = Tempfile.new(["users", ".csv"])
+
+CSV.open(file.path, "wb") do |csv|
+  csv << ["id", "email"]
+
+  User.find_each do |user|
+    csv << [user.id, user.email]
+  end
+end
+
+file.rewind
+# upload to S3
+
+🚫 Common mistakes to avoid
+
+❌ Loading everything into memory
+
+CSV.generate { ... }
+
+
+❌ Using each instead of find_each for large tables
+
+❌ Forgetting binary mode "wb" (causes issues on Windows)
+
+Interview-ready one-liner 🎯
+
+CSV.open allows us to stream rows one by one, making large exports memory efficient.

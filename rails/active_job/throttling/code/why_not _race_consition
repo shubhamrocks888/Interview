@@ -1,0 +1,72 @@
+count = Rails.cache.read(key)
+
+if count <= limit
+  Rails.cache.increment(key)
+  allow = true
+else
+  allow = false
+end
+
+
+State
+
+limit = 5
+
+initial count = 4
+
+⏱ Timeline (real concurrency)
+T1: Request A reads count = 4
+T2: Request B reads count = 4
+
+T3: Request A checks 4 <= 5 → true
+T4: Request B checks 4 <= 5 → true
+
+T5: Request A increments → count = 5
+T6: Request B increments → count = 6
+
+Result
+
+✅ Request A allowed
+
+❌ Request B also allowed
+
+But only one slot was actually available (the 5th)
+
+That’s the bug.
+
+🧠 Why your “still one passes” intuition feels right (but isn’t)
+
+You’re subconsciously assuming:
+
+The second request will see the updated count
+
+But it doesn’t — because it already:
+
+read the old value
+
+evaluated the condition
+
+committed to allowing
+
+Concurrency breaks that assumption.
+
+✅ Why the atomic version works
+current = Rails.cache.increment(key)
+current <= limit
+
+
+Now the timeline is:
+
+Request A → INCR → returns 5 → allowed
+Request B → INCR → returns 6 → blocked
+
+
+Only one request gets <= limit.
+
+✔ Decision and mutation are tied together.
+
+🏁 Interview-quality conclusion
+
+Even though increment is atomic, doing a separate read first causes both requests to pass the check using stale data. Only when the increment itself determines the decision do we avoid the race condition.
+
+If you want, I can:

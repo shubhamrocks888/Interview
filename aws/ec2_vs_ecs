@@ -1,0 +1,143 @@
+This is a classic interview question, and the key is to explain it clearly, not deeply.
+
+I’ll give you:
+1️⃣ Simple definition
+2️⃣ Core differences
+3️⃣ When to use which
+4️⃣ Interview-ready answer
+
+1️⃣ EC2 vs ECS — one-line definitions
+EC2 (Elastic Compute Cloud)
+
+EC2 is a virtual server in the cloud.
+
+You manage:
+
+OS
+
+Patching
+
+Docker installation
+
+Process management
+
+ECS (Elastic Container Service)
+
+ECS is a managed service to run Docker containers.
+
+You manage:
+
+Containers
+
+Task definitions
+
+Scaling rules
+
+AWS manages:
+
+Scheduling
+
+Restarts
+
+Infrastructure (especially with Fargate)
+
+2️⃣ Key difference (mental model)
+
+EC2 gives you machines.
+ECS gives you a platform to run containers on machines.
+
+3️⃣ Comparison table (interview-friendly)
+Feature	EC2	ECS
+What it is	Virtual machine	Container orchestration
+Level	Infrastructure	Platform
+You manage	OS, Docker, apps	Containers only
+Scaling	Manual / ASG	Automatic
+Restart on crash	You handle	ECS handles
+Deployment	SSH / scripts	Task definitions
+Best for	Full control	Microservices
+4️⃣ How they work together (IMPORTANT)
+
+ECS runs on top of EC2 or Fargate.
+
+EC2  ← compute
+ECS  ← container scheduler
+Docker ← app packaging
+
+
+So:
+
+ECS does not replace EC2
+
+ECS uses EC2
+
+5️⃣ ECS launch modes (very important)
+ECS + EC2
+
+You create EC2 instances
+
+ECS places containers on them
+
+More control, more ops
+
+ECS + Fargate
+
+No EC2 management
+
+AWS handles everything
+
+Most modern choice
+
+🔥 Interview line:
+
+“ECS with Fargate removes the need to manage EC2 instances.”
+
+6️⃣ Where Rails & Elixir fit
+EC2 approach (old school)
+
+SSH into server
+
+Run Rails + Elixir manually
+
+Handle restarts yourself
+
+ECS approach (modern)
+
+Rails container as ECS service
+
+Elixir container as ECS service
+
+Auto-restart, auto-scale
+
+7️⃣ When to use EC2 directly
+
+Use EC2 if:
+
+You need full OS control
+
+Legacy apps
+
+Custom networking / kernel tweaks
+
+8️⃣ When to use ECS
+
+Use ECS if:
+
+Microservices
+
+Dockerized apps
+
+Independent scaling
+
+CI/CD pipelines
+
+9️⃣ One-sentence interview answer (perfect)
+
+Say this:
+
+“EC2 provides virtual machines, while ECS is a managed service that orchestrates Docker containers, often running on EC2 or Fargate to simplify deployment, scaling, and recovery.”
+
+10️⃣ Extra credit (OTP connection)
+
+🔥 If you want to impress:
+
+“ECS handles container-level fault tolerance, while Elixir’s OTP handles process-level fault tolerance inside the container.”

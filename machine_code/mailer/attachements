@@ -1,0 +1,139 @@
+1️⃣ Basic Attachment Example
+
+Suppose you want to send a PDF invoice after ride completion.
+
+✅ Mailer
+class RideMailer < ApplicationMailer
+  default from: "no-reply@ridesapp.com"
+
+  def ride_invoice(ride)
+    @ride = ride
+    @rider = ride.rider
+
+    attachments["invoice_#{ride.id}.pdf"] =
+      File.read(Rails.root.join("tmp/sample_invoice.pdf"))
+
+    mail(
+      to: @rider.email,
+      subject: "Your Ride Invoice"
+    )
+  end
+end
+
+
+That’s it.
+
+attachments["filename"] = file_data
+
+📌 2️⃣ Attachment From ActiveStorage (More Realistic)
+
+If you store invoices using ActiveStorage:
+
+def ride_invoice(ride)
+  @ride = ride
+
+  if ride.invoice.attached?
+    attachments[ride.invoice.filename.to_s] =
+      ride.invoice.download
+  end
+
+  mail(to: ride.rider.email, subject: "Your Ride Invoice")
+end
+
+
+Much cleaner.
+
+📌 3️⃣ Attach CSV File (Generated Dynamically)
+
+Example: Send ride details CSV.
+
+def ride_report(ride)
+  @ride = ride
+
+  csv_data = CSV.generate(headers: true) do |csv|
+    csv << ["Ride ID", "Driver", "Rider", "Status"]
+    csv << [ride.id, ride.driver.name, ride.rider.name, ride.status]
+  end
+
+  attachments["ride_#{ride.id}.csv"] = csv_data
+
+  mail(to: ride.rider.email, subject: "Ride Report")
+end
+
+
+No file saved to disk.
+
+📌 4️⃣ Attach Inline Image (For HTML Email)
+
+For logos:
+
+attachments.inline["logo.png"] =
+  File.read(Rails.root.join("app/assets/images/logo.png"))
+
+
+In HTML:
+
+<%= image_tag attachments["logo.png"].url %>
+
+
+Used for branding.
+
+📌 5️⃣ Setting MIME Type (Optional)
+
+If needed:
+
+attachments["report.pdf"] = {
+  mime_type: "application/pdf",
+  content: File.read("path")
+}
+
+
+Usually Rails auto-detects.
+
+⚠ Important Production Tip
+
+Never do heavy file generation inside mailer.
+
+Better approach:
+
+Generate file in background job
+
+Attach from storage
+
+Send mail
+
+Because mailer should be lightweight.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+How do attachments work internally?
+
+Answer:
+
+ActionMailer builds a multipart MIME email
+
+attachments[] adds parts to email
+
+Uses Mail gem under the hood
+
+Can send binary or text attachments
+
+🚀 For Your Ride App (Practical Scenario)
+
+After complete:
+
+RideMailer.ride_invoice(ride).deliver_later
+
+
+Send PDF receipt.
+
+That would impress interviewer.
+
+You now know:
+
+✔ File attachments
+✔ Dynamic attachments
+✔ ActiveStorage attachments
+✔ Inline attachments

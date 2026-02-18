@@ -1,0 +1,116 @@
+1️⃣ Policy Structure in Rails (Pundit-style)
+
+In Rails, policies live in app/policies.
+Each resource (model) usually has one policy file.
+
+Folder structure:
+app/
+  policies/
+    application_policy.rb    # base policy, shared logic
+    course_policy.rb         # Course-specific policy
+    program_policy.rb        # Program-specific policy
+    chapter_policy.rb        # Chapter-specific policy
+
+2️⃣ Base Policy: application_policy.rb
+
+This is the parent class for all policies.
+
+class ApplicationPolicy
+  attr_reader :user, :record
+
+  def initialize(user, record)
+    @user = user        # current_user
+    @record = record    # the model instance
+  end
+
+  # Default CRUD methods (can override in child)
+  def index?; false; end
+  def show?; false; end
+  def create?; false; end
+  def update?; false; end
+  def destroy?; false; end
+
+  # Admin helper
+  def admin?
+    user.role.name == "admin"
+  end
+end
+
+
+Architect-level point: Common logic like admin? or coordinator_assigned? lives in base policy to avoid repetition.
+
+3️⃣ Child Policy: Example course_policy.rb
+class CoursePolicy < ApplicationPolicy
+  def show?
+    admin? || instructor_assigned? || coordinator_assigned?
+  end
+
+  def update?
+    admin? || instructor_assigned?
+  end
+
+  private
+
+  def instructor_assigned?
+    user.role.name == "instructor" &&
+      user.course_assignments.exists?(course_id: record.id)
+  end
+
+  def coordinator_assigned?
+    user.role.name == "coordinator" &&
+      user.programs.exists?(id: record.program_id)
+  end
+end
+
+
+record = the course instance
+
+user = current_user
+
+This is data-driven RBAC, centralized and reusable.
+
+4️⃣ How it’s used
+In controller
+def update
+  course = Course.find(params[:id])
+  authorize course, :update?    # calls CoursePolicy#update?
+  course.update!(course_params)
+end
+
+In services
+policy = CoursePolicy.new(current_user, course)
+raise Pundit::NotAuthorizedError unless policy.update?
+
+5️⃣ Optional: Policy Scopes
+
+For index/collection queries, Rails Pundit supports policy scopes.
+
+Example: CoursePolicy::Scope
+
+class CoursePolicy < ApplicationPolicy
+  class Scope
+    attr_reader :user, :scope
+
+    def initialize(user, scope)
+      @user = user
+      @scope = scope
+    end
+
+    def resolve
+      return scope.all if admin?
+      scope.joins(:course_assignments).where(course_assignments: { user_id: user.id })
+    end
+  end
+end
+
+
+Admin sees all courses
+
+Instructor sees only assigned courses
+
+6️⃣ Summary for interview
+
+“Each model has a corresponding policy file in app/policies.
+Policies inherit from ApplicationPolicy to reuse shared logic like admin checks.
+They define per-action methods (show?, update?, create?) and optionally scopes for collections.
+Controllers, services, and jobs call these policies to enforce RBAC consistently.”

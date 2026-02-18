@@ -1,0 +1,148 @@
+What happens if Redis goes down?
+
+Remember one core fact first:
+
+Redis is Sidekiq’s source of truth.
+No Redis = no Sidekiq.
+
+1️⃣ Enqueuing jobs (from Rails)
+When Redis is DOWN:
+MyJob.perform_async
+
+
+👉 Fails immediately
+
+Sidekiq tries to push job to Redis
+
+Redis connection error occurs
+
+Exception is raised
+
+Typical error:
+
+Redis::CannotConnectError
+
+Result:
+
+❌ Job is NOT queued
+❌ Job is LOST unless you rescue/retry in app code
+
+📌 Rails web server keeps running, but job enqueue fails.
+
+2️⃣ Running jobs (Sidekiq workers)
+Case A: Job is already running
+
+Job continues executing in memory
+
+Sidekiq does NOT need Redis during execution
+
+BUT…
+
+When job finishes:
+
+Sidekiq tries to:
+
+Acknowledge completion
+
+Remove job metadata
+
+👉 Redis is down → ACK fails
+
+Result:
+
+Job appears unfinished
+
+On Redis recovery → job may be re-run
+
+⚠️ This is why idempotency is critical.
+
+3️⃣ Fetching new jobs
+
+Redis is required to:
+
+Pop jobs from queues
+
+When Redis is down:
+❌ No job fetching
+❌ Worker threads go idle
+❌ Sidekiq logs connection errors
+
+Sidekiq does not crash immediately — it keeps retrying Redis connection.
+
+4️⃣ Retry, Scheduled, Dead jobs
+
+All of these live in Redis:
+
+| Feature        | Impact          |
+| -------------- | --------------- |
+| Retries        | ❌ Paused        |
+| Scheduled jobs | ❌ Won’t run     |
+| Cron jobs      | ❌ Won’t trigger |
+| Dead set       | ❌ Inaccessible  |
+
+
+Nothing moves until Redis comes back.
+
+5️⃣ Sidekiq UI
+
+Sidekiq UI is just a Redis viewer.
+
+Redis down →
+❌ UI broken
+❌ No stats
+❌ No retries / deletes
+
+6️⃣ When Redis comes back up
+What resumes automatically:
+
+✅ Sidekiq reconnects
+✅ Queues resume
+✅ Scheduled jobs resume
+✅ Crashed jobs are re-queued
+
+What does NOT resume:
+
+❌ Jobs that failed to enqueue during downtime
+❌ Unless your app retried them
+
+7️⃣ Worst-case scenario (important)
+
+If Redis is:
+
+Not persistent (no AOF / RDB)
+
+And crashes hard
+
+👉 All jobs are permanently lost
+
+This is why production Redis must have persistence enabled.
+
+8️⃣ How production systems protect against this
+✅ Redis persistence
+
+AOF (Append Only File)
+
+RDB snapshots
+
+✅ Redis HA
+
+Redis Sentinel
+
+Redis Cluster
+
+Managed Redis (AWS ElastiCache, GCP, etc.)
+
+✅ App-level protection
+begin
+  MyJob.perform_async
+rescue Redis::BaseError
+  # fallback / log / retry later
+end
+
+Interview-ready summary 🔥
+
+If Redis goes down, Sidekiq cannot enqueue, fetch, retry, or track jobs. Running jobs may finish but won’t be acknowledged, so they can be re-run after Redis recovers. Once Redis is back, Sidekiq reconnects automatically and resumes processing. Jobs attempted during the outage are lost unless the application handles retries.
+
+One-liner (if interviewer cuts you off)
+
+Redis down means Sidekiq is effectively paused. No Redis, no background jobs.

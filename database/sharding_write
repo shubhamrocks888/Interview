@@ -1,0 +1,97 @@
+In sharding, writes are distributed across multiple databases. But the important part is how the system decides which DB to write to.
+
+Let’s walk it slowly and cleanly.
+
+Core idea (1 sentence)
+
+In a sharded system, each write goes to exactly one shard, chosen using a shard key.
+
+Step-by-step write flow in sharding
+1️⃣ Client sends a write request
+
+Example:
+
+Create order for user_id = 123
+
+2️⃣ Application calculates shard
+
+Using shard key (user_id):
+
+shard_id = user_id % TOTAL_SHARDS
+
+
+Example:
+
+123 % 4 = 3
+
+3️⃣ Write goes to ONE database only
+Shard 3 DB
+  └── INSERT INTO orders ...
+
+
+❌ Other shards are not touched
+❌ No fan-out write
+
+Visual picture
+           App
+            |
+     shard(user_id)
+            |
+    -----------------
+    |   |   |   |   |
+   DB1 DB2 DB3 DB4 DB5
+         ↑
+       write here
+
+Important clarification ❗
+
+❌ Writes do NOT go to all databases
+✅ Writes go to one shard only
+
+This is why sharding scales writes.
+
+Reads in sharding
+Targeted read (fast)
+SELECT * FROM orders WHERE user_id = 123
+
+
+→ goes to one shard
+
+Global read (slow)
+SELECT COUNT(*) FROM orders
+
+
+→ must query all shards
+
+Transactions in sharded DBs
+Within one shard
+BEGIN
+INSERT ...
+UPDATE ...
+COMMIT
+
+
+✅ Easy
+
+Across shards
+
+❌ Very hard
+❌ Needs 2-phase commit or compensation logic
+
+👉 Most systems avoid cross-shard transactions.
+
+Why sharding improves write throughput
+Single DB	Sharded DB
+All writes hit 1 DB	Writes spread across DBs
+Write lock contention	Parallel writes
+Disk bottleneck	Distributed disks
+Common sharding mistake (interview trap ⚠️)
+
+“We shard by user_id but then query by email.”
+
+❌ Bad — causes scatter-gather
+✅ Queries must include shard key
+
+Interview-ready answer 🔥
+
+In sharding, writes are routed to a single database shard using a shard key. Each shard handles writes independently, which allows horizontal write scaling.

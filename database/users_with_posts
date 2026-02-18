@@ -1,0 +1,72 @@
+Query
+for users who have posts more than 5
+
+active record and also sql
+
+####
+
+Assume tables:
+
+users(id, name, email)
+posts(id, user_id, title)
+
+✅ ActiveRecord
+1️⃣ Using joins + group + having (MOST COMMON)
+User
+  .joins(:posts)
+  .group('users.id')
+  .having('COUNT(posts.id) > 5')
+
+
+✔️ Generates efficient SQL
+✔️ Interview-friendly answer
+✔️ Uses DB aggregation (not Ruby)
+
+2️⃣ If you want the post count also
+User
+  .joins(:posts)
+  .select('users.*, COUNT(posts.id) AS posts_count')
+  .group('users.id')
+  .having('COUNT(posts.id) > 5')
+
+
+Now you can access:
+
+user.posts_count
+
+3️⃣ Using left_joins (edge-case safe)
+
+If you want to include users with zero posts safely (not required here, but good to mention):
+
+User
+  .left_joins(:posts)
+  .group('users.id')
+  .having('COUNT(posts.id) > 5')
+
+✅ Raw SQL
+Basic SQL query
+SELECT users.*
+FROM users
+JOIN posts ON posts.user_id = users.id
+GROUP BY users.id
+HAVING COUNT(posts.id) > 5;
+
+With post count
+SELECT users.*, COUNT(posts.id) AS posts_count
+FROM users
+JOIN posts ON posts.user_id = users.id
+GROUP BY users.id
+HAVING COUNT(posts.id) > 5;
+
+❌ Common WRONG approach (interview trap)
+User.all.select { |u| u.posts.count > 5 }
+
+
+❌ N+1 queries
+❌ Loads everything into memory
+❌ Not scalable
+❌ Interviewer will NOT like this
+
+💡 Interview tip (say this line)
+
+“Since this is an aggregate condition, we must use GROUP BY and HAVING, not WHERE.”

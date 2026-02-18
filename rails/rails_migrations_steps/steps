@@ -1,0 +1,192 @@
+✅ Rails 5 → Rails 6 Migration (Step-by-Step)
+
+Golden rule: Upgrade Ruby first, then Rails, then features
+
+1️⃣ Check prerequisites
+🔹 Ruby version
+
+Rails 6 requires:
+
+Ruby ≥ 2.5.0 (Rails 6.1 prefers 2.7+)
+
+👉 First upgrade Ruby safely.
+
+ruby -v
+
+
+If needed:
+
+rvm install 2.7.8
+rvm use 2.7.8
+
+2️⃣ Lock dependencies & get tests green
+
+Before touching Rails:
+
+bundle update --conservative
+
+Fix existing deprecations
+
+Ensure test suite is passing
+
+⚠️ Never upgrade Rails with failing tests.
+
+3️⃣ Enable deprecation warnings (VERY IMPORTANT)
+
+In config/environments/development.rb:
+
+config.active_support.deprecation = :log
+
+
+Then run the app and fix Rails 5 deprecations first.
+
+4️⃣ Upgrade Rails version (incrementally)
+
+In Gemfile:
+
+gem 'rails', '~> 6.0.0'
+
+
+Then:
+
+bundle update rails
+
+
+⚠️ Avoid jumping directly to 6.1 initially.
+
+5️⃣ Run Rails update task
+rails app:update
+
+
+This will prompt you to update:
+
+config files
+
+initializers
+
+environments
+
+👉 Review carefully — don’t blindly accept all changes.
+
+6️⃣ Handle Rails 6 breaking changes
+🔹 Zeitwerk (major change)
+
+Rails 6 uses Zeitwerk autoloader by default.
+
+Common fixes:
+
+File names must match class names
+
+No circular requires
+
+No constants defined in wrong files
+
+Check:
+
+rails zeitwerk:check
+
+
+Fix all errors here.
+
+🔹 Stronger credentials
+
+Rails 6 encourages:
+
+rails credentials:edit
+
+
+Replace:
+
+secrets.yml
+
+ENV usage (if applicable)
+
+🔹 Action Mailbox / Action Text (optional)
+
+These are new features, not required.
+Skip unless you need them.
+
+7️⃣ Webpacker (if using frontend)
+
+Rails 6 introduces Webpacker by default.
+
+If upgrading an API-only app → skip
+If full-stack app:
+
+rails webpacker:install
+
+
+Common issues:
+
+Node / Yarn version mismatch
+
+Missing packs
+
+8️⃣ Update ActiveRecord behavior changes
+🔹 belongs_to required by default
+
+(Already in Rails 5, but stricter in 6)
+
+belongs_to :user, optional: true
+
+🔹 update_attributes removed
+
+Replace with:
+
+update
+
+🔹 render behavior changes
+
+Explicit locals needed more often.
+
+9️⃣ Background jobs & async changes
+
+If using:
+
+Sidekiq
+
+DelayedJob
+
+👉 Update gems to Rails-6-compatible versions.
+
+Example:
+
+gem 'sidekiq', '~> 6.5'
+
+🔟 Run full test suite + production-like env
+RAILS_ENV=production rails assets:precompile
+
+
+Fix:
+
+eager loading issues
+
+missing constants
+
+caching bugs
+
+1️⃣1️⃣ Upgrade to Rails 6.1 (optional but recommended)
+
+Once stable on 6.0:
+
+gem 'rails', '~> 6.1'
+
+
+Repeat:
+
+bundle update rails
+rails app:update
+
+🚨 Common gotchas (interview gold)
+
+| Issue                  | Why                        |
+| ---------------------- | -------------------------- |
+| Zeitwerk failures      | File/class mismatch        |
+| Autoload vs eager load | Production breaks          |
+| Webpacker errors       | Node/Yarn mismatch         |
+| Monkey patches break   | Load order changed         |
+| Thread safety bugs     | Rails 6 is more concurrent |
+
+🎯 Interview-ready summary
+
+We first upgrade Ruby, fix Rails 5 deprecations, then upgrade Rails incrementally. We run rails app:update, fix Zeitwerk autoloading issues, update dependencies like Sidekiq and Webpacker, run tests in production mode, and only then move to Rails 6.1.

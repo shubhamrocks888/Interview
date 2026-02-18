@@ -1,0 +1,52 @@
+Next Step
+
+Now implement:
+
+POST /rides/:id/start
+
+
+Rules:
+
+Only assigned driver can start ride
+
+Ride must be in accepted state
+
+Change status → started
+
+###
+
+class RidesController < ApplicationController
+  
+  def start
+    ride = Ride.find_by(id: params[:id])
+    return render json: { errors: "Ride not found" }, status: :not_found unless ride
+
+    driver = User.find_by(id: params[:driver_id], role: "driver")
+    return render json: { errors: "Driver not found" }, status: :not_found unless driver
+
+    ActiveRecord::Base.transaction do
+      ride.lock!
+      driver.lock!
+
+      unless ride.accepted?
+        raise StandardError, "Ride is not in accepted state"
+      end
+
+      unless ride.driver_id == driver.id
+        raise StandardError, "Driver not assigned to this ride"
+      end
+
+      if Ride.where(driver: driver, status: :started).exists?
+        raise StandardError, "Driver already on another ride"
+      end
+
+      ride.update!(status: :started)
+    end
+
+    render json: { message: "Ride started" }, status: :ok
+
+  rescue StandardError => e
+    render json: { errors: e.message }, status: :unprocessable_entity
+  end
+
+end

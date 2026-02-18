@@ -1,0 +1,73 @@
+Program P1 contains courses C1 → C2 → C3 in a specific order.
+
+✅ How it is stored (clean & correct)
+program_courses table
+id	program_id	course_id	position	mandatory
+1	P1	C1	1	true
+2	P1	C2	2	true
+3	P1	C3	3	false
+🧠 Key points (say this in interview)
+
+“We stored the order of courses inside the program_courses join table using a position column, which allowed each program to define its own sequence independently.”
+
+This line is gold 🥇
+
+❓ Why position in join table?
+1️⃣ Same course, different order in different programs
+
+Program P1: C1 → C2 → C3
+
+Program P2: C2 → C3 → C1
+
+This is impossible if order lives in courses.
+
+2️⃣ Program-specific rules
+
+You can add:
+
+mandatory
+
+unlock_after_course_id
+
+min_score
+
+weightage
+
+All belong to program ↔ course, not course itself.
+
+🔍 Likely follow-up questions
+“How do you fetch courses in order?”
+
+Answer:
+
+“We query program_courses ordered by position, joining courses to fetch details.”
+
+Simple and confident.
+
+“What if order changes?”
+
+Answer:
+
+“We update the position values inside a transaction to avoid inconsistent ordering.”
+
+Mention transaction → big plus.
+
+“What about gaps in position (1, 10, 20)?”
+
+Answer (optional, senior touch):
+
+“We sometimes left gaps to allow reordering without mass updates, and normalized positions periodically.”
+
+Architects love this 😄
+
+⚠️ Common mistakes (don’t say these)
+
+❌ store array of course_ids in programs
+
+❌ store order in courses table
+
+❌ hardcode logic in application
+
+🧠 15-second summary
+
+“Program-course ordering was handled via a join table with a position column, allowing flexible sequencing and program-specific rules without duplicating course data.”

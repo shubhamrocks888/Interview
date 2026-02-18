@@ -1,0 +1,74 @@
+1️⃣ What is a Kafka Broker?
+
+A broker is a Kafka server/node that stores and serves messages.
+
+Each Kafka cluster has one or more brokers
+
+Brokers manage topics, partitions, and consumer requests
+
+Producers send events to brokers, consumers read events from brokers
+
+2️⃣ Example with your scenario
+Order Service (Producer)
+        ↓
+       Kafka Cluster
+ ┌─────────────┐ ┌─────────────┐
+ │ Broker 0    │ │ Broker 1    │
+ └─────────────┘ └─────────────┘
+        ↓
+   orders topic with 2 partitions
+Partition 0 → Broker 0 → order_id 1, 2, 5
+Partition 1 → Broker 1 → order_id 3, 4, 6
+        ↓
+Consumers:
+Email Service → reads from brokers
+Analytics Service → reads from brokers
+
+
+Each partition is hosted on a broker
+
+Brokers store data, handle requests, and replicate partitions for fault tolerance
+
+3️⃣ Key Roles of a Broker
+
+1️⃣ Stores partitions
+
+Each partition lives on a broker
+
+Multiple brokers = partitions distributed across them
+
+2️⃣ Handles client requests
+
+Producers → send events
+
+Consumers → read events
+
+3️⃣ Replication & fault tolerance
+
+Kafka can replicate partitions to multiple brokers
+
+If one broker fails → another broker has a copy
+
+4️⃣ Analogy (Simple)
+
+Broker = post office branch
+
+Producer = person sending letters
+
+Consumer = person picking up letters
+
+Multiple branches → handle more letters and survive branch failure
+
+5️⃣ Interview-Perfect Answer
+
+“A Kafka broker is a server that stores partitions of topics, handles producer and consumer requests, and ensures replication for fault tolerance. In our orders example, different partitions of the orders topic can reside on different brokers, and consumers like Email or Analytics read events from these brokers independently.”
+
+✅ Key takeaway
+
+Broker = Kafka server
+
+Partition = subset of topic stored on broker
+
+Consumer/Producer interact with brokers
+
+Multiple brokers = high throughput + fault tolerance

@@ -1,0 +1,234 @@
+When perform_later is called → what exactly happens?
+MyJob.perform_later(1)
+
+
+Flow:
+
+Rails → ActiveJob → Sidekiq adapter → Redis
+
+
+Sidekiq serializes the job into JSON and stores it in different Redis data structures based on job state.
+
+1️⃣ Where are NEW / PENDING jobs stored?
+👉 Redis LIST
+
+Queue key format
+
+queue:<queue_name>
+
+
+Example:
+
+queue:default
+queue:critical
+
+
+Command used:
+
+LPUSH queue:default <job_json>
+
+
+Example job JSON:
+
+{
+  "class": "MyJob",
+  "args": [1],
+  "jid": "a1b2c3",
+  "queue": "default",
+  "created_at": 1700000000,
+  "enqueued_at": 1700000005,
+  "retry": true
+}
+
+
+✔️ FIFO behavior
+✔️ Fast push/pop
+✔️ Multiple workers can pop safely
+
+2️⃣ What happens when a worker picks the job?
+👉 Job is REMOVED from queue list
+RPOP queue:default
+
+
+Now job is:
+
+In worker memory
+
+Being executed
+
+NOT stored in Redis
+
+⚠️ This is why crashes matter (we’ll cover reliability next)
+
+3️⃣ Where are RUNNING jobs tracked?
+👉 Redis HASH + SET
+
+Keys:
+
+workers
+processes
+
+
+Example:
+
+HSET workers <process_id>:<thread_id> <job_payload>
+
+
+Purpose:
+
+Sidekiq Web UI
+
+Detect stuck jobs
+
+Graceful shutdown
+
+✔️ Purely monitoring
+✔️ Not persistence
+
+4️⃣ Where are RETRY jobs stored?
+
+If job fails and retry: true 👇
+
+👉 Redis SORTED SET
+
+Key:
+
+retry
+
+
+Command:
+
+ZADD retry <retry_at_timestamp> <job_json>
+
+
+Why sorted set?
+
+Jobs must run in the future
+
+Sorted by execution time
+
+Example:
+
+retry
+  score: 1700000600 → job_json
+
+
+Sidekiq poller:
+
+Periodically checks retry
+
+Moves due jobs back to queue
+
+✔️ Delayed retries
+✔️ Time-based scheduling
+
+5️⃣ Where are SCHEDULED / DELAYED jobs stored?
+
+Example:
+
+MyJob.set(wait: 10.minutes).perform_later
+
+👉 Redis SORTED SET
+
+Key:
+
+schedule
+
+
+Command:
+
+ZADD schedule <run_at_timestamp> <job_json>
+
+
+Very similar to retry set, but:
+
+schedule → first execution
+
+retry → failed execution
+
+6️⃣ Where are FAILED (Dead) jobs stored?
+
+After retries exhausted 👇
+
+👉 Redis SORTED SET
+
+Key:
+
+dead
+
+
+Command:
+
+ZADD dead <failed_at_timestamp> <job_json>
+
+
+Used by:
+
+Sidekiq Web UI
+
+Manual retries
+
+Debugging
+
+Default behavior:
+
+Jobs kept for 6 months
+
+Max 10,000 jobs (older pruned)
+
+7️⃣ Where are COMPLETED jobs stored?
+❌ NOWHERE ❌
+
+This is important.
+
+✔️ Successful jobs:
+
+Are removed from memory
+
+Not stored in Redis
+
+No history kept
+
+Reason:
+
+High throughput
+
+Redis memory efficiency
+
+👉 Sidekiq assumes success is the normal case
+
+8️⃣ Summary Table (🔥 interview-ready)
+
+| Job State     | Redis Structure | Redis Key              |
+| ------------- | --------------- | ---------------------- |
+| Pending       | List            | `queue:<name>`         |
+| Running       | Hash / Set      | `workers`, `processes` |
+| Scheduled     | Sorted Set      | `schedule`             |
+| Retry         | Sorted Set      | `retry`                |
+| Dead (Failed) | Sorted Set      | `dead`                 |
+| Completed     | ❌ Not stored    | —                      |
+
+
+9️⃣ Why Redis data structures are chosen?
+
+| Redis Type | Why                  |
+| ---------- | -------------------- |
+| List       | Fast FIFO queue      |
+| Sorted Set | Time-based execution |
+| Hash       | Worker state         |
+| Set        | Process tracking     |
+
+
+Redis is:
+
+In-memory
+
+Atomic
+
+Extremely fast
+
+Perfect for background jobs.
+
+10️⃣ One-liner interview answer 💡
+
+Sidekiq stores pending jobs in Redis lists, scheduled and retry jobs in sorted sets keyed by timestamp, failed jobs in a dead set, running jobs in worker hashes, and successful jobs are not persisted at all.

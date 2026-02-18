@@ -1,0 +1,6 @@
+
+
+params
+  .to_unsafe_h
+  .transform_keys(&:underscore)
+  .transform_values(&:strip)

@@ -1,0 +1,94 @@
+Short answer
+
+❌ Kafka is NOT usually run in your application ECS containers
+✅ Kafka runs as a separate managed service or separate infrastructure
+
+Where Kafka actually lives (3 real options)
+1️⃣ Managed Kafka (MOST COMMON, INTERVIEW-SAFE)
+AWS MSK (Managed Streaming for Kafka)
+AWS MSK Cluster
+   |
+   +── Kafka brokers
+
+
+Fully managed by AWS
+
+Highly available
+
+Handles replication, storage, upgrades
+
+Your setup becomes:
+
+Rails (ECS) → MSK
+Elixir (ECS) ← MSK
+
+
+🔥 Interview line:
+
+“Kafka typically runs as a managed service like AWS MSK, not inside application containers.”
+
+2️⃣ Kafka on EC2 (less common, more ops)
+EC2 Instance(s)
+   |
+   +── Kafka brokers
+   +── Zookeeper / KRaft
+
+
+You manage disks, scaling, upgrades
+
+More control, more ops
+
+Used when:
+
+Custom Kafka configs needed
+
+Cost optimization
+
+3️⃣ Kafka via Docker (ONLY for local dev)
+services:
+  kafka:
+    image: bitnami/kafka
+
+
+❌ Not for production
+❌ No durability guarantees
+
+Why Kafka is NOT inside Rails/Elixir container
+
+Very important reasoning (say this):
+
+Reason	Explanation
+Persistence	Kafka needs stable disk
+Scalability	Kafka scales independently
+Availability	Needs replication
+Isolation	App crashes must not kill Kafka
+Networking	Needs fixed endpoints
+
+🔥 Interview sentence:
+
+“Kafka must be independent of application lifecycles to guarantee durability and availability.”
+
+How apps connect to Kafka
+
+Rails / Elixir containers connect via:
+
+Kafka bootstrap servers
+
+Provided via env vars
+
+KAFKA_BROKERS=broker1:9092,broker2:9092
+
+
+They communicate over network, just like DB.
+
+Very common interview follow-up (be ready)
+
+❓ “So is Kafka part of ECS?”
+
+Correct answer:
+
+“No. Kafka runs as a separate managed service or on EC2; ECS services connect to it over the network.”
+
+One-line final answer (perfect)
+
+“Kafka runs outside application containers, typically as a managed service like AWS MSK, while Rails and Elixir containers act as producers and consumers over the network.”

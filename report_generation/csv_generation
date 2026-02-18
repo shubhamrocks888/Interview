@@ -1,0 +1,229 @@
+We’ll go CSV only, from scratch, step by step, assuming data is already normalized & streaming in batches.
+
+I’ll explain:
+
+Why CSV is chosen
+
+Exact flow
+
+Line-by-line CSV generation
+
+Performance & memory safety
+
+Edge cases interviewers ask
+
+1️⃣ Why CSV export is simple but powerful
+
+Tell the interviewer first:
+
+“CSV is lightweight, streamable, memory-efficient, and universally supported, which makes it ideal for large datasets like 30,000+ rows.”
+
+This frames your choice.
+
+2️⃣ CSV generation – high-level flow
+Open CSV stream
+→ Write headers once
+→ For each batch:
+    → For each normalized row:
+        → Write row to CSV
+→ Close stream
+→ Return / store file
+
+
+Key rule:
+❌ Never hold entire CSV in memory
+✅ Write incrementally
+
+3️⃣ Step 1: Decide where CSV is generated
+
+You have two common patterns:
+
+Pattern A: Direct download (small–medium files)
+
+CSV generated in request cycle
+
+Streamed as response
+
+Pattern B: Background job (large files)
+
+CSV written to temp file / S3
+
+User downloads later
+
+For 30,000 rows, both are acceptable — but interview-safe answer:
+
+“We generate CSV in a background job to avoid request timeouts and memory pressure.”
+
+4️⃣ Step 2: Define CSV headers (schema lock)
+
+Before writing any data:
+
+HEADERS = [
+  "User ID",
+  "User Name",
+  "Email",
+  "Course",
+  "Program",
+  "Enrolled At",
+  "Status"
+]
+
+
+Why this matters:
+
+Prevents column drift
+
+XLS & CSV share same schema
+
+Easy to version later
+
+🎯 Interviewer phrase:
+
+“We lock the report schema before generation.”
+
+5️⃣ Step 3: Open CSV writer (line by line)
+If writing to a file
+file_path = "/tmp/enrollments_report.csv"
+
+CSV.open(file_path, "w", write_headers: true, headers: HEADERS) do |csv|
+
+
+What happens here:
+
+Opens file stream
+
+Writes header row automatically
+
+Keeps file handle open
+
+6️⃣ Step 4: Stream normalized data into CSV
+
+You already have this from previous step:
+
+normalized_rows.each do |row|
+
+
+Now write line by line:
+
+csv << [
+  row[:user_id],
+  row[:user_name],
+  row[:email],
+  row[:course_name],
+  row[:program_name],
+  row[:enrolled_at],
+  row[:status]
+]
+
+
+🔥 This is the most important line
+One row in → one line out
+
+7️⃣ Step 5: Combine with batching (REAL WORLD)
+
+Now let’s combine batching + CSV:
+
+CSV.open(file_path, "w", write_headers: true, headers: HEADERS) do |csv|
+
+  EnrollmentReportFetcher.each_batch do |batch|
+    batch.each do |row|
+      csv << [
+        row[:user_id],
+        row[:user_name],
+        row[:email],
+        row[:course_name],
+        row[:program_name],
+        row[:enrolled_at],
+        row[:status]
+      ]
+    end
+  end
+
+end
+
+
+🎯 What to say:
+
+“The CSV writer stays open while data flows in batches, so memory stays constant.”
+
+8️⃣ Step 6: Handle encoding & safety (interviewer bonus)
+Encoding issues (Excel problems)
+CSV.open(file_path, "w", encoding: "UTF-8") do |csv|
+
+
+Optional BOM for Excel:
+
+file.write("\uFEFF")
+
+Formula injection prevention (SECURITY)
+
+Very important for reports:
+
+def safe_cell(value)
+  value.to_s.start_with?("=", "+", "-", "@") ? "'#{value}" : value
+end
+
+
+Then:
+
+csv << row.values.map { |v| safe_cell(v) }
+
+
+🎯 Interviewer gold line:
+
+“We sanitize CSV cells to prevent formula injection attacks.”
+
+9️⃣ Step 7: Close file & finalize
+
+When block exits:
+
+File is flushed
+
+File is closed safely
+
+Now:
+
+Upload to S3
+
+Or send as response
+
+🔟 Step 8: Send file to user (brief)
+Direct response
+send_file file_path, type: "text/csv"
+
+Or background job
+upload_to_s3(file_path)
+generate_signed_url
+
+1️⃣1️⃣ Common CSV challenges (YOU MUST SAY THESE)
+1️⃣ Large memory usage
+
+✅ Solved by streaming
+
+2️⃣ Slow generation
+
+✅ Solved by:
+
+batching
+
+selecting only required columns
+
+3️⃣ Broken Excel formatting
+
+✅ Solved by:
+
+UTF-8 encoding
+
+BOM
+
+4️⃣ Security risks
+
+✅ Solved by:
+
+permission checks earlier
+
+CSV injection prevention
+
+1️⃣2️⃣ Final interviewer-ready summary (memorize)
+
+“Once the data is normalized, we generate CSV by opening a stream, writing headers once, and incrementally appending rows batch by batch. We never load the full dataset into memory. Each normalized row is written directly to the CSV writer with proper encoding and sanitization to prevent CSV injection. After generation, the file is either streamed to the user or securely stored with an expiring download link.”

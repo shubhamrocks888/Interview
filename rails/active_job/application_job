@@ -1,0 +1,19 @@
+class MyJob < ApplicationJob
+  queue_as :critical
+  retry_on StandardError, attempts: 5
+end
+
+class MyJob
+  include Sidekiq::Job
+  sidekiq_options retry: 5, queue: :critical
+end
+
+Common variations you should know
+Disable retries
+sidekiq_options retry: false
+
+Infinite retries (⚠️ dangerous)
+sidekiq_options retry: true
+
+
+

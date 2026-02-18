@@ -1,0 +1,87 @@
+4️⃣ Why NoSQL is Faster for Writes?
+
+		Key points:
+
+		No joins
+
+		No foreign keys
+
+		No locking across tables
+
+		Append-heavy writes
+
+		“NoSQL optimizes for write-heavy workloads common in event systems.”
+
+
+5️⃣ Sharding vs Indexing (VERY IMPORTANT)
+
+| Feature  | Indexing         | Sharding           |
+| -------- | ---------------- | ------------------ |
+| Purpose  | Faster queries   | Scale data         |
+| Scope    | Within node      | Across nodes       |
+| Used for | Read performance | Horizontal scaling |
+
+
+
+👉 Indexes don’t scale storage — shards do
+
+
+
+6️⃣ How does MongoDB scale?
+
+		Answer:
+
+		Replica sets → high availability
+
+		Sharding → horizontal scaling
+
+		Indexes → query performance
+
+7️⃣ How do you model data in NoSQL?
+
+	“You design data based on access patterns, not normalization.”
+
+	Example:
+
+	Duplicate user data inside orders
+
+	Avoid joins
+
+	Optimize reads
+
+
+8️⃣ Why NoSQL doesn’t support joins (mostly)?
+
+“Joins are expensive in distributed systems because data is spread across nodes.”
+
+9️⃣ When should you NOT use NoSQL?
+
+Strong answer:
+
+Financial transactions needing strict ACID
+
+Complex reporting queries
+
+Heavy relational logic
+
+
+1️⃣0️⃣ NoSQL + Kafka (interviewer LOVES this)
+
+	Kafka handles event streaming
+	NoSQL handles event storage & querying
+
+	Kafka ≠ Database
+	NoSQL ≠ Message queue
+
+	They complement each other.
+
+🧠 INTERVIEWER SIGNALS (IMPORTANT)
+
+If interviewer asks:
+
+“Why” → talk architecture
+
+“How does it scale” → sharding, partitioning
+
+“Trade-offs” → consistency vs availability
+

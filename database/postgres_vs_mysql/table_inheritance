@@ -1,0 +1,148 @@
+Example: Table Inheritance (PostgreSQL only)
+PostgreSQL supports table inheritance
+
+MySQL does NOT.
+
+PostgreSQL example
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name TEXT
+);
+
+CREATE TABLE admins (
+  role TEXT
+) INHERITS (users);
+
+
+Now:
+
+INSERT INTO admins (name, role)
+VALUES ('Shubham', 'super_admin');
+
+
+And this works 👇
+
+SELECT * FROM users;
+
+
+➡️ It returns both users AND admins
+
+Why this proves Object-Relational behavior
+
+admins inherits columns from users
+
+Acts like class inheritance
+
+Parent table can query child records
+
+This is not possible in MySQL
+
+📌 MySQL has no table inheritance at all — you must use joins or STI-like patterns.
+
+Interview one-liner 🎯
+
+PostgreSQL supports table inheritance, where one table can inherit another like classes, which is a core object-relational feature not available in MySQL.
+
+
+
+
+###### example
+
+n PostgreSQL, string is not a valid data type. You need to use VARCHAR, TEXT, etc.
+
+❌ What’s wrong
+name string,
+email string
+
+
+Postgres doesn’t have a string type (that’s more of a Rails / ORM concept).
+
+✅ Correct PostgreSQL syntax (using inheritance)
+CREATE TABLE users (
+  name  TEXT,
+  email TEXT
+);
+
+CREATE TABLE admins (
+  role TEXT
+) INHERITS (users);
+
+
+This is valid Postgres syntax, and admins will inherit:
+
+name
+
+email
+
+from the users table.
+
+⚠️ Important Postgres inheritance gotchas (interview gold)
+
+Postgres table inheritance is rarely used in real apps. A few key things to know:
+
+1️⃣ Queries on parent don’t include children by default (unless you want them to)
+SELECT * FROM users;
+
+
+⬆️ This will include admins rows by default.
+
+To get only users (excluding admins):
+
+SELECT * FROM ONLY users;
+
+2️⃣ Constraints are NOT fully inherited
+
+PRIMARY KEY
+
+UNIQUE
+
+FOREIGN KEY
+
+👉 These do NOT automatically apply to child tables.
+
+Example:
+
+ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE (email);
+
+
+⬆️ This does NOT enforce uniqueness across admins.
+
+This is one big reason people avoid inheritance.
+
+3️⃣ Rails does NOT support Postgres inheritance
+
+ActiveRecord:
+
+doesn’t understand inherited tables
+
+won’t auto-load columns correctly
+
+causes pain with validations & associations
+
+👉 Rails prefers:
+
+Single Table Inheritance (STI), or
+
+Separate tables with foreign keys
+
+✅ Rails-friendly alternative (recommended)
+
+If this is for a Rails system:
+
+Option 1: STI (most common)
+# users table
+type:string
+name:string
+email:string
+role:string
+
+class User < ApplicationRecord; end
+class Admin < User; end
+
+Option 2: Separate tables (clean + explicit)
+users(id, name, email)
+admins(id, user_id, role)
+
+📌 Interview one-liner
+
+“Postgres supports table inheritance syntactically, but because constraints and Rails ORM support are weak, it’s rarely used in production. In Rails apps, STI or explicit foreign-key tables are preferred.”

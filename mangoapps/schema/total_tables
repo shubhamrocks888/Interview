@@ -1,0 +1,143 @@
+✅ 1️⃣ Core Domain Tables
+users
+id
+name
+email
+role (admin / instructor / coordinator / learner)
+status
+created_at
+updated_at
+
+
+Represents all system actors. Role drives authorization.
+
+courses
+id
+title
+description
+status
+created_at
+updated_at
+
+
+Reusable learning unit, independent of programs.
+
+programs
+id
+title
+description
+status
+created_at
+updated_at
+
+
+A collection of courses with its own lifecycle.
+
+chapters
+id
+course_id
+title
+position
+created_at
+updated_at
+
+
+Ordered learning units within a course.
+
+✅ 2️⃣ Relationship / Join Tables
+program_courses
+id
+program_id
+course_id
+position
+mandatory
+created_at
+updated_at
+
+
+Defines which courses belong to a program and in what order.
+
+course_enrollments
+id
+user_id
+course_id
+status (enrolled, completed, dropped)
+progress_percentage
+enrolled_at
+completed_at
+
+
+Tracks user’s relationship with a course.
+
+program_enrollments
+id
+user_id	
+program_id
+status
+progress_percentage
+enrolled_at
+completed_at
+
+
+Tracks program-level enrollment and progress.
+
+✅ 3️⃣ Progress & Content Tracking
+chapter_contents (optional but realistic)
+id
+chapter_id
+content_type (video, quiz, reading)
+position
+duration
+created_at
+updated_at
+
+
+Atomic learning content inside chapters.
+
+chapter_progress
+id
+user_id
+chapter_id
+status (not_started, in_progress, completed)
+completion_percentage
+completed_at
+updated_at
+
+
+Fine-grained progress tracking per user per chapter.
+
+✅ 4️⃣ Optional / Advanced Tables (good to mention if asked)
+user_content_time
+id
+user_id
+content_id
+time_spent_seconds
+updated_at
+
+
+Tracks actual learning time for analytics.
+
+audit_logs
+id
+user_id
+action
+entity_type
+entity_id
+created_at
+
+
+Important for admin actions & compliance.
+
+🧠 How to say this in interview (important)
+
+Don’t dump everything at once. Say:
+
+“At a high level, we had core entities like users, courses, programs, and chapters.
+Relationships and state lived in enrollment and join tables, while progress was tracked at chapter, course, and program levels for performance and analytics.”
+
+That framing matters more than raw tables.
+
+🏁 20-second executive summary
+
+“The schema separates content structure from user state.
+Static entities like courses and chapters are independent, while dynamic state—enrollment and progress—is modeled explicitly, making the system scalable and flexible.”

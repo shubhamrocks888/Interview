@@ -1,0 +1,113 @@
+What is transform_values in Ruby?
+
+transform_values is a Hash method that lets you change only the values of a hash while keeping the keys the same.
+
+👉 Think of it as:
+“Map over hash values, not keys.”
+
+📌 Basic Syntax
+hash.transform_values { |value| new_value }
+
+
+Keys stay unchanged
+
+Values are transformed
+
+Returns a new hash (non-mutating)
+
+✅ Simple Example
+prices = { apple: 100, banana: 50 }
+
+discounted = prices.transform_values { |price| price * 0.9 }
+
+Output:
+{ apple: 90, banana: 45 }
+
+
+🔹 Keys (:apple, :banana) remain the same
+🔹 Values are modified
+
+✅ Your Use Case (Very Important)
+
+After group_by, you get this:
+
+{
+  "developer" => [ {..}, {..}, {..} ],
+  "manager"   => [ {..}, {..} ],
+  "qa"        => [ {..}, {..} ]
+}
+
+
+Now you want to convert each array into summary stats, without changing the role names.
+
+That’s exactly what transform_values is for 👇
+
+grouped.transform_values do |employees|
+  {
+    highest_salary: employees.map { |e| e[:salary] }.max,
+    lowest_salary:  employees.map { |e| e[:salary] }.min,
+    avg_projects:   (employees.sum { |e| e[:projects].size }.to_f / employees.size).round(1)
+  }
+end
+
+
+✔️ Keys ("developer", "manager") stay the same
+✔️ Values change from arrays → stats hash
+
+🔄 How transform_values Works Internally
+
+Ruby does something like this:
+
+new_hash = {}
+
+hash.each do |key, value|
+  new_hash[key] = yield(value)
+end
+
+
+🧠 Key Insight
+You don’t touch the key, only the value.
+
+❌ Without transform_values
+result = {}
+
+grouped.each do |role, employees|
+  result[role] = {
+    highest_salary: employees.map { |e| e[:salary] }.max,
+    lowest_salary:  employees.map { |e| e[:salary] }.min,
+    avg_projects:   (employees.sum { |e| e[:projects].size }.to_f / employees.size).round(1)
+  }
+end
+
+
+❌ More boilerplate
+❌ Less expressive
+
+🟢 transform_values vs Similar Methods
+Method	What it does
+map	Transforms elements → array
+each	Iteration only
+transform_keys	Changes keys
+transform_values	Changes values only
+each_with_object	Manual accumulation
+🧠 Interview One-Liner
+
+"transform_values allows transforming the values of a hash while preserving the keys, making hash-based aggregations clean and expressive."
+
+⚠️ Important Notes
+
+Available in Ruby 2.4+
+
+Returns a new hash
+
+Use transform_values! for mutation
+
+🔥 When to Use It
+
+Use transform_values when:
+
+You already have correct keys
+
+You need to compute or reshape the values
+
+You want clean, readable Ruby

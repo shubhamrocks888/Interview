@@ -1,0 +1,97 @@
+GIL vs Mutex (Very Important Distinction)
+🔹 GIL (Global Interpreter Lock)
+
+Exists inside the Ruby interpreter (MRI)
+
+Allows only one thread to execute Ruby bytecode at a time
+
+Automatically managed by Ruby
+
+You cannot control it directly
+
+GIL is about CPU execution, not data safety.
+
+🔹 Mutex
+
+A programmer-controlled lock
+
+Protects critical sections of code
+
+Prevents race conditions
+
+Works at application logic level
+
+Mutex is about data correctness, not CPU scheduling.
+
+Why GIL does NOT solve race conditions
+
+Even with GIL:
+
+count += 1
+
+
+This is NOT atomic.
+
+It becomes:
+
+read count
+
+add 1
+
+write count
+
+👉 Ruby can context-switch between these steps, even under GIL.
+
+So this can still happen:
+
+Thread A: read 0
+Thread B: read 0
+Thread A: write 1
+Thread B: write 1
+
+
+Final result: 1 ❌
+
+What Mutex does that GIL does not
+mutex.synchronize do
+  count += 1
+end
+
+
+Guarantees no context switch inside block
+
+Ensures logical atomicity
+
+Makes read-modify-write safe
+
+Simple Comparison Table
+
+| Feature                  | GIL              | Mutex     |
+| ------------------------ | ---------------- | --------- |
+| Scope                    | Ruby interpreter | Your code |
+| Automatic                | Yes              | No        |
+| Prevents race conditions | ❌                | ✅         |
+| Thread safety            | ❌                | ✅         |
+| Cross-process            | ❌                | ❌         |
+
+
+Rails does NOT use mutex everywhere
+
+Rails relies on:
+
+DB transactions
+
+Optimistic locking
+
+Pessimistic locking
+
+Mutex is used only for in-memory shared state
+
+Interview-ready answer 🏆
+
+No, a mutex is not the GIL. The GIL only ensures that one thread executes Ruby bytecode at a time, but it does not prevent race conditions. A mutex is an explicit lock used to protect shared data and ensure thread safety.
+
+One-liner to remember
+
+GIL ≠ Mutex
+GIL controls execution, mutex controls correctness.

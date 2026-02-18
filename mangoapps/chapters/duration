@@ -1,0 +1,85 @@
+⏱️ What is the duration column used for?
+
+duration represents the expected time (or actual time) required to complete a piece of content
+(video, chapter, quiz, reading, etc.).
+
+✅ Primary uses (these are interview-worthy)
+1️⃣ Accurate progress calculation (VERY important)
+
+Instead of:
+
+each chapter = equal weight ❌
+
+You can do:
+
+progress based on time weight ✅
+
+Example
+Chapter	Duration
+Video 1	10 min
+Video 2	30 min
+
+If user completes Video 1:
+
+Progress = 10 / 40 = 25%
+
+
+Say this line:
+
+“Duration allows us to calculate weighted progress instead of naive chapter counts.”
+
+Architects love this.
+
+2️⃣ Learning analytics & reporting
+
+“Total learning time per user”
+
+“Time spent per course”
+
+“Drop-off points”
+
+“Duration enables meaningful learning analytics beyond just completion flags.”
+
+3️⃣ UX & expectations
+
+Used in UI:
+
+“This course takes ~3 hours”
+
+“Chapter: 15 mins”
+
+This improves user trust and engagement.
+
+4️⃣ Program-level planning
+
+At program level:
+
+Total program duration
+
+Mandatory time thresholds
+
+Certifications requiring X hours
+
+🔁 Expected vs actual duration
+
+Architect follow-up:
+“Is this expected or actual duration?”
+
+Best answer:
+
+“We stored expected duration on content, and optionally tracked actual time spent separately per user.”
+
+Example (advanced, optional)
+user_content_time
+  user_id
+  content_id
+  time_spent
+
+⚠️ Common mistake
+
+❌ using duration as completion signal
+Completion should come from progress logic, not just time.
+
+🧠 15-second interview summary
+
+“Duration is used for weighted progress calculation, analytics, and setting learner expectations. It allows us to move beyond simple completion counts.”

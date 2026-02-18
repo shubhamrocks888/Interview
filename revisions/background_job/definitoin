@@ -1,0 +1,78 @@
+
+####
+Active Job creates the job into ruby hash and pushes it to queue adapter
+
+
+####
+
+Sidekiq serializes to JSON
+
+Sidekiq now:
+
+Adds Sidekiq-specific metadata
+
+Converts everything to JSON
+
+Pushes it into Redis
+
+####
+Sidekiq pushes job to Redis
+
+####
+
+	what happens if something fails?
+	Example: Email service down
+
+	Sidekiq:
+
+	Catches exception
+	Retries job automatically
+	Uses exponential backoff
+	Stores retry info in Redis
+
+	You get:
+
+	Automatic retries
+	Failure tracking
+	Dead jobs queue
+
+####
+
+	Rails server / Sidekiq process crashes 🔥
+
+	Important distinction:
+
+	❌ Rails web server restart (Puma)
+	✅ Sidekiq is a separate process
+
+	But assuming Sidekiq itself crashes or is restarted:
+
+	Job never gets acknowledged
+
+	Sidekiq does NOT delete the job
+
+	Redis still knows: this job was being worked on
+
+####
+
+| Redis structure | Purpose                     |
+| --------------- | --------------------------- |
+| `queue:*`       | Waiting jobs                |
+| `processes`     | Active Sidekiq processes    |
+| `workers`       | Currently running jobs      |
+| `retry`         | Failed jobs with retry      |
+| `dead`          | Jobs that exhausted retries |
+| `scheduled`     | Jobs scheduled in future    |
+
+
+###
+4️⃣ How does Sidekiq interpret this command?
+bundle exec sidekiq -q critical -q mailers -q default -q low
+
+####
+
+You can assign weights:
+
+bundle exec sidekiq -q critical -q mailers -q default -q low
+
+sidekiq -q critical,5 -q default,2 -q low,1

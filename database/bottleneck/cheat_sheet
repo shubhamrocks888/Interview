@@ -1,0 +1,169 @@
+🗂 Architect-Level Database Performance & Bottleneck Cheat Sheet
+1️⃣ Confirm the Bottleneck
+
+Before touching any optimization, ensure the database is truly the problem.
+
+Metrics to check:
+
+Metric	Why
+CPU usage	High → expensive queries
+Memory	Sorting, caching issues
+Disk IO / latency	Reads/writes slow → storage or query problem
+Active connections	Pool exhaustion → throttling needed
+Lock waits	Contention → slow transactions
+Query latency	Endpoints slow due to DB
+
+Tools:
+
+Postgres: pg_stat_activity, pg_stat_statements
+
+MySQL: slow query log, performance_schema
+
+APM: NewRelic, Datadog, AppSignal
+
+2️⃣ Identify Problem Queries
+
+Step 1: Slow query logs
+
+Postgres: log_min_duration_statement
+
+MySQL: slow_query_log
+
+Step 2: Query stats / top offenders
+
+Postgres: pg_stat_statements → top N queries by total time
+
+MySQL: performance_schema
+
+Step 3: Execution plan
+
+EXPLAIN or EXPLAIN ANALYZE to check:
+
+Full table scans
+
+Sequential scans
+
+Nested loops
+
+Join costs
+
+Step 4: Frequency × cost
+
+High-frequency, high-cost queries → highest impact
+
+3️⃣ Common Optimization Techniques
+A. Indexing
+
+Single-column, composite, partial indexes
+
+Covering indexes for read-heavy queries
+
+Avoid over-indexing → slows writes
+
+B. Query Optimization
+
+Avoid SELECT *
+
+Use proper JOINs
+
+Aggregate carefully
+
+Remove N+1 queries in app layer
+
+C. Caching
+
+Redis / Memcached for hot reads
+
+Materialized views for expensive aggregates
+
+TTL / cache invalidation strategies
+
+D. Read Scaling
+
+Read replicas (Postgres / MySQL)
+
+Route read queries to replicas
+
+Eventually consistent replicas — explain trade-offs
+
+E. Write Scaling
+
+Partition / shard tables for horizontal scaling
+
+Queue writes asynchronously where possible
+
+Batch inserts / updates
+
+F. Connection Pooling
+
+Optimize DB pool size
+
+Use PgBouncer (Postgres) or proxy pooling
+
+G. Hardware / Cloud Scaling
+
+Upgrade CPU / RAM / storage IOPS
+
+Multi-AZ deployments for failover
+
+Only after query & schema optimization
+
+4️⃣ Concurrency & Locks
+
+Identify locks / deadlocks → may slow all transactions
+
+Long-running transactions → break them into smaller units
+
+Optimistic locking for high contention tables
+
+5️⃣ Monitoring & Alerts
+
+Track slow queries over time
+
+Track lock/wait events
+
+Track replication lag (if using replicas)
+
+Track queue depth (for async writes)
+
+6️⃣ Pitfalls / Trade-offs
+
+| Pitfall                                 | Architect Expectation                  |
+| --------------------------------------- | -------------------------------------- |
+| Blindly scaling vertically              | Costly, doesn’t fix query inefficiency |
+| Too many indexes                        | Slows writes                           |
+| Overusing caching                       | Stale or inconsistent data             |
+| Sharding incorrectly                    | Complexity, hot partitions             |
+| Async writes without consistency checks | Can break correctness                  |
+| Ignoring locks / deadlocks              | High latency, unexpected failures      |
+
+
+7️⃣ Interview-Ready One-Liners
+
+Diagnosis:
+
+“I confirm the DB is the bottleneck using metrics, then pinpoint slow/high-frequency queries using slow query logs, stats tables, and execution plans.”
+
+Optimization:
+
+“I optimize queries, add indexes, cache hot reads, batch writes, and monitor impact.”
+
+Scaling:
+
+“I scale reads using replicas, partition writes if needed, and only scale vertically or horizontally after optimizing queries.”
+
+Trade-offs:
+
+“All optimizations must consider consistency, write overhead, and operational complexity.”
+
+8️⃣ Architect Drill Follow-ups
+
+How do you handle 1B+ rows efficiently?
+
+How do you prevent hot partitions in sharding?
+
+How do you scale write-heavy tables while maintaining consistency?
+
+How do you prevent deadlocks under high concurrency?
+
+All of these are answered using the diagnose → optimize → scale → monitor → trade-offs roadmap.

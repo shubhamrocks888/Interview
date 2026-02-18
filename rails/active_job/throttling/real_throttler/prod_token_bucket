@@ -1,0 +1,89 @@
+class RedisTokenBucket
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity
+    @refill_rate = refill_rate
+  end
+
+  def allow?(key)
+    now = Time.now.to_f
+
+    data = Rails.cache.read(bucket_key(key)) || {
+      tokens: @capacity,
+      last_refill: now
+    }
+
+    tokens = data[:tokens]
+    last_refill = data[:last_refill]
+
+    # refill
+    elapsed = now - last_refill
+    tokens = [@capacity, tokens + elapsed * @refill_rate].min
+
+    if tokens >= 1
+      tokens -= 1
+      Rails.cache.write(
+        bucket_key(key),
+        { tokens: tokens, last_refill: now },
+        expires_in: ttl
+      )
+      true
+    else
+      Rails.cache.write(
+        bucket_key(key),
+        { tokens: tokens, last_refill: now },
+        expires_in: ttl
+      )
+      false
+    end
+  end
+
+  private
+
+  def bucket_key(key)
+    "token_bucket:#{key}"
+  end
+
+  def ttl
+    (@capacity / @refill_rate).ceil
+  end
+end
+
+
+
+##########
+
+8️⃣ Important interview note ⚠️
+
+This Redis version is logically correct but still has:
+
+race conditions under concurrency
+
+True production systems use:
+
+Redis Lua scripts
+
+Atomic math in Redis
+
+Or specialized gateways (Envoy, Nginx)
+
+If you mention this → you sound senior 👌
+
+9️⃣ Interview-ready explanation 🎯
+
+You can say:
+
+“Token bucket allows short bursts by consuming pre-filled tokens, then enforces an average rate using time-based refill. It’s closer to real throttling than fixed-window rate limiting.”
+
+That answer is 🔥.
+
+🔟 Final takeaway
+
+✔️ Rate limiter → counts requests
+
+✔️ Token bucket → controls flow
+
+✔️ Your intuition about slow → reject was correct
+
+✔️ This is real throttling
+
+

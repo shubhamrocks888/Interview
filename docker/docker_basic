@@ -1,0 +1,114 @@
+1️⃣ What is Docker (1-liner)
+
+Docker packages an application and its dependencies into a container so it runs the same everywhere.
+
+2️⃣ Why use Docker on AWS?
+
+Without Docker:
+
+“Works on my machine” problem
+
+Environment mismatch (Ruby, Erlang, OS, libs)
+
+With Docker:
+
+Same container runs on local → staging → production
+
+Easy scaling & deployment
+
+Perfect fit for cloud infra
+
+3️⃣ How Docker is used on AWS (Most Common Ways)
+🔹 Option 1: EC2 + Docker (Most common & simplest)
+EC2 instance
+ └── Docker
+      ├── Rails container
+      ├── Elixir/Phoenix container
+      └── Sidekiq / Worker container
+
+
+You manage EC2
+
+You install Docker
+
+You run containers manually or via scripts
+
+📌 Very common in startups & mid-size teams
+
+🔹 Option 2: ECS (Elastic Container Service)
+
+AWS-managed container orchestration
+
+AWS manages scheduling containers
+
+Works with EC2 or Fargate
+
+No need to SSH into servers
+
+📌 Often asked in interviews as “next step after EC2 + Docker”
+
+🔹 Option 3: EKS (Kubernetes)
+
+Managed Kubernetes on AWS
+
+Complex but powerful
+
+Usually not expected unless JD mentions Kubernetes
+
+4️⃣ Typical Docker Flow on AWS (Interview-Friendly)
+
+1️⃣ Build Docker image locally
+2️⃣ Push image to ECR (Elastic Container Registry)
+3️⃣ EC2 / ECS pulls image
+4️⃣ Container runs app
+
+Code → Docker Image → ECR → EC2/ECS → Running App
+
+5️⃣ Real Example (Rails / Elixir)
+Rails
+
+Container 1 → Rails API
+
+Container 2 → Sidekiq
+
+RDS → Database
+
+S3 → File storage
+
+Elixir
+
+Container → Phoenix app
+
+Handles high concurrency with BEAM processes
+
+Docker just packages it
+
+6️⃣ Why Docker fits Elixir & Ruby well
+Ruby / Elixir Problem	Docker Solution
+Dependency conflicts	Container isolation
+Deployment issues	Same image everywhere
+Scaling	Run more containers
+CI/CD	Easy Jenkins integration
+7️⃣ Pros & Cons (Interview Simple)
+✅ Pros
+
+Consistent environment
+
+Faster deployments
+
+Easy scaling
+
+Works well with CI/CD
+
+❌ Cons
+
+Added complexity
+
+Needs orchestration for large systems
+
+Debugging containers can be harder
+
+8️⃣ Interview-Perfect Answer (Memorize)
+
+“We use Docker on AWS to containerize our Ruby and Elixir applications so they run consistently across environments. Docker images are built and stored in ECR, and containers are run on EC2 or ECS, which simplifies deployment, scaling, and CI/CD.”
+

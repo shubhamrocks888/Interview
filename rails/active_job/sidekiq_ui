@@ -1,0 +1,84 @@
+1️⃣ Sidekiq Web UI (Recommended)
+
+Start Sidekiq with the Web UI mounted in Rails:
+
+# config/routes.rb
+require 'sidekiq/web'
+mount Sidekiq::Web => '/sidekiq'
+
+
+Then visit: http://yourapp.com/sidekiq
+
+You can see:
+
+Busy → jobs currently executing
+
+Queues → jobs waiting in each queue
+
+Scheduled → jobs set to run in the future
+
+Retry → jobs that failed and will retry
+
+Dead → jobs that failed permanently
+
+2️⃣ Sidekiq CLI commands
+
+Sidekiq comes with a sidekiq CLI, but for inspecting jobs, you usually use sidekiqctl:
+
+# Check process stats
+sidekiqctl stats /path/to/sidekiq.pid
+
+
+This gives you: processed, failed, busy, scheduled, retries, etc.
+
+For more detailed info, you can use redis-cli because Sidekiq stores queues in Redis:
+
+# List all queues
+redis-cli LLEN queue:default  # pending jobs in 'default' queue
+
+# List scheduled jobs
+redis-cli ZRANGE schedule 0 -1
+
+3️⃣ Programmatically in Rails console
+
+You can inspect Sidekiq queues directly from Rails:
+
+# All queue names
+Sidekiq::Queue.all.map(&:name)  
+
+# Jobs in a specific queue
+queue = Sidekiq::Queue.new("default")
+queue.size          # number of jobs
+queue.each do |job|
+  puts job.klass    # class name
+  puts job.args     # arguments
+  puts job.jid      # job ID
+end
+
+# Scheduled jobs
+schedule = Sidekiq::ScheduledSet.new
+schedule.each do |job|
+  puts "#{job.klass} will run at #{Time.at(job.at)}"
+end
+
+# Retry jobs
+retry_set = Sidekiq::RetrySet.new
+retry_set.each do |job|
+  puts "#{job.klass} will retry at #{Time.at(job.at)}"
+end
+
+# Dead jobs
+dead_set = Sidekiq::DeadSet.new
+dead_set.each do |job|
+  puts "#{job.klass} failed permanently at #{Time.at(job.failed_at)}"
+end
+
+4️⃣ Summary Table
+
+| Job type          | How to check                                |
+| ----------------- | ------------------------------------------- |
+| Queued            | `Sidekiq::Queue` or Web UI queues           |
+| Scheduled         | `Sidekiq::ScheduledSet` or Web UI scheduled |
+| Retry             | `Sidekiq::RetrySet` or Web UI retry tab     |
+| Dead / Failed     | `Sidekiq::DeadSet` or Web UI dead tab       |
+| Currently running | Web UI busy tab, or `Sidekiq::Workers`      |

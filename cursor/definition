@@ -1,0 +1,25 @@
+. Name the tool clearly
+
+“Yes, I’ve used Cursor AI during development.”
+
+2. Explain the purpose
+
+“I used it mainly to autocomplete code, generate boilerplate, and refactor snippets quickly.”
+
+3. Give concrete examples
+
+“For instance, while building a Rails API, I used Cursor to generate service objects and serializers faster. It helped reduce repetitive code writing and minimized small syntax errors.”
+
+4. Mention impact
+
+“This allowed me to focus more on logic and architecture, rather than repetitive coding tasks, improving both speed and accuracy.”
+
+5. Optional: Show awareness of limits
+
+“Of course, I double-check the suggestions because AI tools can make mistakes or not fully understand business logic.”
+
+💡 Pro tip: Many interviewers like to see your thought process and how AI complements your skills, not replaces them. So framing it as a productivity enhancer + quality booster works bes
+
+
+"Yes, I’ve used AI tools like Cursor during development. I mainly use it to speed up coding tasks—such as generating boilerplate code, writing service objects, or creating serializers in Rails. For example, while building an API, Cursor helped me quickly scaffold repetitive code, which let me focus more on application logic and architecture. Of course, I always review the AI-generated code to ensure it fits the business requirements and maintains quality. Overall, it’s a productivity booster that complements my coding skills rather than replacing them."
+

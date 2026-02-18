@@ -1,0 +1,95 @@
+Example: two processes talking
+parent = self()
+
+spawn(fn ->
+  send(parent, {:hello, self()})
+end)
+
+receive do
+  {:hello, pid} ->
+    IO.puts("Message from #{inspect(pid)}")
+end
+
+
+
+######  
+
+parent = self()
+
+spawn(fn ->
+  send(parent, {:hello, self()} )
+  end)
+
+receive do
+  (:hello,:pid) ->
+    IO.puts ("Mesage from #{inspect(pid)}")
+end 
+
+##
+
+defmodule MyServer do
+   use GenServer
+
+   ### CLIENT API
+
+   def start_link(initial_state) do
+    GenServer.start_link(__MODULE__, initial_state)
+   end
+
+   def init(state) do
+      {:ok, state}
+   end
+end
+
+
+###  Basic start
+GenServer.start_link(MyServer, initial_state
+
+GenServer.start_link(MyServer, %{})
+
+
+
+#
+GenServer.cast(pid,:ping)
+GenServer.call(pid. :ping)
+
+def handle_cast(:ping, state) do
+  IO.puts("Receievd ping")
+  (:noreply, state)
+end
+
+def handle_call(:ping, _from , state) do
+  {:reply, :pong, state}
+end
+
+
+defmodule MyServer do
+  use GenServer
+
+  ## Client
+  def start_link(state) do
+    GenServer.start_link(__MODULE__, state)
+  end
+
+  def ping(pid) do
+    GenServer.call(pid, :ping)
+  end
+
+  ## Server
+  def init(state), do: {:ok, state}
+
+  def handle_call(:ping, _from, state) do
+    {:reply, :pong, state}
+  end
+end
+
+
+
+
+
+
+
+
+
+
+

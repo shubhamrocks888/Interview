@@ -1,0 +1,89 @@
+# 🎯 Requirements
+# Models
+# User
+
+# email (must be unique, present)
+# full_name (present)
+
+# Post
+
+# title (present)
+# status (must be draft or published)
+
+# user_id
+
+# Relationship:
+
+# A User has many Posts
+# A Post belongs to a User
+
+class User < ApplicationRecord
+    has_many :posts, dependent: :destroy
+    validates :email, uniqueness: true, presence: true, format: { with: Mail::To::EMAIL_REGEXP}
+    validates :full_name, presence: true
+    
+    accepts_nested_attributes_for :posts
+end
+
+class Post < ApplicationRecord
+    belongs_to :user
+    
+    validates :title, presence: true
+    validates :status, inclusion: { in: %w[draft published]}
+end
+
+#### in  migration
+add_index :users, :email, unique: true
+add_index :posts, :user_id
+
+class UsersController < ApplicationController
+    
+    def create
+        user = User.new(user_params)
+        
+        if user.save
+            render json: { msg: "User created"}, status: :created
+        else
+            render json: { errors: user.errors.full_messages}, status: :unprocessable_entity
+        end
+    end
+    
+    private
+    
+    def user_params
+        params.require(:user).permit(:email, :full_name, posts_attributes: [:title, :status])
+    end
+end
+
+
+###################
+
+for 
+{
+  "user": {
+    "email": "a@test.com",
+    "full_name": "Shubham",
+    "posts": [
+      { "title": "Hello", "status": "draft" }
+    ]
+  }
+}
+
+
+def user_params
+   params.require(:user).permit(:email, :full_name, posts: [:title, :status])
+end
+
+def create
+   ActiveRecord::Base.transaction do
+         user = User.create!(email: user_params[:email], full_name: user_params[:full_name])
+
+         user_params[:posts].each do |post|
+          user.posts.create!(title: post[:title], status: post[:status])
+         end 
+   end
+
+   rescue ActiveRecord::RecordInvalid => e
+    render json: {errors: e.message}, status: :unprocessable_entity
+   end
+end

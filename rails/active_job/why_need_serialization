@@ -1,0 +1,192 @@
+Why can’t we “directly save data” (objects) in Rails?
+The core reason:
+
+Ruby objects live only in RAM of a single process.
+
+RAM data:
+
+Exists only while the process is running
+
+Cannot be shared between processes
+
+Cannot survive restarts
+
+Cannot be understood by Redis / DB / file systems
+
+Example:
+
+user = User.new(name: "Shubham")
+
+
+This user object:
+
+Lives in Ruby memory
+
+Has pointers, references, class metadata
+
+Is meaningless outside that Ruby process
+
+What goes wrong if we try to save objects directly?
+1️⃣ Process Boundary Problem (BIGGEST reason)
+
+Rails app is multi-process:
+
+Web Process        Sidekiq Worker
+-----------        ---------------
+Ruby memory ❌  →  Ruby memory ❌
+
+
+You cannot pass memory references between them.
+
+❌ This is impossible:
+
+perform_later(user)   # pass live Ruby object
+
+
+Because:
+
+Sidekiq runs in a different process
+
+That object does not exist there
+
+✔️ Serialization converts object → bytes → reconstructable data
+
+2️⃣ Persistence Problem (Crash / Restart)
+
+RAM data is temporary.
+
+If server restarts:
+
+All in-memory objects are lost
+
+Jobs, cache, sessions disappear
+
+Serialization allows:
+
+Data stored in Redis / DB / files
+
+Survives crashes & deploys
+
+Object → Serialized bytes → Redis
+
+3️⃣ Storage Systems Don’t Understand Ruby Objects
+
+Redis, PostgreSQL, files:
+
+Store strings / bytes
+
+Don’t know Ruby classes, methods, pointers
+
+❌ Redis cannot store this:
+
+#<User id:1 name:"Shubham">
+
+
+✔️ But it can store:
+
+{"id":1,"name":"Shubham"}
+
+
+That conversion is serialization.
+
+4️⃣ Object Graph & Reference Problem
+
+Ruby objects reference other objects:
+
+user → profile → address → country
+
+
+Saving this directly means:
+
+Circular references
+
+Huge memory graphs
+
+Hard to reconstruct safely
+
+Serialization flattens this into a safe structure.
+
+5️⃣ Versioning & Code Change Problem
+
+If you saved raw objects:
+
+Deploy changes class structure
+
+Old objects break
+
+Example:
+
+class User
+  attr_accessor :age
+end
+
+
+Later you remove age → old saved objects crash.
+
+✔️ Serialized primitives (id, hash) are stable.
+
+6️⃣ Security Risk
+
+Direct object storage can:
+
+Execute arbitrary code when loaded
+
+Cause deserialization vulnerabilities
+
+Rails limits this by:
+
+Using GlobalID
+
+Encouraging primitive data only
+
+So why serialization is REQUIRED?
+Serialization solves these problems:
+Problem	Without Serialization	With Serialization
+Process boundary	❌	✅
+Crash recovery	❌	✅
+Distributed systems	❌	✅
+Storage compatibility	❌	✅
+Version safety	❌	✅
+Retry jobs	❌	✅
+Is it a memory problem?
+❌ Mostly NO
+
+Memory size is not the main issue
+
+Even small objects fail across processes
+
+✅ It’s a lifecycle & boundary problem
+
+Memory is local, temporary, and private
+
+Real-world analogy (Interview-friendly)
+
+RAM objects are like open browser tabs
+Serialization is like saving a PDF
+
+You can:
+
+Send PDF
+
+Store it
+
+Open it later
+
+Open it on another machine
+
+But you can’t send an open tab
+
+Rails Best Practice (Golden Rule)
+# GOOD
+perform_later(user.id)
+
+# BAD
+perform_later(user)
+
+
+Rails uses GlobalID internally to safely serialize references.
+
+One-line interview answer 💡
+
+We need serialization because Ruby objects live only in process memory.
+To persist data, share it across processes, survive restarts, and store it in Redis/DB, we must convert objects into a portable byte format — that is serialization.

@@ -1,0 +1,138 @@
+🧩 useMemo — FROM SCRATCH
+1️⃣ Why does useMemo exist?
+Problem first
+
+Every time a component re-renders:
+
+all functions run again
+
+all calculations run again
+
+Even if inputs didn’t change.
+
+Example problem
+function Example({ number }) {
+  const result = slowCalculation(number);
+
+  return <p>{result}</p>;
+}
+
+
+If slowCalculation is expensive:
+
+UI feels slow
+
+Unnecessary work happens ❌
+
+2️⃣ What is useMemo?
+
+useMemo memoizes (caches) a computed value and recalculates it only when dependencies change.
+
+3️⃣ Basic syntax
+const memoizedValue = useMemo(() => {
+  return expensiveCalculation(a, b);
+}, [a, b]);
+
+4️⃣ Important rule (KEY IDEA)
+
+useMemo caches a VALUE, not a function
+
+(Functions are for useCallback)
+
+5️⃣ Simple example (easy)
+function Square({ number }) {
+  const squared = useMemo(() => {
+    console.log("Calculating...");
+    return number * number;
+  }, [number]);
+
+  return <p>{squared}</p>;
+}
+
+What happens?
+
+number changes → recalculates
+
+Re-render without change → uses cached value
+
+6️⃣ Without useMemo vs with useMemo
+❌ Without
+const squared = number * number;
+
+
+Runs on every render.
+
+✅ With
+useMemo(() => number * number, [number]);
+
+
+Runs only when needed.
+
+7️⃣ Real example: expensive loop
+function Expensive({ num }) {
+  const result = useMemo(() => {
+    let total = 0;
+    for (let i = 0; i < 1_000_000_000; i++) {
+      total += num;
+    }
+    return total;
+  }, [num]);
+
+  return <p>{result}</p>;
+}
+
+8️⃣ When NOT to use useMemo ❌
+
+Very important 👇
+
+Small calculations
+
+Simple JSX
+
+Every render anyway
+
+Premature optimization
+
+useMemo is a performance tool, not a correctness tool
+
+9️⃣ Common mistake ❌
+useMemo(() => {
+  setCount(count + 1);
+}, [count]);
+
+
+❌ Never do side effects in useMemo
+Side effects → useEffect
+
+🔟 useMemo vs useEffect (CONFUSION CLEAR)
+useMemo	useEffect
+Returns value	Runs side effect
+Sync	Async-ish
+For performance	For behavior
+1️⃣1️⃣ Interview questions 🏆
+
+Q: Does useMemo guarantee performance improvement?
+A: No, React may discard memoization.
+
+Q: Is useMemo executed during render?
+A: Yes, but cached value is reused.
+
+🧠 Mental model
+
+Think of useMemo as:
+
+“Don’t recalculate unless inputs change”
+
+Rails analogy 🧠
+React	Rails
+useMemo	memoization (`
+expensive calc	N+1 query
+🔑 Summary
+
+useMemo caches values
+
+Runs during render
+
+Avoid unnecessary recomputation
+
+Use sparingly

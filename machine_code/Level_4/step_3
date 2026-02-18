@@ -1,0 +1,104 @@
+🎯 Required Validations When Applying Coupon
+
+1️⃣ Coupon exists
+2️⃣ Coupon is active
+3️⃣ Coupon is not expired
+4️⃣ Usage limit not exceeded
+5️⃣ Coupon not already redeemed by same user ❗ (very important)
+
+That last one is usually what candidates forget.
+
+🧠 Now Think Structurally
+
+Before writing controller:
+
+We need to design models properly.
+
+Do we already have:
+
+Coupon model?
+
+CouponRedemption model?
+
+Assume fields are:
+
+Coupon
+
+code
+
+discount_type
+
+discount_value
+
+expiry_date
+
+usage_limit
+
+usage_count
+
+active
+
+CouponRedemption
+
+user_id
+
+coupon_id
+
+redeemed_at
+
+🚀 Next Step (Model Layer First)
+
+We should not put all validation logic inside controller.
+
+Better design:
+
+Add helper methods inside Coupon model:
+
+expired?
+
+usable?
+
+✍️ Your Task
+
+Inside Coupon model:
+
+Add association with coupon_redemptions
+
+Add association with users through redemptions
+
+Add method expired?
+
+Add method usable? (should check active, expiry, usage limit)
+
+Don’t write validations yet.
+Just write associations + those two methods.
+
+
+
+#######
+
+
+
+class Coupon < ApplicationRecord
+  has_many :coupon_redemptions
+  has_many :users, through: :coupon_redemptions
+
+  def expired?
+    expiry_date.present? && Time.current > expiry_date
+  end
+
+  def usable?
+    active && !expired? && usage_count < usage_limit
+  end
+end
+
+
+class CouponRedemption < ApplicationRecord
+    belongs_to :user
+    belongs_to :coupon
+end
+
+class User < ApplicationRecord
+	has_many :coupon_redemptions
+	has_many :coupons, through: :coupon_redemptions
+end

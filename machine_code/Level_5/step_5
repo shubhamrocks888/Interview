@@ -1,0 +1,67 @@
+1️⃣ Controller Responsibility
+
+BookingController only needs to:
+
+Accept user_id, show_id, seats_booked from request params
+
+Call Booking.book_seats(user_id, show_id, seats)
+
+Rescue errors and return proper JSON responses
+
+Notice:
+
+All business logic (seat availability, transaction, locking) is in the model → keeps controller thin
+
+This is production-grade practice
+
+2️⃣ Request Format
+POST /bookings
+{
+  "user_id": 1,
+  "show_id": 10,
+  "seats_booked": 3
+}
+
+3️⃣ Controller Action — Step by Step
+
+Step 1: Fetch params
+
+Step 2: Call model method inside begin...rescue
+
+Step 3: Return JSON success / error
+
+✍️ Task
+
+Write only the create action of BookingController:
+
+Use strong params
+
+Call Booking.book_seats
+
+Rescue errors like StandardError
+
+Render JSON response
+
+Paste your create action.
+
+
+########
+
+class BookingsController < ApplicationController
+  
+  def create
+    begin
+      Boooking.book_seats(params[:user_id], params[:show_id],params[:seats_booked])
+
+      render json: {msg: "Booking completed"}, status: :created
+    rescue => e
+      render json: {errors: e.message}, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def booking_params
+    params.require(:booking).permit(:user_id, :show_id, seats_booked)
+  end
+end

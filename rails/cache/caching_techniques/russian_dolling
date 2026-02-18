@@ -1,0 +1,70 @@
+1️⃣ Without Russian Doll Caching (inner cache only)
+<% @posts.each do |post| %>
+  <% cache post do %>
+    <%= render post %>
+  <% end %>
+<% end %>
+
+
+Each post fragment is cached individually ✅
+
+But Rails still has to loop through all posts on every request
+
+For each post, it checks the cache store → fetches or renders
+
+So the loop + assembly logic runs every time, even if the fragments themselves are cached
+
+🔹 Memory use: only per-post fragments cached
+🔹 CPU: still iterates 1000 times for 1000 posts
+
+2️⃣ With Russian Doll Caching (outer + inner)
+<% cache @posts do %>        <!-- outer cache -->
+  <% @posts.each do |post| %>
+    <% cache post do %>      <!-- inner cache -->
+      <%= render post %>
+    <% end %>
+  <% end %>
+<% end %>
+
+
+Outer cache stores the whole HTML of the loop (container + cached inner fragments)
+
+Inner caches store each post fragment separately
+
+When a post updates:
+
+Only that inner fragment is regenerated
+
+Outer container is reused from cache → no need to rebuild the loop
+
+Rails does not have to iterate all posts or check each cache key for posts that didn’t change
+
+🔹 Memory use: outer container + inner fragments cached
+🔹 CPU: loop assembly mostly avoided → huge performance gain
+
+3️⃣ Key takeaway
+
+Inner cache only → saves rendering per fragment, but still loops through all items
+
+Russian doll caching → saves both fragment rendering AND loop assembly, because the entire loop container is cached
+
+This is why it’s called “Russian doll” — inner dolls can change independently, but the outer doll (container) is already cached, reducing repeated work
+
+
+Exact definition (precise)
+
+Russian doll caching is a caching technique in Rails where fragments are cached in a nested (hierarchical) structure, so that inner fragments can expire and be regenerated independently without invalidating or rebuilding the outer cached fragments.
+
+Plain-English definition
+
+Russian doll caching means caching a big piece of HTML that contains smaller cached pieces inside it, so when one small piece changes, only that piece is rebuilt, not everything around it.
+
+Why it’s called “Russian doll”
+
+Like Russian nesting dolls:
+
+🪆 Outer doll → big fragment (list, page section)
+
+🪆 Inner dolls → smaller fragments (items, partials)
+
+Change one inner doll → you don’t rebuild all dolls

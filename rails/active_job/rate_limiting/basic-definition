@@ -1,0 +1,11 @@
+What is Rate Limiting?
+
+Rate Limiting = controlling how often a job can be executed within a time window.
+
+Why it’s needed:
+
+You don’t want a user to spam API calls that enqueue jobs
+
+Sending too many emails too quickly may get you blacklisted by SMTP providers
+
+External API calls often have per-minute/hour limits

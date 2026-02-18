@@ -1,0 +1,172 @@
+CAP Theorem (Deep Dive)
+
+In a distributed system, you can only guarantee 2 out of 3:
+
+C — Consistency
+
+A — Availability
+
+P — Partition Tolerance
+
+You must tolerate partitions in real systems, so the real choice is:
+👉 Consistency vs Availability
+
+1️⃣ Partition Tolerance (P) — Mandatory
+What is a partition?
+
+Network failure
+
+Nodes can’t communicate
+
+Example:
+
+Node A ❌ —— ❌ Node B
+
+
+This will happen in real systems.
+
+If your system can’t handle partitions, it will fail completely.
+
+2️⃣ Consistency (C)
+
+All clients see the same, latest data.
+
+Example:
+
+User updates order status
+
+Any read immediately shows updated value
+
+Cost:
+
+Slower writes
+
+Reduced availability during failures
+
+3️⃣ Availability (A)
+
+Every request gets a response (success or failure).
+
+Example:
+
+Even during failures
+
+System always responds
+
+Cost:
+
+Reads may return stale data
+
+The 3 Real Choices
+CP System (Consistency + Partition Tolerance)
+
+Choose correctness over uptime
+
+Behavior during network failure:
+
+Some requests are rejected
+
+Prevents stale reads
+
+Examples:
+
+HBase
+
+MongoDB (with majority writes)
+
+Zookeeper
+
+Use case:
+
+Banking
+
+Inventory management
+
+AP System (Availability + Partition Tolerance)
+
+Choose uptime over immediate consistency
+
+Behavior during network failure:
+
+System keeps responding
+
+Data may be temporarily inconsistent
+
+Examples:
+
+Cassandra
+
+DynamoDB (default)
+
+CouchDB
+
+Use case:
+
+Social feeds
+
+Analytics
+
+Event logging
+
+CA System (Consistency + Availability)
+
+Not possible in distributed systems
+
+Only works if there are no partitions
+
+Single-node databases
+
+Real-World Example (MongoDB)
+Normal operation
+
+Writes go to primary
+
+Reads from primary → consistent
+
+Network partition
+
+MongoDB chooses:
+
+CP → blocks writes until majority available
+
+Prevents split-brain
+
+Real-World Example (DynamoDB)
+
+Default → AP
+
+Always available
+
+May return stale reads
+
+Optional strong consistency for reads
+
+Kafka and CAP (Interview Gold)
+
+Kafka is:
+
+CP for writes
+
+Durable and ordered
+
+Sacrifices availability during leader election
+
+Simple Analogy
+Concept	Analogy
+Consistency	Everyone reads the same book page
+Availability	Library always open
+Partition	Roads blocked
+
+You must choose:
+
+Close library → keep book correct (CP)
+
+Keep library open → allow wrong page (AP)
+
+Interview-Perfect Answer (30 sec)
+
+“CAP theorem states that a distributed system can only guarantee two of Consistency, Availability, and Partition Tolerance. Since network partitions are inevitable, systems must choose between consistency and availability. Most NoSQL databases choose availability and partition tolerance, offering eventual consistency, while systems requiring correctness choose consistency over availability.”
+
+One-line killer answer
+
+“Partition tolerance is mandatory; CAP is really a trade-off between consistency and availability.”

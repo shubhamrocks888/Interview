@@ -1,0 +1,179 @@
+S – Single Responsibility Principle (SRP)
+
+Definition:
+A class should have only one reason to change. It should do one thing.
+
+Example:
+
+# ❌ Bad: Two responsibilities in one class
+class User
+  def save
+    # save user to database
+  end
+
+  def send_welcome_email
+    # send email
+  end
+end
+
+# ✅ Good: Split responsibilities
+class User
+  def save
+    # save user
+  end
+end
+
+class UserMailer
+  def send_welcome_email(user)
+    # send email
+  end
+end
+
+
+Interview Tip: “SRP makes code easier to maintain and test.”
+
+
+O – Open/Closed Principle (OCP)
+
+Definition:
+Classes should be open for extension, but closed for modification. You can add new behavior without changing existing code.
+
+Example:
+
+# ❌ Bad: modifying existing class to add new behavior
+class Calculator
+  def calculate(type, a, b)
+    if type == :add
+      a + b
+    elsif type == :multiply
+      a * b
+    end
+  end
+end
+
+# ✅ Good: extend without changing
+class Calculator
+end
+
+class AddOperation
+  def calculate(a, b)
+    a + b
+  end
+end
+
+class MultiplyOperation
+  def calculate(a, b)
+    a * b
+  end
+end
+
+
+Tip: Use inheritance or modules to extend behavior.
+
+
+L – Liskov Substitution Principle (LSP)
+
+Definition:
+Objects of a subclass should be replaceable with objects of the parent class without breaking the program.
+
+Example:
+
+class Bird
+  def fly
+    "I can fly"
+  end
+end
+
+class Duck < Bird
+end
+
+class Penguin < Bird
+  def fly
+    raise "I can't fly"
+  end
+end
+
+
+### Duck supports LSP
+❌ Problem: Penguin breaks LSP because not all birds can fly.
+✅ Fix: Only put flying behavior in birds that actually fly.
+
+
+
+I – Interface Segregation Principle (ISP)
+
+Definition:
+Clients should not be forced to implement methods they don’t use. Small, specific interfaces are better than large general ones.
+
+Example:
+
+# ❌ Bad
+class Worker
+  def work; end
+  def eat; end
+end
+
+class Robot < Worker
+  def eat
+    # robots don't eat
+  end
+end
+
+# ✅ Good
+module Workable
+  def work; end
+end
+
+module Eatable
+  def eat; end
+end
+
+class Human
+  include Workable
+  include Eatable
+end
+
+class Robot
+  include Workable
+end
+
+
+D – Dependency Inversion Principle (DIP)
+
+Definition:
+High-level modules should not depend on low-level modules; both should depend on abstractions (interfaces or contracts).
+
+Example:
+
+# ❌ Bad
+class UserMailer
+  def send_email(user)
+    Gmail.new.send_email(user)
+  end
+end
+
+# ✅ Good: depend on abstraction
+class UserMailer
+  def initialize(email_service)
+    @service = email_service
+  end
+
+  def send_email(user)
+    @service.send_email(user)
+  end
+end
+
+class Gmail
+  def send_email(user)
+    # sends email
+  end
+end
+
+class Outlook
+  def send_email(user)
+    # sends email
+  end
+end
+
+
+Tip: DIP makes it easy to swap implementations without changing the code.

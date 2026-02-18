@@ -1,0 +1,169 @@
+Elixir Basics – Variables, Functions, Syntax (Interview-Safe)
+1️⃣ Variables in Elixir (IMPORTANT DIFFERENCE)
+Defining a variable
+x = 10
+
+Key rule (VERY IMPORTANT)
+
+Variables are immutable
+
+This works:
+
+x = 10
+x = x + 1
+
+
+But what’s happening?
+
+x is rebound, not mutated
+
+Old value still exists conceptually
+
+🔥 Interview line:
+
+Elixir allows rebinding but not mutation.
+
+Rails comparison:
+
+Ruby → mutable variables
+
+Elixir → immutable values
+
+2️⃣ Data types (common ones)
+number = 10
+float  = 10.5
+string = "hello"
+atom   = :ok
+boolean = true
+list   = [1, 2, 3]
+map    = %{name: "John", age: 30}
+tuple  = {:ok, "success"}
+
+Atoms (VERY IMPORTANT)
+
+Constants
+
+Often used as status values
+
+Rails equivalent:
+
+Symbols (:ok in Ruby)
+
+3️⃣ Pattern Matching (CORE CONCEPT)
+{:ok, result} = {:ok, 200}
+
+
+Works ✔️
+
+{:ok, result} = {:error, "failed"}
+
+
+Crashes ❌
+
+🔥 Interview line:
+
+Assignment in Elixir is pattern matching, not variable assignment.
+
+4️⃣ Functions in Elixir
+Anonymous function
+add = fn a, b -> a + b end
+add.(2, 3)
+
+
+Note the dot . when calling.
+
+Named function (most common)
+defmodule Math do
+  def add(a, b) do
+    a + b
+  end
+end
+
+
+Call it:
+
+Math.add(2, 3)
+
+
+Rails comparison:
+
+Module ≈ class (kind of)
+
+Functions ≠ methods with state
+
+5️⃣ Function pattern matching (VERY IMPRESSIVE)
+defmodule Greeter do
+  def greet(:admin), do: "Hello Admin"
+  def greet(:user),  do: "Hello User"
+end
+
+
+Elixir chooses the correct function automatically.
+
+🔥 Interview line:
+
+Elixir uses function heads for pattern matching instead of conditionals.
+
+6️⃣ Default arguments
+def greet(name \\ "Guest") do
+  "Hello #{name}"
+end
+
+7️⃣ Conditionals (rarely used heavily)
+if
+if age >= 18 do
+  "Adult"
+else
+  "Minor"
+end
+
+Prefer case
+case result do
+  {:ok, _} -> "Success"
+  {:error, _} -> "Failure"
+end
+
+8️⃣ Lists and Enum (functional style)
+Enum.map([1, 2, 3], fn x -> x * 2 end)
+
+
+Shortcut:
+
+Enum.map([1, 2, 3], &(&1 * 2))
+
+
+🔥 Interview line:
+
+Elixir prefers data transformations using Enum over loops.
+
+9️⃣ Pipe operator (|>) – VERY IMPORTANT
+[1, 2, 3]
+|> Enum.map(&(&1 * 2))
+|> Enum.filter(&(&1 > 3))
+
+
+Reads like:
+
+Take list → map → filter
+
+Rails analogy:
+
+Method chaining
+
+🔟 Guards (bonus, but nice)
+def adult?(age) when age >= 18 do
+  true
+end
+
+1️⃣1️⃣ What NOT to say in interview
+
+❌ “Elixir has variables like Ruby”
+❌ “Elixir is object-oriented”
+
+Instead:
+
+Elixir is functional, immutable, and relies heavily on pattern matching.
+
+🔑 60-second summary (MEMORIZE)
+
+Variables in Elixir are immutable and use pattern matching. Functions are defined inside modules, support multiple clauses, and data is transformed using Enum and the pipe operator.

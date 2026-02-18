@@ -1,0 +1,128 @@
+🧠 Golden Rule
+
+Log locally OR report to Sentry OR both — depending on who needs to see the error.
+
+Not all exceptions deserve double noise.
+
+1️⃣ When you SHOULD use both (✅ correct)
+👉 Production, critical paths, unexpected failures
+rescue StandardError => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+  raise
+end
+
+
+Use both when:
+
+Payments
+
+Orders
+
+Money / data integrity
+
+Infra / external services
+
+Truly unexpected bugs
+
+Why both?
+
+Rails.logger → quick server debugging
+
+Sentry → alerts, stack traces, trends
+
+🎯 Interview line:
+
+“For critical production issues, I log and report.”
+
+2️⃣ When you should use ONLY Sentry (✅ best practice)
+
+Sentry already logs stack trace + message.
+
+rescue StandardError => e
+  Sentry.capture_exception(e)
+  raise
+end
+
+
+Use this when:
+
+Logs are noisy
+
+You rely on centralized monitoring
+
+Exception already appears in logs elsewhere
+
+🎯 Interview line:
+
+“Sentry already captures context, so logging again can be redundant.”
+
+3️⃣ When you should use ONLY Rails.logger (✅ very common)
+Expected / recoverable errors
+rescue Net::ReadTimeout => e
+  Rails.logger.warn("Timeout while calling payment API")
+end
+
+
+Examples:
+
+External API timeouts
+
+Validation failures
+
+User errors
+
+Retryable conditions
+
+🎯 Interview line:
+
+“Expected errors don’t need alerting.”
+
+4️⃣ When you should use NEITHER (😎 senior-level)
+
+Some errors are:
+
+User-driven
+
+Business logic outcomes
+
+rescue ActiveRecord::RecordNotFound
+  head :not_found
+end
+
+
+No logging.
+No Sentry.
+No noise.
+
+🎯 Interview line:
+
+“Not every exception is an error.”
+
+🚫 What NOT to do (interview red flag)
+rescue StandardError => e
+  Rails.logger.error(e.message)
+  Sentry.capture_exception(e)
+end
+
+
+❌ No re-raise
+❌ Job marked successful
+❌ Silent failure
+
+🎯 Interviewer hears: junior dev
+
+🔥 Clean decision table (memorize this)
+
+| Scenario                | Logger | Sentry | Raise |
+| ----------------------- | ------ | ------ | ----- |
+| Unexpected prod bug     | ✅      | ✅      | ✅     |
+| Critical background job | ❌      | ✅      | ✅     |
+| Expected business error | ✅      | ❌      | ❌     |
+| User input issue        | ❌      | ❌      | ❌     |
+| External API flaky      | ✅      | ❌      | ❌     |
+
+
+🧠 PERFECT INTERVIEW ANSWER
+
+“No, I don’t log and send to Sentry every time. I log expected errors, alert on unexpected ones, and only combine both for critical failures. Over-logging creates noise.”

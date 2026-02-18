@@ -1,0 +1,33 @@
+### app/jobs/welcome_email_job.rb
+
+class WelcomeEmail < ApplicationJob
+	queue_as :default
+
+
+	def perform(user_id)
+		UserMailer.welcome_email(user_id).deliver_now
+	end
+end
+
+
+### app/workers/welcome_email_worker.rb
+
+
+class WelcomeEmailWork
+	include Sidekiq::Worker
+
+	sidekiq_options(
+		retry: 5,
+		queue: default,
+		unique: :until_executed,
+		rate: { limit: 10, period: 1.minute }
+	)
+
+	def perfomr(user_id)
+		UserMailer.welcome_email(user_id).deliver_now
+	end
+
+end
+
+#### unique: :until_executed   ---> gem sidekiq-unique-jobs
+rate: { limit: 10, period: 1.minute } -->  Sidekiq Pro / Enterprise (not free, its paid)

@@ -1,0 +1,118 @@
+###
+
+errors is NOT an Array and NOT a simple Hash.
+
+It is an object of type:
+
+ActiveModel::Errors
+
+###
+
+How errors.add works
+errors.add(:start_date, "must be before end date")
+
+
+Means:
+
+Key → :start_date
+
+Value → appended to an internal array of messages
+
+If you add again:
+
+errors.add(:start_date, "cannot be nil")
+
+
+Internally becomes:
+
+start_date: [
+  "must be before end date",
+  "cannot be nil"
+]
+
+
+Commonly used errors methods (interview-relevant)
+
+errors.full_messages
+errors.any?
+error.empty?
+errors[:start_date]
+
+errors.each do |attribute,message|
+	puts "#{attribute}: #{message}"
+end
+
+
+Commonly used errors methods (interview-relevant)
+Get errors for one field
+errors[:start_date]
+# => ["must be before end date"]
+
+Full messages (most used)
+errors.full_messages
+# => ["Start date must be before end date"]
+
+Check if errors exist
+errors.any?     # true / false
+errors.empty?   # true / false
+
+Iterate
+errors.each do |attribute, message|
+  puts "#{attribute}: #{message}"
+end
+
+When errors gets populated
+
+During valid?
+
+During save / create / update
+
+Inside custom validations (validate)
+
+Example flow:
+
+post.valid?  # fills errors
+post.save    # runs validations, fills errors if invalid
+
+Important interview clarification ⚠️
+
+“errors is an ActiveModel::Errors object that behaves like a hash of arrays, not a plain array or hash.”
+
+This sentence alone shows strong Rails internals understanding.
+
+Bonus: Rails version note (advanced)
+
+Rails 6+ internally stores errors as objects, not just strings, but the public API still behaves the same.
+
+One-line interview answer ⭐
+
+“errors is an ActiveModel::Errors object. Conceptually it’s a hash where each attribute maps to an array of error messages.”
+
+
+Compare with other errors APIs (VERY important)
+1️⃣ errors.messages → Hash of arrays
+@order.errors.messages
+
+{
+  start_date: ["must be before end date"],
+  user: ["must exist"]
+}
+
+
+✔ Hash<Symbol, Array<String>>
+
+2️⃣ errors.details → Hash of arrays (machine-readable)
+@order.errors.details
+
+{
+  start_date: [{ error: :invalid }],
+  user: [{ error: :blank }]
+}
+
+
+✔ Used for APIs
+
+3️⃣ errors.full_messages → Array of strings ⭐
+@order.errors.full_messages
+
+["Start date must be before end date"]

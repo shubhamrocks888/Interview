@@ -1,0 +1,50 @@
+1️⃣ Controllers: Primary enforcement
+
+✅ Yes, controller actions are the first and main place where you enforce RBAC.
+
+Every request from the web/API passes through the controller
+
+authorize checks if the user is allowed to perform that action
+
+Policies keep logic centralized and declarative
+
+2️⃣ But controllers are not enough in all cases
+a) Background jobs / services
+
+Many LMS actions happen asynchronously (e.g., batch enrollments, report generation)
+
+These don’t go through controllers, so you need service-level authorization if sensitive operations are performed
+
+Example: A background job that enrolls users into a program should check that the initiator has permission, or that the system context is allowed.
+
+b) Console / scripts / rake tasks
+
+Developers or admins may trigger scripts that touch sensitive resources
+
+You may still want policy checks or safeguards to prevent mistakes
+
+c) APIs consumed internally
+
+Internal services calling Rails endpoints may bypass the controller layer if they use internal models directly
+
+Always enforce policy at the service / domain layer if the operation is sensitive
+
+3️⃣ Summary: Where to enforce
+
+| Layer                    | Enforcement needed?        |
+| ------------------------ | -------------------------- |
+| Controller (HTTP/API)    | ✅ Always                   |
+| Service / domain objects | ✅ If operation sensitive   |
+| Background jobs          | ✅ For sensitive operations |
+| Console / scripts        | ✅ Optional but recommended |
+
+
+Architect-level phrasing:
+“Controllers enforce request-level RBAC for all external requests.
+For operations outside the controller, sensitive actions should still invoke policies or permission checks in the service/domain layer to prevent bypass.”
+
+4️⃣ Key interview tip
+
+Never say controllers only — they want to hear you consider all entry points.
+
+Policies are centralized, so you can call them anywhere, not just controllers.

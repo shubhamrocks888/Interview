@@ -1,0 +1,134 @@
+Great question — this is exactly where Sidekiq semantics matter 👀
+Raising an exception can be correct, but only if you understand the trade-offs.
+
+Let’s walk it through carefully.
+
+❓ What happens if you raise when count > 10?
+count = Rails.cache.increment(key, 1, expires_in: 60)
+raise "Rate limit exceeded" if count > 10
+
+Sidekiq behavior
+
+Job fails
+
+Sidekiq retries it (default retry backoff)
+
+Job goes back to the queue
+
+Eventually runs again
+
+✅ Job is not lost
+❌ But this introduces new problems
+
+🚨 Hidden problems with “raise to rate limit”
+1️⃣ Retry backoff ≠ rate window
+
+Sidekiq retry schedule:
+
+~15s, 1m, 3m, 10m, ...
+
+
+Your rate window:
+
+60 seconds
+
+
+➡ They are not aligned
+➡ Jobs may retry too late or too early
+
+2️⃣ Retry storm risk 💥
+
+If traffic is high:
+
+Many jobs raise
+
+Many retries scheduled
+
+Redis + Sidekiq get hammered
+
+Latency spikes
+
+This is called a retry storm
+
+3️⃣ Retries increment again 😬
+
+Each retry does:
+
+Rails.cache.increment(key)
+
+
+So:
+
+One job = multiple increments
+
+You block yourself harder
+
+Starvation possible
+
+4️⃣ Semantically wrong signal
+
+Exceptions mean:
+
+“Something went wrong”
+
+Rate limiting is:
+
+“System is healthy, just busy”
+
+Mixing them is bad design.
+
+✅ When raising IS acceptable
+✔ Use case
+
+Very rare edge case
+
+Hard limit
+
+You want exponential backoff
+
+Dropping or delaying is acceptable
+
+Example:
+
+raise Sidekiq::RetryableJobError
+
+
+But still not ideal.
+
+✅ Better OSS approach — custom delay (recommended)
+if count > 10
+  self.class.perform_in(10.seconds, user_id)
+  return
+end
+
+
+✔ Controlled delay
+✔ No retry storm
+✔ No false failures
+
+💎 Best solution — Sidekiq Enterprise
+sidekiq_options rate: { limit: 10, period: 1.minute }
+
+
+Pauses execution
+
+No retries
+
+No drops
+
+No hacks
+
+🧠 Interview-ready one-liner (🔥)
+
+Raising exceptions for rate limiting abuses Sidekiq retries and can cause retry storms.
+Proper rate limiting should delay execution, not signal failure.
+
+TL;DR
+
+| Approach        | Safe | Drops jobs | Retry storm |
+| --------------- | ---- | ---------- | ----------- |
+| `raise`         | ⚠️   | ❌          | ❌ Yes       |
+| `return`        | ❌    | ✅          | ❌           |
+| Re-enqueue      | ✅    | ❌          | ⚠️          |
+| Token bucket    | ✅    | ❌          | ❌           |
+| Enterprise rate | 💎   | ❌          | ❌           |

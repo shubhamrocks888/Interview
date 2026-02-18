@@ -1,0 +1,145 @@
+STEP 5️⃣: Refund Scenario
+
+Refunds can happen for multiple reasons:
+
+User cancels order after payment
+
+Product returned / service canceled
+
+Partial refund requested
+
+1️⃣ Backend Initiates Refund
+
+Once you know the payment_id (from a successful payment):
+
+# Full refund
+refund = Razorpay::Payment.refund(payment_id)
+
+# Partial refund example
+partial_refund = Razorpay::Payment.refund(payment_id, 20000) # paise
+
+
+payment_id → identifies which payment to refund
+
+amount → optional, defaults to full amount
+
+Razorpay Response
+{
+  "id": "rfnd_ABC123",
+  "entity": "refund",
+  "payment_id": "pay_XYZ123",
+  "status": "processed",
+  "amount": 50000,
+  "currency": "INR",
+  "created_at": 1700000000
+}
+
+
+id → refund_id
+
+payment_id → original payment_id
+
+status → processed / failed
+
+amount → refunded amount
+
+2️⃣ Database Updates
+
+You can track refunds in DB either:
+
+Option 1: Add fields to orders table
+
+id	razorpay_order_id	razorpay_payment_id	amount	status	refunded_amount
+1	order_ABC123	pay_XYZ123	50000	refunded	50000
+
+Option 2: Use a separate refunds table
+
+id	order_id	payment_id	refund_id	amount	status
+1	1	pay_XYZ123	rfnd_ABC123	50000	processed
+
+Recommended if your app has multiple partial refunds per order.
+
+3️⃣ Webhook for Refunds
+
+Razorpay triggers webhook: refund.processed
+
+Webhook payload:
+
+{
+  "entity": "refund",
+  "event": "refund.processed",
+  "payload": {
+    "refund": {
+      "entity": {
+        "id": "rfnd_ABC123",
+        "payment_id": "pay_XYZ123",
+        "status": "processed",
+        "amount": 50000,
+        "currency": "INR"
+      }
+    }
+  }
+}
+
+
+Backend verifies signature using webhook secret
+
+Updates database accordingly
+
+4️⃣ Backend Handling Example
+
+  def refund_webhook
+    payload = request.body.read
+    signature = request.headers['X-Razorpay-Signature']
+
+    Razorpay::Utility.verify_webhook_signature(payload, signature, ENV['RAZORPAY_WEBHOOK_SECRET'])
+
+    data = JSON.parse(payload)
+    refund = data['payload']['refund']['entity']
+
+    order = Order.find_by(razorpay_payment_id: refund['payment_id'])
+    order.update(
+      status: 'refunded',
+      refunded_amount: refund['amount']
+    )
+
+    render plain: 'ok'
+  rescue Razorpay::SignatureVerificationError
+    render plain: 'invalid', status: 400
+  end
+
+5️⃣ Key Points / Interview Lines
+
+  Refunds are asynchronous, just like payments
+  Payment_id is mandatory to identify the payment to refund
+  Refunds can be full or partial
+  Webhooks are the source of truth if frontend is not involved
+  Backend should be idempotent: multiple webhook calls for same refund should not double-update DB
+
+6️⃣ Summary Flow
+
+| Step | Action             | Who                | Notes                                              |
+| ---- | ------------------ | ------------------ | -------------------------------------------------- |
+| 1    | Initiate refund    | Backend            | Use `Razorpay::Payment.refund(payment_id, amount)` |
+| 2    | Razorpay processes | Razorpay           | Refund created in Razorpay system                  |
+| 3    | Webhook triggers   | Razorpay → Backend | `refund.processed` event                           |
+| 4    | Backend updates DB | Backend            | Status = `refunded`, track refunded amount         |
+| 5    | Notify user        | Backend → Frontend | Optional email / UI update                         |
+
+💡 Interview-ready line:
+
+Refunds in Razorpay are asynchronous. Backend initiates refund via payment_id, and the refund status is confirmed via webhook. The database should track refunded amount and status, and backend code must be idempotent.
+
+If you want, I can now draw a single complete flow diagram for Razorpay + Rails, combining:
+
+Payment success
+
+Payment failed
+
+Frontend verification
+
+Webhook handling
+
+Refunds
+
+Idempotency

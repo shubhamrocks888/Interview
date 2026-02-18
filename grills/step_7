@@ -1,0 +1,59 @@
+sidekiq offeres exponential retry when job fails again and also provides number of attempt if job didn't succeed at particular attempt list then it will be dead and wont be retry further
+
+Exactly — you’ve captured the basics! ✅ Now let’s polish it into an architect-grade answer because this is where interviewers start probing failure behavior + ordering guarantees.
+
+Step 1 — Exponential retries
+
+“Sidekiq automatically retries failed jobs using exponential backoff, so that subsequent attempts are spaced out and we don’t overwhelm downstream systems.”
+
+You can even mention the default behavior:
+
+Retry interval increases roughly like: 10s → 30s → 1m → 5m → 30m → 1h → ...
+
+Prevents retry storms if an external service is temporarily down.
+
+Step 2 — Maximum retry attempts & dead-lettering
+
+“Each job has a configurable maximum retry count. Once it exceeds that, the job is moved to the Dead Letter Queue (or marked as ‘dead’). This ensures we don’t retry indefinitely and can investigate persistent failures.”
+
+Default in Sidekiq: 25 retries
+
+Jobs in DLQ can be manually reprocessed or analyzed
+
+Step 3 — Architect nuance — ordering vs retry
+
+“One thing to note: retrying a failed job can affect job ordering. For example, a job that fails early may retry later than jobs that succeeded immediately, so FIFO ordering is no longer strict once retries happen.”
+
+✅ This is exactly what architects expect you to point out.
+
+Step 4 — Handling persistent failures
+
+Architects may push:
+
+“What do you do if a critical job keeps failing?”
+
+You can answer:
+
+Alert/notify ops team immediately
+
+Investigate cause (code bug, downstream API failure)
+
+If safe, reschedule manually after fixing the root cause
+
+Use idempotency keys so retrying the job won’t corrupt state
+
+Step 5 — Optional advanced points
+
+Sidekiq Pro/Enterprise supports custom retry intervals, per-job backoff strategies
+
+You can also combine retries with rate limiting to protect external services
+
+Architect-ready one-liner
+
+“Sidekiq retries failed jobs using exponential backoff, respects a maximum attempt count, and moves jobs exceeding that to the Dead Letter Queue. Retries may break strict FIFO ordering, so for critical sequential jobs, I would enforce idempotency and consider single-worker or sequence-controlled processing.”
+
+💡 Next possible grill in interview:
+
+Interviewer:
+
+How do you ensure that a sequence of dependent jobs executes in the correct order if some jobs fail and retry?

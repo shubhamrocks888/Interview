@@ -1,0 +1,129 @@
+🧩 useRef — FROM SCRATCH
+1️⃣ Why useRef exists
+
+Problem first 👇
+
+❌ Normal variable resets on re-render
+function Example() {
+  let count = 0;
+}
+
+
+Every render → count = 0 again ❌
+
+❌ State causes re-render
+setCount(count + 1); // triggers re-render
+
+
+But sometimes you want to:
+
+store a value
+
+keep it between renders
+
+❌ NOT re-render the UI
+
+2️⃣ What is useRef?
+
+useRef gives you a mutable object that persists across renders but does NOT cause re-render when changed.
+
+3️⃣ Basic syntax
+const myRef = useRef(initialValue);
+
+
+Returns:
+
+{
+  current: initialValue
+}
+
+4️⃣ MOST COMMON use case — DOM access
+function InputFocus() {
+  const inputRef = useRef(null);
+
+  return (
+    <>
+      <input ref={inputRef} />
+      <button onClick={() => inputRef.current.focus()}>
+        Focus Input
+      </button>
+    </>
+  );
+}
+
+What’s happening?
+
+React puts DOM element into inputRef.current
+
+No re-render happens
+
+You directly access DOM
+
+5️⃣ useRef vs useState (VERY IMPORTANT)
+useState	useRef
+Triggers re-render	❌ No re-render
+For UI data	For non-UI data
+Async update	Sync update
+6️⃣ Storing previous value (common interview Q)
+function Counter({ value }) {
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    prevValue.current = value;
+  });
+
+  return (
+    <p>
+      Current: {value}, Previous: {prevValue.current}
+    </p>
+  );
+}
+
+7️⃣ useRef for timers / intervals
+const timerRef = useRef(null);
+
+useEffect(() => {
+  timerRef.current = setInterval(() => {
+    console.log("running");
+  }, 1000);
+
+  return () => clearInterval(timerRef.current);
+}, []);
+
+8️⃣ Why not use state here?
+setTimer(timer); // ❌ causes re-render unnecessarily
+
+
+Refs are escape hatches for React.
+
+9️⃣ Very important misconception ❌
+
+❌ Changing ref.current updates UI
+
+NO ❌
+UI updates only on state/props change
+
+🔟 Mental model 🧠
+
+Think of useRef as:
+
+A box that React never looks into for rendering
+
+🎯 Interview questions
+
+Q: Does useRef cause re-render?
+A: No.
+
+Q: When should you use useRef instead of state?
+A: When value is needed across renders but doesn’t affect UI.
+
+Rails analogy 🧠
+React	Rails
+useRef	instance variable not used in view
+🔑 Summary
+
+useRef persists data across renders
+
+Does NOT trigger re-render
+
+Mostly used for DOM, timers, previous values

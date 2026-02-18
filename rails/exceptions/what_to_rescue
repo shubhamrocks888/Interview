@@ -1,0 +1,25 @@
+🔹 Final Conclusion
+
+Never blindly rescue StandardError
+
+It covers programmer mistakes like NoMethodError, NameError, ArgumentError
+
+Rescuing it hides real bugs → silent failures, inconsistent data, broken monitoring
+
+Always rescue only what’s expected / recoverable
+
+Examples: ActiveRecord::RecordNotFound, RecordInvalid, Payment::Failed, Net::ReadTimeout
+
+Let unexpected errors bubble up so Rails logs them and monitoring tools (Sentry, Bugsnag) report them
+
+Pro tip for Rails APIs:
+
+Use rescue_from in controllers for expected errors
+
+Use rescue => e in service objects only for specific exceptions
+
+Always log or report critical errors
+
+🏁 Perfect Interview Answer (30 sec)
+
+“I never rescue StandardError blindly because it includes programmer mistakes. I only rescue specific, expected errors that I can handle gracefully, and let unexpected errors bubble up so they can be logged, reported, and fixed.”

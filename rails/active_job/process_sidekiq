@@ -1,0 +1,167 @@
+What is the processes key?
+
+👉 processes is a Redis SET.
+
+It contains all currently alive Sidekiq processes.
+
+Example:
+
+processes
+= {
+  "sidekiq:host1:12345",
+  "sidekiq:host1:12346",
+  "sidekiq:host2:9876"
+}
+
+
+Each entry represents one Sidekiq process, not a worker thread.
+
+STEP 1 — When Sidekiq starts
+
+When a Sidekiq process boots:
+
+It generates a unique process identity
+
+sidekiq:<hostname>:<pid>
+
+
+It writes itself to Redis:
+
+SADD processes sidekiq:host1:12345
+
+
+Now Redis knows:
+
+“This Sidekiq process is alive.”
+
+STEP 2 — Heartbeat (this is critical)
+
+Every ~5 seconds, Sidekiq sends a heartbeat.
+
+Heartbeat does two things:
+
+1️⃣ Refresh process metadata
+
+Stored under:
+
+sidekiq:host1:12345
+
+
+This key contains JSON like:
+
+{
+  "busy": 2,
+  "concurrency": 10,
+  "queues": ["default"],
+  "started_at": 1700000000,
+  "beat": 1700000050
+}
+
+
+👉 beat = last heartbeat timestamp
+
+2️⃣ Confirms liveness
+
+As long as:
+
+the process keeps heartbeating
+
+beat keeps updating
+
+Sidekiq assumes:
+✅ process is alive
+
+STEP 3 — Worker entries depend on processes
+
+When a worker thread starts a job, Sidekiq writes an entry to:
+
+workers   (Redis HASH)
+
+
+Key:
+
+sidekiq:host1:12345:<thread_id>
+
+
+Value:
+
+{
+  "queue": "default",
+  "jid": "abc123",
+  "run_at": 1700000100
+}
+
+
+📌 Notice:
+👉 Worker entry is linked to the process identity
+
+STEP 4 — Process crashes 💥
+
+What happens in Redis?
+
+❌ No more heartbeat
+❌ beat timestamp stops updating
+
+So Redis now has:
+
+Worker entries pointing to a process
+
+But that process is stale
+
+STEP 5 — How Sidekiq uses processes to detect crashes
+
+Sidekiq periodically does:
+
+Read all entries in:
+
+processes
+
+
+For each process:
+
+Fetch its metadata key
+
+Check beat
+
+If:
+
+current_time - beat > timeout
+
+
+👉 Process is considered dead
+
+STEP 6 — Cleanup & recovery
+
+When a process is dead:
+
+1️⃣ Remove it from processes
+SREM processes sidekiq:host1:12345
+
+2️⃣ Remove its worker entries
+HDEL workers sidekiq:host1:12345:<thread_id>
+
+3️⃣ Requeue its jobs
+
+Jobs referenced by those worker entries
+
+Are put back into their original queues
+
+Why processes key is needed (big picture)
+
+Without processes:
+
+Sidekiq wouldn’t know which workers belong to which process
+
+It couldn’t distinguish:
+
+slow jobs
+
+crashed processes
+
+processes = source of truth for liveness
+
+Interview one-liner 🔥
+
+If interviewer asks “What is the purpose of the processes key in Redis?”:
+
+Sidekiq uses the processes set as a registry of active Sidekiq processes. Each process heartbeats to Redis, and if a process stops heartbeating, Sidekiq detects it as dead, cleans up its worker entries, and re-queues any in-progress jobs.

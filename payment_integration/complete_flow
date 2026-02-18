@@ -1,0 +1,47 @@
+Normal Flow: User completes payment normally
+
+	User clicks “Pay ₹500” → backend creates order → frontend gets order_id
+
+	Razorpay Checkout opens → user enters payment info → payment succeeds
+
+	Razorpay returns payment_id + signature to frontend
+
+	Frontend immediately calls backend /verify API
+
+	Backend verifies signature → updates DB → status = paid
+
+	Webhook is optional here — it may still trigger later, but your backend has already recorded payment.
+
+Edge Case: User closes browser mid-payment or network fails
+
+	Backend created order → frontend opened Razorpay Checkout → user pays
+
+	Browser is closed or frontend never calls /verify
+
+	Frontend does nothing
+
+	Razorpay still processes payment → triggers webhook
+
+	Backend receives webhook → verifies signature → updates DB → status = paid
+
+	Webhook acts as a “safety net” ensuring your DB is consistent.
+
+Key points / Interview-ready lines
+
+	Frontend verification: fast, immediate, improves UX
+
+	Webhooks: reliable, guarantees payment status even if frontend fails
+
+	Backend DB always updated by either step 3 or step 4
+
+	💡 Interview line you can say:
+
+	“Frontend verification handles normal flow for immediate response, and webhooks handle edge cases where the user abandons the payment. Both use signature verification to ensure authenticity.”
+
+Optional note:
+
+	Even in normal flow, webhook may still arrive later.
+
+	Some companies ignore it if payment is already verified
+
+	Others reconcile it to ensure data integrity

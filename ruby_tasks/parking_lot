@@ -1,0 +1,148 @@
+🚀 Task 2: Design a Parking Lot System (OOP Design)
+📝 Problem Statement
+
+Design a ParkingLot system that:
+
+Has limited capacity
+
+Allows cars to:
+
+Enter
+
+Exit
+
+Tracks parked cars
+
+Prevents entry if full
+
+Calculates parking fee based on time
+
+🎯 What Interviewer Is Testing
+
+OOP modeling
+
+Responsibility separation
+
+Clean class design
+
+Validation
+
+Edge case handling
+
+Time-based logic
+
+🧠 Step 1: Think Before Coding (Very Important)
+
+Ask yourself:
+
+What objects exist here?
+
+We likely need:
+
+Car
+
+ParkingLot
+
+Maybe Ticket
+
+Strong candidates think in objects first.
+
+🏗 Step 2: Clean Design Approach
+
+We’ll create:
+
+1️⃣ Car
+
+Stores plate number
+
+2️⃣ Ticket
+
+Stores:
+
+Car
+
+Entry time
+
+Exit time
+
+Fee calculation
+
+3️⃣ ParkingLot
+
+Handles:
+
+Capacity
+
+Entry
+
+Exit
+
+Active tickets
+
+
+#######
+
+
+class Car
+  attr_reader :plate_number
+
+  def initialize(plate_number)
+    @plate_number = plate_number
+  end
+end
+
+class Ticket
+  attr_reader :car, :entry_time, :exit_time
+
+  RATE_PER_HOUR = 10
+
+  def initialize(car)
+    @car = car
+    @entry_time = Time.now
+    @exit_time = nil
+  end
+
+  def close
+    @exit_time = Time.now
+  end
+
+  def fee
+    raise "Car has not exited yet" unless @exit_time
+
+    hours = ((@exit_time - @entry_time) / 3600.0).ceil
+    hours * RATE_PER_HOUR
+  end
+end
+
+
+class ParkingLot
+  attr_reader :capacity, :active_tickets
+
+  def initialize(capacity)
+    raise ArgumentError, "Capacity must be positive" if capacity <= 0
+
+    @capacity = capacity
+    @active_tickets = {}
+  end
+
+  def park(car)
+    raise "Parking full" if full?
+    raise "Car already parked" if @active_tickets.key?(car.plate_number)
+
+    ticket = Ticket.new(car)
+    @active_tickets[car.plate_number] = ticket
+    ticket
+  end
+
+  def exit(car)
+    ticket = @active_tickets.delete(car.plate_number)
+    raise "Car not found" unless ticket
+
+    ticket.close
+    ticket.fee
+  end
+
+  def full?
+    @active_tickets.size >= @capacity
+  end
+end

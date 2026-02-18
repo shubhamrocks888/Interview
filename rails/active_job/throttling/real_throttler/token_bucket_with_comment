@@ -1,0 +1,34 @@
+class TokenBucket                     # Defines a TokenBucket class (one bucket per user/IP/etc.)
+  
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity              # Maximum number of tokens the bucket can hold
+    @refill_rate = refill_rate        # Number of tokens added per second
+    @tokens = capacity                # Start with a full bucket (allows burst traffic)
+    @last_refill = Time.now            # Store the time when tokens were last refilled
+  end
+
+  def allow?                           # Called for every request to check if it should be allowed
+    refill_tokens                     # Refill tokens based on elapsed time since last refill
+
+    if @tokens >= 1                   # Check if at least one token is available
+      @tokens -= 1                    # Consume one token for the current request
+      true                            # Allow the request
+    else
+      false                           # No tokens left → reject (throttle) the request
+    end
+  end
+
+  private                             # Methods below are internal helpers
+
+  def refill_tokens                   # Adds tokens to the bucket based on time passed
+    now = Time.now                    # Get the current time
+    elapsed = now - @last_refill      # Calculate seconds passed since last refill
+
+    new_tokens = elapsed * @refill_rate # Calculate how many tokens to add
+    @tokens = [@capacity, @tokens + new_tokens].min
+                                      # Add new tokens but do not exceed bucket capacity
+
+    @last_refill = now if new_tokens > 0
+                                      # Update refill time only if tokens were actually added
+  end
+end

@@ -1,0 +1,147 @@
+Great interview question. This is about fairness, starvation, and job scheduling in Sidekiq — not about threads.
+
+Let me give you an interview-ready answer, then the deep reasoning, then practical solutions.
+
+🎯 Problem restated (in interviewer language)
+
+We have 10 Sidekiq threads.
+User-1 enqueues 10 jobs, User-2 enqueues 10 jobs, User-3 enqueues 10 jobs.
+We must ensure fair execution, so one user does not monopolize all workers.
+
+✅ High-confidence interview answer (say this first)
+
+Sidekiq by default is FIFO per queue, so a single user can starve others.
+To ensure fairness, I would isolate jobs per user (or per user group) into separate queues and configure weighted or round-robin queue processing.
+Alternatively, I would use rate limiting or concurrency limiting per user using Redis to ensure no single user consumes all worker threads.
+
+Now let’s break it down clearly 👇
+
+❌ Why default Sidekiq fails here
+
+Sidekiq:
+
+Uses Redis lists
+
+Pulls jobs FIFO per queue
+
+If User-1 enqueues first:
+
+[U1, U1, U1, U1, ... U1, U2, U2, U3]
+
+
+Result:
+
+All 10 threads pick User-1 jobs
+
+User-2 and User-3 wait → starvation
+
+This is expected behavior.
+
+✅ Solution 1: Multiple queues (MOST COMMON INTERVIEW ANSWER)
+Idea
+
+Separate work by queue, then let Sidekiq fairly poll queues.
+
+Example
+# enqueue
+ReportJob.set(queue: "reports_user_#{user_id}").perform_async(user_id)
+
+sidekiq.yml
+:concurrency: 10
+:queues:
+  - [reports_user_1, 1]
+  - [reports_user_2, 1]
+  - [reports_user_3, 1]
+
+Why it works
+
+Sidekiq polls queues round-robin
+
+Each user gets a fair share
+
+No queue can starve others
+
+Interview one-liner
+
+“We use separate queues and Sidekiq’s round-robin queue polling to ensure fairness.”
+
+✅ Solution 2: Rate limiting / concurrency limiting per user (VERY STRONG ANSWER)
+Idea
+
+Limit how many jobs per user can run at once.
+
+Example using Redis lock
+def perform(user_id)
+  key = "user:#{user_id}:in_progress"
+
+  return unless redis.incr(key) <= 1
+
+  begin
+    generate_report
+  ensure
+    redis.decr(key)
+  end
+end
+
+Result
+
+Only 1 job per user runs at a time
+
+Threads are shared fairly
+
+Interview line
+
+“Even if many jobs are enqueued, Redis-based concurrency limits prevent one user from consuming all workers.”
+
+✅ Solution 3: Sidekiq Enterprise (bonus points 💎)
+
+If allowed:
+
+Use Sidekiq Enterprise
+
+Features:
+
+rate_limit
+
+concurrency_limit
+
+weighted queues
+
+Example
+sidekiq_options concurrency: { limit: 2, key: ->(args) { args.first } }
+
+Interview line
+
+“Sidekiq Enterprise provides built-in per-key concurrency limits, which is ideal for per-user fairness.”
+
+✅ Solution 4: Batch + Scheduler approach (advanced)
+
+Collect jobs
+
+Execute in time slices per user
+
+More complex, rarely needed
+
+Mention only if interviewer goes very deep.
+
+⭐ BEST interview answer structure (say it like this)
+
+“By default, Sidekiq can suffer from starvation because it processes jobs FIFO per queue.
+To ensure fairness when multiple users enqueue heavy jobs, I would either:
+
+Use separate queues per user or per user group, letting Sidekiq poll them fairly, or
+
+Enforce per-user concurrency or rate limits using Redis, so no user can occupy all worker threads.
+In enterprise setups, Sidekiq Enterprise provides this natively.”
+
+🧠 What interviewer is actually testing
+
+They want to see if you understand:
+
+Job starvation
+
+Fair scheduling
+
+Redis as a coordination layer
+
+Sidekiq ≠ magic fairness

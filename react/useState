@@ -1,0 +1,80 @@
+🧩 Step 1: useState (FROM ABSOLUTE ZERO)
+❓ Why useState?
+
+Function components were stateless before hooks.
+
+function Counter() {
+  let count = 0; // ❌ resets on every render
+}
+
+
+React needed a way to persist data between renders.
+
+🧠 What is State?
+
+State is data that belongs to a component and changes over time.
+
+Examples:
+
+counter value
+
+form input
+
+toggle (open/close)
+
+API response
+
+✅ useState syntax
+const [state, setState] = useState(initialValue);
+
+Example
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {count}
+    </button>
+  );
+}
+
+🔍 What happens internally (important)
+
+Component renders
+
+useState(0) runs
+
+React stores count = 0
+
+setCount(1) called
+
+React re-renders component
+
+useState returns updated value
+
+👉 State is preserved between renders
+
+⚠️ Common mistakes
+❌ Direct mutation
+count = count + 1; // ❌
+
+✅ Correct
+setCount(count + 1);
+
+❌ Using old state
+setCount(count + 1);
+setCount(count + 1);
+
+✅ Correct (functional update)
+setCount(c => c + 1);
+setCount(c => c + 1);
+
+🎯 Interview questions (useState)
+
+Q: Why useState doesn’t update immediately?
+A: State updates are batched for performance.
+
+Q: Can we use multiple useState hooks?
+A: Yes, unlimited.

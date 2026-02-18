@@ -1,0 +1,87 @@
+1️⃣ TDD (Test-Driven Development)
+Definition
+
+Write tests first, then code to make them pass.
+
+Focus is on how code works.
+
+Usually unit tests.
+
+Workflow
+Red → Green → Refactor
+
+
+Write a failing test
+
+Write code to pass the test
+
+Refactor and repeat
+
+Example (Ruby / RSpec)
+# tdd: test first
+RSpec.describe Calculator do
+  it "adds two numbers" do
+    calc = Calculator.new
+    expect(calc.add(2,3)).to eq(5)
+  end
+end
+
+# Then write code to pass
+class Calculator
+  def add(a,b)
+    a + b
+  end
+end
+
+
+✅ Key point: focus is on method functionality, not human-readable behavior.
+
+🔹 2️⃣ BDD (Behavior-Driven Development)
+Definition
+
+Write tests as behavior specifications
+
+Focus is on what the system should do from a user or business perspective
+
+Usually more readable, often called specs
+
+Workflow
+
+Write behavior description → implement code → tests pass
+
+Example (Ruby / RSpec)
+RSpec.describe "User login" do
+  it "allows a registered user to log in" do
+    user = User.create(email: "test@example.com", password: "123456")
+
+    login_result = UserAuthenticator.new(user.email, "123456").login
+
+    expect(login_result).to eq("Login successful")
+  end
+end
+
+
+✅ Key point: focus is on behavior, not just the method’s implementation.
+
+Tests read like a specification
+
+🔹 TDD vs BDD (Side by Side)
+
+| Aspect      | TDD                              | BDD                                              |
+| ----------- | -------------------------------- | ------------------------------------------------ |
+| Focus       | Correct implementation of code   | Behavior and outcomes                            |
+| Test style  | Unit test / technical            | Spec / business-readable                         |
+| Example     | `expect(calc.add(2,3)).to eq(5)` | `expect(login_result).to eq("Login successful")` |
+| Goal        | Ensure code works                | Ensure code behaves correctly for user/business  |
+| Readability | Developer-focused                | Stakeholder-focused                              |
+| Tools       | RSpec, Minitest                  | RSpec, Cucumber, Capybara                        |
+
+🔹 Memory trick
+
+TDD = Test what your code does
+
+BDD = Specify what the user expects
+
+🔹 Interview one-liner
+
+TDD focuses on writing tests to guide code implementation, while BDD focuses on writing human-readable specifications that describe expected behavior.

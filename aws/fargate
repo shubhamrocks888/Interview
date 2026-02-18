@@ -1,0 +1,78 @@
+1️⃣ What is Fargate
+
+AWS Fargate is:
+
+A serverless compute engine for containers that runs tasks without you managing EC2 instances.
+
+In other words:
+
+You just provide container + task definition
+
+AWS provides the compute, networking, and scaling
+
+No EC2 instance to manage
+
+2️⃣ Why use Fargate (advantages)
+✅ 1. No server management
+
+You don’t provision, patch, or monitor EC2
+
+ECS just launches tasks
+
+✅ 2. Automatic scaling
+
+CPU/memory-based scaling of tasks
+
+Handles spikes automatically
+
+✅ 3. Isolation
+
+Each task gets its own network namespace and compute
+
+Safer for multi-tenant workloads
+
+✅ 4. Pay for what you use
+
+Only pay for vCPU + memory per running task
+
+No idle EC2 instances
+
+✅ 5. Simplifies CI/CD
+
+Jenkins + Docker + Fargate = deploy tasks without touching servers
+
+✅ 6. Integration with AWS services
+
+CloudWatch logs
+
+ALB/NLB
+
+Secrets Manager
+
+IAM roles per task
+
+3️⃣ Fargate vs ECS on EC2 (common trap)
+| Feature             | ECS on EC2                        | ECS on Fargate                     |
+| ------------------- | --------------------------------- | ---------------------------------- |
+| Who manages servers | You                               | AWS                                |
+| Scaling             | You define scaling of EC2 + tasks | Just tasks; compute managed by AWS |
+| Isolation           | Shared EC2                        | Task-level isolation               |
+| Cost                | EC2 billed 24/7                   | Pay per running task               |
+
+🔥 Interview line:
+
+“Fargate removes the operational overhead of managing EC2 instances, letting us focus purely on deploying and scaling containers.”
+
+4️⃣ How it fits your Rails + Elixir system
+
+Rails API → Fargate service
+
+Elixir Kafka consumer → Fargate service
+
+Auto-restart & auto-scale independently
+
+ECS ensures tasks are running, while OTP inside Elixir handles process-level crashes
+
+5️⃣ One-sentence interview answer
+
+“We use Fargate because it allows running containers without managing EC2 servers, providing auto-scaling, isolation, and integration with AWS services, while letting us focus on application logic.”

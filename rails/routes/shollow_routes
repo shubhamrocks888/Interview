@@ -1,0 +1,143 @@
+🔹 resources :users — How many routes?
+✅ Answer: 7 RESTful routes
+resources :users
+
+
+Rails automatically creates 7 routes.
+
+📌 The 7 RESTful Routes
+HTTP Verb	Path	Controller#Action	Purpose
+GET	/users	users#index	List all users
+GET	/users/new	users#new	Form to create user
+POST	/users	users#create	Create user
+GET	/users/:id	users#show	Show user
+GET	/users/:id/edit	users#edit	Edit user form
+PATCH / PUT	/users/:id	users#update	Update user
+DELETE	/users/:id	users#destroy	Delete user
+🧠 Why exactly 7?
+
+Rails follows REST conventions:
+
+Collection actions → index, create
+
+Member actions → show, update, destroy
+
+Form helpers → new, edit
+
+🔍 Verify in Rails
+rails routes | grep users
+
+🔥 Interview One-Liner
+
+"resources :users generates 7 RESTful routes corresponding to standard CRUD operations."
+
+⭐ Bonus (Very Common Follow-ups)
+👉 Only specific routes
+resources :users, only: [:index, :show]
+
+
+➡ Creates 2 routes
+
+👉 Excluding routes
+resources :users, except: [:destroy]
+
+
+➡ Creates 6 routes
+
+👉 Singular resource
+resource :profile
+
+
+➡ Creates 6 routes (no index)
+
+If you want, I can also explain:
+
+resource vs resources
+
+Nested routes (users/:user_id/posts)
+
+REST vs non-REST routes (interview trick questions)
+
+Just tell me 🚀
+
+resources :users do
+  resources :posts, shallow: true
+end
+
+###what route it will produce
+
+This is a classic Rails interview question.
+Let’s break it slowly and clearly, then list all routes produced.
+
+Code
+resources :users do
+  resources :posts, shallow: true
+end
+
+🔹 What does shallow: true mean?
+
+👉 Collection routes stay nested
+👉 Member routes become non-nested
+
+In simple words:
+
+Routes that need user_id → stay nested
+
+Routes that operate on a specific post (:id) → become shallow
+
+🧩 Generated Routes (TOTAL: 8)
+🔸 User Routes (7 standard REST routes)
+GET    /users          → users#index
+GET    /users/new      → users#new
+POST   /users          → users#create
+GET    /users/:id      → users#show
+GET    /users/:id/edit → users#edit
+PATCH  /users/:id      → users#update
+DELETE /users/:id      → users#destroy
+
+🔸 Post Routes (Shallow)
+✅ Nested (collection-level)
+
+These require user_id because they create or list posts for a user.
+
+GET  /users/:user_id/posts     → posts#index
+POST /users/:user_id/posts     → posts#create
+GET  /users/:user_id/posts/new → posts#new
+
+✅ Shallow (member-level)
+
+These work on a specific post, so user_id is NOT needed.
+
+GET    /posts/:id      → posts#show
+GET    /posts/:id/edit → posts#edit
+PATCH  /posts/:id      → posts#update
+DELETE /posts/:id      → posts#destroy
+
+📊 Summary Table
+Type	Route Example
+Nested	/users/:user_id/posts
+Shallow	/posts/:id
+🧠 Why use shallow: true?
+❌ Without shallow
+/users/1/posts/99/edit
+
+✅ With shallow
+/posts/99/edit
+
+
+✔ Cleaner URLs
+✔ Less redundancy
+✔ Still keeps logical nesting
+
+🔥 Interview One-Liner
+
+"shallow: true keeps collection routes nested under the parent resource but makes member routes independent, resulting in cleaner and more maintainable URLs."
+
+⭐ Common Follow-up Questions (Interview)
+❓ How many post routes?
+
+👉 7 routes (same REST actions, just split nested + shallow)
+
+❓ When NOT to use shallow?
+
+When child resource must always depend on parent context

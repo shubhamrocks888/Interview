@@ -1,0 +1,82 @@
+
+1️⃣ Horizontal Scaling
+
+	Definition: Ability to add more servers/nodes to handle more traffic or data.
+
+	SQL (relational): Scaling usually means upgrading a single server (vertical scaling), which has limits.
+
+	NoSQL: You can add more nodes to the cluster → data and load are distributed automatically.
+
+	Example in your stack:
+
+	Thousands of order events coming from Kafka every second
+
+	DynamoDB or MongoDB can distribute data across multiple nodes
+
+	No single node becomes a bottleneck
+
+	Analogy:
+
+	SQL = one big warehouse → if more items arrive, warehouse gets full
+
+	NoSQL = multiple warehouses → add a new warehouse when demand grows
+
+
+
+2️⃣ Flexible Schema for Event-Driven Data
+
+		Definition: You don’t need a fixed table structure; each record can have different fields.
+
+		SQL: You must define all columns in advance
+
+		NoSQL: Each document/key-value pair can have different structure
+
+		Example in your stack:
+
+		Kafka produces events like:
+
+		Order Created → {order_id, user_id, amount}
+
+		Order Shipped → {order_id, shipment_id, shipped_at}
+
+		NoSQL DB can store both without changing schema
+
+		Analogy:
+
+		SQL = Excel sheet → every row must have same columns
+
+		NoSQL = filing cabinet → every folder can have different documents
+
+
+
+3️⃣ Faster Writes for High-Concurrency Workloads
+
+		Definition: NoSQL is optimized for fast inserts/updates, even with many simultaneous requests.
+
+		SQL often requires locking rows/tables, which can slow down high-volume inserts
+
+		NoSQL allows parallel writes without locking, improving throughput
+
+		Example in your stack:
+
+		Kafka produces thousands of order events per second
+
+		Phoenix consumer writes events to NoSQL DB → fast, non-blocking writes
+
+		System stays responsive under heavy load
+
+		Analogy:
+
+		SQL = one cashier handling everyone → lines form
+
+		NoSQL = multiple cashiers (nodes) → everyone served quickly
+
+✅ Interview-Perfect Answer
+
+“NoSQL is preferred for high-concurrency, event-driven workloads because:
+
+Horizontal scaling: we can add more nodes to handle more traffic,
+
+Flexible schema: each event can have different fields without altering the structure,
+
+Faster writes: it allows multiple concurrent writes without locking, ensuring the system stays responsive under load.”

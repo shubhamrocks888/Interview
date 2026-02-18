@@ -1,0 +1,130 @@
+0️⃣ First — which abstraction are we talking about?
+
+These APIs belong to different worlds:
+
+Method	Belongs to
+perform_later	ActiveJob
+perform_in	Sidekiq::Worker
+perform_at	Sidekiq::Worker
+
+So one class cannot support all three unless you’re very intentional.
+
+1️⃣ WelcomeJob.perform_later(user.id)
+✅ What it is
+
+ActiveJob API
+
+Rails-level abstraction
+
+Works with any backend (Sidekiq, DelayedJob, etc.)
+
+What actually happens (with Sidekiq adapter)
+Rails → ActiveJob → Sidekiq
+
+Characteristics
+
+Queue decided by queue_as
+
+Retry handled by ActiveJob
+
+Sidekiq-specific features ❌ (limiters, rate, unique, etc.)
+
+Use when
+
+✔ You want portability
+✔ Simple background work
+✔ No Sidekiq-specific behavior
+
+2️⃣ WelcomeJob.perform_in(5.minutes)
+❌ If WelcomeJob is an ActiveJob
+
+This will NOT work
+
+Raises NoMethodError
+
+✅ If WelcomeJob includes Sidekiq::Worker
+class WelcomeJob
+  include Sidekiq::Worker
+end
+
+What it is
+
+Sidekiq native API
+
+Schedules job 5 minutes from now
+
+Characteristics
+
+Stored in Sidekiq Scheduled Set
+
+Survives restarts
+
+Uses Redis timestamp
+
+3️⃣ WelcomeJob.perform_at(1.hour.from_now)
+Same as perform_in
+
+Just different syntax.
+
+perform_at(Time.now + 1.hour)
+
+Use when
+
+✔ You already have an absolute time
+✔ Cron-like behavior
+
+🧠 Key difference (the real answer)
+
+| Aspect           | perform_later           | perform_in / perform_at |
+| ---------------- | ----------------------- | ----------------------- |
+| Layer            | ActiveJob               | Sidekiq                 |
+| Delay support    | ❌ (unless `set(wait:)`) | ✅                       |
+| Sidekiq features | ❌                       | ✅                       |
+| Portability      | ✅                       | ❌                       |
+| Control          | Low                     | High                    |
+
+
+⚠️ Important gotcha (interview trap)
+ActiveJob delayed syntax is actually:
+WelcomeJob.set(wait: 5.minutes).perform_later(user.id)
+WelcomeJob.set(wait_until: 1.hour.from_now).perform_later(user.id)
+
+
+So this is the ActiveJob equivalent of perform_in / perform_at.
+
+✅ Best practice summary
+Using ActiveJob
+WelcomeJob.perform_later(user.id)
+WelcomeJob.set(wait: 5.minutes).perform_later(user.id)
+
+Using Sidekiq Worker
+WelcomeWorker.perform_async(user.id)
+WelcomeWorker.perform_in(5.minutes, user.id)
+WelcomeWorker.perform_at(1.hour.from_now, user.id)
+
+🎯 Interview one-liner (gold)
+
+perform_later is an ActiveJob abstraction, while perform_in and perform_at are Sidekiq-native scheduling APIs. Mixing them causes subtle bugs.
+
+TL;DR
+
+❌ Don’t mix ActiveJob & Sidekiq APIs
+
+✅ perform_later → ActiveJob
+
+✅ perform_in / perform_at → Sidekiq
+
+🧠 Use set(wait:) for delayed ActiveJob
+
+
+
+
+
+
+
+
+
+#############
+
+
+

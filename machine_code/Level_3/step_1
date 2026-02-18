@@ -1,0 +1,50 @@
+Step 1
+
+Write:
+
+Migration-level safety for balance column
+
+Model-level validations for Wallet
+
+Any DB constraints you would add
+
+Only models + migration logic for now.
+
+No controller yet.
+
+This is serious backend thinking now.
+
+
+###
+
+add_column :wallets, :balance, :decimal, precision: 15, scale: 2, default: 0, null: false
+
+precision: 15 → total digits
+scale: 2 → 2 decimal places
+
+add_check_constraint :wallets, "balance >= 0", name: "balance_non_negative"
+add_index :wallets, :user_id
+
+class Wallet < ApplicationRecord
+	belongs_to :user
+	has_many :transactions
+
+	validates :balance, numericality: { greater_than_or_equal_to: 0 }
+end
+
+
+class Transaction < ApplicationRecord
+  belongs_to :wallet
+
+  validates :amount, numericality: { greater_than: 0 }
+  validates :transaction_type, inclusion: { in: %w[credit debit transfer] }
+  validates :status, inclusion: { in: %w[pending success failed] }
+end
+
+
+### migrations
+add_column :transactions, :amount, :decimal, null: false, precision: 15, scale: 2
+add_column :transactions, :transaction_type, :string, null: false
+add_column :transactions, :status, :string, null: false
+
+add_index :transactions, :wallet_id

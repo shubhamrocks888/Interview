@@ -1,0 +1,67 @@
+1️⃣ Why you need to handle duplicate webhook + frontend verification
+
+  Payment can reach backend twice:
+
+  Frontend sends /verify after checkout → backend updates DB
+
+  Webhook triggers a few seconds/minutes later → backend receives same payment
+
+  If you don’t handle it:
+
+  Your order status might get updated twice
+
+  Business logic (like sending “payment successful” email) could trigger twice
+
+  Logs or analytics could get duplicated
+
+  Rarely, if your update logic isn’t idempotent, you could introduce bugs
+
+  💡 Interview line:
+
+  Payments are asynchronous and can be confirmed via multiple channels, so backend code must be idempotent.
+
+2️⃣ How to handle it in code (Rails example)
+
+  def process_payment(payment)
+    order = Order.find_by(razorpay_order_id: payment['order_id'])
+    return if order.status == 'paid' && order.razorpay_payment_id.present?
+
+    order.update(
+      razorpay_payment_id: payment['id'],
+      status: payment['status'] == 'captured' ? 'paid' : 'failed'
+    )
+
+    # Trigger business logic (email, inventory update, etc.)
+  end
+
+
+✅ This ensures:
+
+If payment already processed → do nothing
+
+Otherwise → update DB and trigger business logic
+
+3️⃣ Extra Safety Tips
+
+Database constraint
+
+add_index :orders, :razorpay_payment_id, unique: true
+
+
+Prevents duplicate records if the same webhook fires twice
+
+Idempotent business logic
+
+Sending emails, updating inventory → check if already done
+
+Logging
+
+Always log incoming webhook & payment verification attempts
+
+Helps debug failed or duplicate payments
+
+4️⃣ Interview-ready explanation
+
+Yes, as developers we must handle the scenario where the same payment is received both via frontend verification and webhook.
+This is done using idempotent code: checking if the payment is already processed before updating the database or running business logic.
+This ensures database consistency and prevents duplicate actions.

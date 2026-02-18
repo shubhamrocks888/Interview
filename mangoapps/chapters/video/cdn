@@ -1,0 +1,155 @@
+🌍 Where does CDN come from? (No hand-waving)
+
+Up to now you had:
+
+Frontend  →  Backend (Rails)  →  Object Storage (AWS S3)
+
+
+CDN does not replace any of these.
+It sits in front of storage for fast delivery.
+
+1️⃣ First understand what CDN actually is
+
+A CDN (Content Delivery Network) is a global cache layer that serves static content from locations closest to the user.
+
+Important:
+
+CDN does not store original files
+
+It caches files from an origin
+
+Origin = your object storage
+
+Example:
+
+AWS CloudFront
+
+Cloudflare
+
+Akamai
+
+2️⃣ Where CDN is configured (very important)
+
+This is a one-time infrastructure setup, not code logic.
+
+CloudFront
+   ↕
+Origin = S3 bucket
+
+
+Meaning:
+
+CDN is configured to fetch files from S3
+
+When CDN doesn’t have a file → it pulls from S3
+
+Next time → served from cache
+
+So CDN exists before any user plays video.
+
+3️⃣ Timeline again — now with CDN included
+Before video upload
+
+Infrastructure already looks like:
+
+Browser
+   ↓
+Rails API
+   ↓
+S3 (origin)
+   ↑
+CloudFront (CDN)
+
+
+CDN is idle until someone requests content.
+
+4️⃣ After processing — what “CDN-backed” means
+
+When background worker uploads processed files:
+
+Processed HLS files → S3
+
+
+At this point:
+
+CDN has no copy yet
+
+S3 is still the source of truth
+
+But S3 is configured as CDN origin.
+
+5️⃣ Learner plays video — CDN activates
+
+Flow:
+
+Browser
+   ↓ (playback request)
+CDN (CloudFront)
+   ↓ (cache miss)
+S3 (origin)
+   ↑
+CDN caches response
+   ↑
+Browser receives video chunks
+
+
+Second user:
+
+Browser → CDN (cache hit) → Browser
+
+
+Rails is not involved here.
+
+6️⃣ Why not serve video directly from S3?
+
+Architect reasons:
+
+CDN reduces latency globally
+
+Offloads S3 request volume
+
+Protects S3 from traffic spikes
+
+Supports range requests efficiently
+
+Interview line:
+
+“CDN acts as a global cache in front of object storage to handle high-throughput video delivery.”
+
+7️⃣ How Rails fits when CDN is used
+
+Rails role is unchanged:
+
+Authenticate user
+
+Authorize access
+
+Generate signed CDN URL
+
+Example:
+
+https://cdn.example.com/videos/abc/index.m3u8?signature=...
+
+
+Rails does not stream content.
+
+8️⃣ Final mental diagram (memorize)
+Upload:
+Browser → S3
+
+Processing:
+S3 → Worker → S3
+
+Playback:
+Browser → CDN → S3 (only if cache miss)
+
+9️⃣ One-line architect answer
+
+If asked:
+
+“Where does CDN come from?”
+
+Say:
+
+“CDN is configured in front of object storage as the delivery layer.
+Once processed video files are stored in S3, the CDN automatically serves and caches them without involving the backend.”

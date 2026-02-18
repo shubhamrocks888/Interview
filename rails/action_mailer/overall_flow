@@ -1,0 +1,196 @@
+🧠 Big picture (one-liner)
+
+Action Mailer builds an email → hands it to a delivery adapter → adapter talks to an email server → email server delivers to recipient mailbox.
+
+🔁 Action Mailer Flow (step by step)
+
+Let’s assume:
+
+UserMailer.welcome_email(user).deliver_later
+
+1️⃣ Mailer method is called
+UserMailer.welcome_email(user)
+
+
+This does NOT send email yet
+
+It just builds a Mail::Message object
+
+class UserMailer < ApplicationMailer
+  def welcome_email(user)
+    @user = user
+    mail(to: user.email, subject: "Welcome")
+  end
+end
+
+2️⃣ Views are rendered (HTML / text)
+
+Rails looks for:
+
+app/views/user_mailer/welcome_email.html.erb
+app/views/user_mailer/welcome_email.text.erb
+
+
+ERB is rendered
+
+Inline attachments are attached here
+
+Email body is created
+
+📦 Result: complete email content
+
+3️⃣ Delivery method is chosen
+
+This is where Action Mailer hands off the email.
+
+Configured in:
+
+config/environments/production.rb
+
+
+Examples:
+
+config.action_mailer.delivery_method = :smtp
+config.action_mailer.delivery_method = :sendmail
+config.action_mailer.delivery_method = :test
+
+4️⃣ Email is passed to Mail gem
+
+Rails uses the Mail gem internally.
+
+The Mail gem:
+
+Formats headers
+
+Encodes body
+
+Handles MIME (HTML + text + attachments)
+
+Think of Mail gem as:
+
+“The postman who packs the envelope”
+
+5️⃣ Adapter sends email (SMTP / API)
+Example: SMTP
+config.action_mailer.smtp_settings = {
+  address: "smtp.gmail.com",
+  port: 587,
+  user_name: ENV["SMTP_USER"],
+  password: ENV["SMTP_PASS"],
+  authentication: "plain",
+  enable_starttls_auto: true
+}
+
+
+Flow:
+
+Rails → Mail gem → SMTP server → Recipient inbox
+
+
+SMTP server examples:
+
+Gmail
+
+Outlook
+
+Amazon SES
+
+SendGrid SMTP
+
+6️⃣ Recipient mail server receives it
+
+Recipient’s mail server:
+
+Checks SPF / DKIM / DMARC
+
+Filters spam
+
+Delivers to inbox or spam
+
+At this point, Rails is out of the picture.
+
+🚀 deliver_now vs deliver_later
+deliver_now
+UserMailer.welcome_email(user).deliver_now
+
+
+Sends email synchronously
+
+Blocks request
+
+❌ Bad for APIs
+
+deliver_later
+UserMailer.welcome_email(user).deliver_later
+
+
+Enqueues ActiveJob
+
+Background worker sends email
+
+✅ Production standard
+
+Flow:
+
+Controller → Job Queue → Worker → Mailer → SMTP
+
+🧩 Real production flow (Sidekiq example)
+API request
+   ↓
+Mailer called
+   ↓
+ActiveJob created
+   ↓
+Sidekiq worker picks job
+   ↓
+Action Mailer builds email
+   ↓
+Mail gem formats email
+   ↓
+SMTP / SendGrid API
+   ↓
+Inbox
+
+🧪 Environments behavior (important!)
+
+| Env         | delivery_method   | What happens    |
+| ----------- | ----------------- | --------------- |
+| development | :letter_opener    | Opens browser   |
+| test        | :test             | Stored in array |
+| production  | :smtp / :sendgrid | Real email      |
+
+Test example:
+
+ActionMailer::Base.deliveries.count
+
+⚠️ Common misconceptions (interview traps)
+
+❌ Rails sends email directly to Gmail
+✅ Rails sends to SMTP server, not inbox
+
+❌ Mailer sends email immediately
+✅ deliver_later sends asynchronously
+
+❌ HTML email works like web HTML
+✅ Email HTML is very limited
+
+💎 Interview-ready explanation (30 seconds)
+
+“Action Mailer builds a Mail::Message by rendering mailer views and attachments.
+It then hands it to the Mail gem, which uses a configured delivery adapter like SMTP or SendGrid.
+In production we use deliver_later, so email sending happens asynchronously via a background job.”
+
+🔥 Bonus: API-based providers (SendGrid, SES)
+
+Instead of SMTP:
+
+Rails → Mail gem → Provider API → Inbox
+
+
+Advantages:
+
+Better deliverability
+
+Faster
+
+Built-in retries

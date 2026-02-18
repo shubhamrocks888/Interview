@@ -1,0 +1,18 @@
+1.
+	@post = current_user.posts.new(post_params)
+
+	or
+
+	@post = current_user.posts.build(post_params)
+
+
+2.
+
+	Post.create!(title: "System Post", user_id: admin.id)
+
+
+3.  
+
+	params.require(:post).permit(:title, :body)
+
+4.

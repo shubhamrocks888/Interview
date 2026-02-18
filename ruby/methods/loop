@@ -1,0 +1,110 @@
+def generate_referral_code
+  loop do
+    self.referral_code = SecureRandom.alphanumeric(8)
+    break unless User.exists?(referral_code: referral_code)
+  end
+end
+
+
+##
+
+🔹 What is loop?
+
+loop is a Kernel method in Ruby that creates an infinite loop.
+
+It keeps running forever until you explicitly stop it using:
+
+break
+
+return
+
+raise
+
+🔹 How It Works Here
+loop do
+  # generate random code
+  # check if it already exists
+  # if NOT exists → break
+end
+
+
+Step-by-step:
+
+Generate random 8-char string using SecureRandom.alphanumeric
+
+Check DB:
+
+User.exists?(referral_code: referral_code)
+
+
+If it already exists → loop continues
+
+If it does NOT exist → break stops the loop
+
+So this guarantees uniqueness.
+
+🔹 Equivalent Using while true
+
+This:
+
+loop do
+  ...
+end
+
+
+Is basically same as:
+
+while true
+  ...
+end
+
+
+But loop is cleaner and idiomatic Ruby.
+
+🔹 Where loop Comes From
+
+loop is defined in:
+
+Ruby’s Kernel module
+
+So it's available everywhere
+
+You don’t need to import anything.
+
+🔹 Why Use loop Here?
+
+Because we don’t know how many times we may need to try.
+
+It could succeed on:
+
+First attempt
+
+Second attempt
+
+Rarely, more attempts
+
+So we use an indefinite loop.
+
+🔹 ⚠ Important Production Note
+
+This method is fine, but not fully safe in high concurrency systems.
+
+Two requests could:
+
+Generate same code
+
+Both pass exists?
+
+Both save → duplicate error
+
+So you MUST also add:
+
+validates :referral_code, uniqueness: true
+
+
+And ideally a database unique index:
+
+add_index :users, :referral_code, unique: true
+
+
+Database uniqueness is the real guarantee.

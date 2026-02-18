@@ -1,0 +1,42 @@
+What is NoSQL?
+
+	NoSQL = “Not Only SQL” — a type of database that doesn’t rely on traditional relational tables.
+
+	Stores data in flexible ways, not just rows and columns
+
+	Designed for high scalability, high throughput, and unstructured data
+
+	Often used in microservices, real-time apps, and analytics pipelines
+
+2️⃣ Why NoSQL is used in your stack
+
+	Your system handles high-concurrency events (via Kafka)
+
+	Events can be unstructured or semi-structured (e.g., order metadata, user actions, analytics events)
+
+	NoSQL allows fast reads/writes and horizontal scaling
+
+Example:
+
+Order Service → creates order → produces event → stores summary in NoSQL DB
+Analytics Service → reads from Kafka → writes aggregated metrics in NoSQL DB
+
+3️⃣ Key Types of NoSQL
+
+
+| Type              | Storage Model                 | Use Case Example                                       |
+| ----------------- | ----------------------------- | ------------------------------------------------------ |
+| **Document DB**   | JSON-like documents           | MongoDB, CouchDB → store order metadata, user profiles |
+| **Key-Value**     | Key → Value pairs             | Redis, DynamoDB → caching, session storage             |
+| **Column-Family** | Columns grouped into families | Cassandra, HBase → analytics, time-series              |
+| **Graph DB**      | Nodes & edges                 | Neo4j → social connections, recommendations            |
+
+4️⃣ Interview-Perfect Answer
+
+“NoSQL databases are used for high-throughput, flexible, and scalable storage of unstructured or semi-structured data. In our stack, we could use DynamoDB or MongoDB to store event data from Kafka or aggregated analytics because they allow fast reads/writes and horizontal scaling, unlike traditional relational databases.”
+
+5️⃣ Simple Analogy
+
+SQL = spreadsheet → rows and columns
+
+NoSQL = flexible filing cabinet → can store documents of different shapes and sizes, or just key-value pairs

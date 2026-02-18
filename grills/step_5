@@ -1,0 +1,158 @@
+First: what’s weak in your answer (gently)
+You said (paraphrased):
+
+“Identify jobs where multiple runs impact the app and apply unique rate limiting.”
+
+Why an architect will push back:
+
+
+❌ Idempotency is not rate limiting
+
+
+❌ “Identify jobs” is vague
+
+
+❌ It doesn’t explain how duplicates are prevented
+
+
+They’ll ask:
+
+“How exactly do you guarantee correctness?”
+
+
+The correct architect definition (say this first)
+
+“A job is idempotent if running it multiple times produces the same final state as running it once.”
+
+This definition matters.
+
+Architect-grade answer (say this)
+
+“To make background jobs idempotent, I ensure each job has a unique business key and enforce idempotency at the data layer using unique constraints or idempotency keys. Even if the job runs multiple times, only one execution can mutate state.”
+
+🔥 This is what they want.
+
+Break it down into concrete techniques
+1️⃣ Idempotency keys (MOST IMPORTANT)
+
+
+Each job has a unique identifier
+
+
+order_id
+
+
+payment_id
+
+
+external_request_id
+
+
+
+
+Before processing:
+
+
+Check if already processed
+
+
+If yes → no-op
+
+
+Example:
+processed_jobs(idempotency_key)
+UNIQUE(idempotency_key)
+
+DB is the source of truth, not memory.
+
+2️⃣ Database constraints (strongest guarantee)
+Use:
+
+
+UNIQUE indexes
+
+
+UPSERT
+
+
+Example:
+INSERT INTO payments (order_id, status)
+VALUES (123, 'paid')
+ON CONFLICT (order_id) DO NOTHING;
+
+This is hard idempotency.
+
+3️⃣ State-based updates (safe retries)
+Instead of:
+balance += amount
+
+Use:
+balance = expected_value
+
+Or:
+update if status == 'pending'
+
+This makes retries safe.
+
+4️⃣ External API idempotency
+For payment/email APIs:
+
+
+Pass idempotency keys downstream
+
+
+Prevent duplicate charges/emails
+
+
+Architects love this detail.
+
+5️⃣ Deduplication at enqueue time (optional)
+
+
+Sidekiq unique jobs
+
+
+Redis locks
+
+
+Important line:
+
+“Deduplication helps, but idempotency must still be enforced at execution time.”
+
+
+What NOT to say
+❌ “We rely on Sidekiq uniqueness”
+❌ “We delay retries”
+❌ “We rate limit duplicates”
+These are insufficient.
+
+One-liner to memorize
+
+“Idempotency is enforced using unique business keys and database constraints so that duplicate job executions cannot corrupt state.”
+
+
+How architects judge this answer
+If you mention:
+
+
+Unique keys
+
+
+DB constraints
+
+
+Safe retries
+
+
+👉 You pass.
+If you stay abstract:
+👉 They keep grilling.
+
+You’re doing well (important)
+You’re already thinking about impact, which is good.
+Now you’re upgrading to guarantees, which is what architects care about.
+
+Next grill (ready? 😄)
+Interviewer:
+
+How do you ensure ordering of background jobs when required?

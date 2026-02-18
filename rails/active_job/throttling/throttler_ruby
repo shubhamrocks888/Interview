@@ -1,0 +1,173 @@
+1️⃣ Problem statement (simple)
+
+Allow N requests per time window
+Block anything beyond that.
+
+Example:
+
+3 requests
+
+per 10 seconds
+
+per user
+
+2️⃣ Basic idea (important)
+
+For each user:
+
+Store timestamps of requests
+
+Remove old timestamps
+
+Count remaining requests
+
+Allow or block
+
+3️⃣ Simple in-memory throttler (Ruby)
+
+⚠️ Good for interviews / understanding
+⚠️ Not for multi-server production
+
+Step 1: Throttler class
+class Throttler
+  def initialize(limit:, period:)
+    @limit = limit        # max requests
+    @period = period      # time window in seconds
+    @requests = {}        # user_id => [timestamps]
+  end
+
+Step 2: Allow or block logic
+  def allow?(user_id)
+    now = Time.now.to_i
+
+    @requests[user_id] ||= []
+
+    # remove old requests
+    @requests[user_id].reject! do |timestamp|
+      timestamp <= now - @period
+    end
+
+    if @requests[user_id].size < @limit
+      @requests[user_id] << now
+      true
+    else
+      false
+    end
+  end
+end
+
+Step 3: Use it
+throttler = Throttler.new(limit: 3, period: 10)
+
+3.times { puts throttler.allow?(1) }
+puts throttler.allow?(1)
+
+Output
+true
+true
+true
+false
+
+
+🎯 Done! You’ve built a working throttler.
+
+4️⃣ Explain this in interviews (very important)
+
+Say this:
+
+“I store request timestamps per user, clean up expired entries, and allow the request only if the count is below the limit.”
+
+That’s exactly what interviewers want to hear.
+
+5️⃣ Slight improvement (memory cleanup)
+
+Without cleanup, memory grows.
+
+@requests.delete(user_id) if @requests[user_id].empty?
+
+6️⃣ Thread-safe version (advanced)
+
+In real servers, multiple threads may call allow?.
+
+require 'thread'
+
+class Throttler
+  def initialize(limit:, period:)
+    @limit = limit
+    @period = period
+    @requests = {}
+    @mutex = Mutex.new
+  end
+
+  def allow?(user_id)
+    @mutex.synchronize do
+      now = Time.now.to_i
+      @requests[user_id] ||= []
+
+      @requests[user_id].reject! { |t| t <= now - @period }
+
+      if @requests[user_id].size < @limit
+        @requests[user_id] << now
+        true
+      else
+        false
+      end
+    end
+  end
+end
+
+7️⃣ Why this is NOT production-ready ❌
+
+Be ready to explain:
+
+Memory-based
+
+Not shared across servers
+
+Resets on restart
+
+Doesn’t scale
+
+8️⃣ Production approach (Redis – concept)
+
+In real systems:
+
+INCR user:1:count
+EXPIRE user:1:count 60
+
+
+If count > limit → block
+
+Redis gives:
+
+atomicity
+
+speed
+
+cross-server consistency
+
+9️⃣ Interview follow-up questions they love
+
+Be ready for:
+
+What happens in distributed systems?
+
+How to avoid race conditions?
+
+Token bucket vs fixed window?
+
+What if Redis is down?
+
+🔥 Bonus: interview one-liner
+
+“In-memory throttling is fine for learning, but production throttling should use Redis or a centralized store.”
+
+If you want next:
+
+implement token bucket in Ruby
+
+write Rack middleware throttler
+
+design OTP throttling system
+
+compare throttling vs Sidekiq retries

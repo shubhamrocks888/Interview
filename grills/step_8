@@ -1,0 +1,73 @@
+The problem
+
+You have dependent jobs:
+
+Job A → Job B → Job C
+
+
+Job B depends on Job A
+
+Job C depends on Job B
+
+Jobs may fail and retry
+
+Sidekiq retries jobs with exponential backoff
+
+Retries can break ordering
+
+So the question is:
+
+How do you guarantee execution order even with retries?
+
+Architect-level approach
+1️⃣ Enforce idempotency first
+
+Every job must be safe to run multiple times
+
+This ensures retrying a job doesn’t corrupt the system
+
+2️⃣ Use dependency management / job chaining
+
+Tools like Sidekiq Pro Batches:
+
+Batch jobs together
+
+Set a callback when all jobs in batch finish
+
+Or implement your own sequence table:
+
+Record job_sequence_number
+
+Process next job only if previous sequence completed
+
+3️⃣ Handle retries carefully
+
+Don’t blindly enqueue dependent jobs
+
+Only enqueue Job B after Job A success
+
+If Job A fails → retry with exponential backoff
+
+Job B waits until Job A completes successfully
+
+4️⃣ Optional: single-worker / serialized queue
+
+For strict sequential jobs:
+
+Use a dedicated queue
+
+Single worker processes jobs one by one
+
+Ordering is preserved
+
+Downside: lower concurrency
+
+Trade-off: correctness vs throughput
+
+5️⃣ Key point for interviews
+
+“Retries can break FIFO ordering, so for dependent jobs we need either idempotency plus dependency tracking, or dedicated sequential queues. Using Sidekiq Batches or a sequence table allows safe execution with guaranteed ordering.”
+
+One-liner killer answer
+
+“For dependent jobs, I enforce idempotency, use job chaining or batches, and only enqueue dependent jobs when the previous job succeeds. For strict sequential execution, I may use a dedicated queue with a single worker to preserve order, balancing throughput and correctness.”

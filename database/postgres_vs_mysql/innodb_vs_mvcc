@@ -1,0 +1,183 @@
+1️⃣ What is InnoDB vs MVCC (core idea)
+
+They are not the same kind of thing.
+
+🔹 InnoDB (MySQL)
+
+Storage engine
+
+Responsible for:
+
+how data is stored on disk
+
+indexes
+
+transactions
+
+locking
+
+MySQL can have multiple storage engines
+
+InnoDB
+
+MyISAM (old)
+
+Memory, etc.
+
+👉 Today: InnoDB = default + mandatory
+
+🔹 MVCC (PostgreSQL)
+
+Concurrency control mechanism
+
+Defines:
+
+how reads and writes happen at the same time
+
+how versions of rows are managed
+
+PostgreSQL has one storage engine
+
+MVCC is deeply built into the core
+
+👉 MVCC is not a plugin — it’s the heart of Postgres.
+
+2️⃣ Important truth (interview trick)
+
+🚨 Both MySQL (InnoDB) and PostgreSQL use MVCC
+
+But:
+
+PostgreSQL → pure MVCC
+
+MySQL InnoDB → MVCC + locking
+
+That difference matters a LOT.
+
+3️⃣ How MVCC works in PostgreSQL (simple)
+
+When a row is updated:
+
+OLD ROW → stays
+NEW ROW → inserted
+
+
+Readers see a snapshot
+
+Writers create new versions
+
+No blocking between readers & writers
+
+Example:
+
+UPDATE users SET name = 'A' WHERE id = 1;
+
+
+Old row is kept
+
+New row is created
+
+Readers continue safely
+
+✔ non-blocking reads
+✔ predictable performance
+
+4️⃣ How InnoDB does it (hybrid approach)
+
+InnoDB:
+
+keeps undo logs
+
+uses row locks
+
+uses gap locks & next-key locks
+
+Reads:
+
+may read from undo logs
+
+may still interact with locks
+
+Example problem:
+
+SELECT ... FOR UPDATE;
+
+
+➡️ Can block other readers/writers
+➡️ Gap locks can block inserts
+
+So:
+
+MVCC exists
+
+but locking is still heavily involved
+
+5️⃣ Why people say “Postgres = MVCC”
+
+Because in PostgreSQL:
+
+MVCC is clean & consistent
+
+No read locks
+
+No gap locks
+
+No phantom locking issues
+
+In MySQL:
+
+MVCC is there
+
+but behavior is less predictable
+
+6️⃣ VACUUM vs Undo logs (big difference)
+PostgreSQL
+
+old row versions stay in table
+
+cleaned later by VACUUM
+
+Pros:
+
+fast reads
+
+simple logic
+
+Cons:
+
+needs vacuum tuning
+
+MySQL (InnoDB)
+
+old versions stored in undo logs
+
+auto-purged internally
+
+Pros:
+
+less visible maintenance
+
+Cons:
+
+undo log pressure
+
+lock interactions
+
+7️⃣ Practical impact (real world)
+
+| Scenario                  | PostgreSQL   | MySQL (InnoDB) |
+| ------------------------- | ------------ | -------------- |
+| High concurrent reads     | 🔥 Excellent | Good           |
+| Reads during heavy writes | 🔥 Stable    | Can degrade    |
+| Complex queries           | 🔥 Better    | OK             |
+| Lock surprises            | Rare         | Common         |
+| Predictability            | High         | Medium         |
+
+
+8️⃣ Interview-ready explanation (say this)
+
+“InnoDB is MySQL’s storage engine, while MVCC is a concurrency control technique. PostgreSQL uses a pure MVCC model where readers never block writers. MySQL’s InnoDB also uses MVCC, but it combines it with locking mechanisms like gap locks, which can affect concurrency under load.”
+
+🔥 One-line killer answer
+
+“PostgreSQL is MVCC-first; InnoDB uses MVCC but still relies heavily on locks.”

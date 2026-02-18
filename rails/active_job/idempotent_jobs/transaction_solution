@@ -1,0 +1,90 @@
+What this line means
+add_index :transactions, :job_id, unique: true
+
+Breakdown:
+
+transactions → table name
+
+job_id → column in that table
+
+unique: true → database guarantees no duplicates
+
+So the database enforces:
+
+There can be only one row with a given job_id.
+
+Why this is powerful for idempotency
+Scenario: job runs twice (very common)
+def perform(user_id, job_id)
+  Transaction.create!(
+    job_id: job_id,
+    user_id: user_id,
+    amount: 100
+  )
+end
+
+First run
+
+✅ Row is inserted
+
+Second run (retry / crash / manual retry)
+
+❌ DB blocks duplicate insert
+❌ Raises ActiveRecord::RecordNotUnique
+
+So:
+
+Only one transaction row ever exists
+
+Your business state stays correct
+
+Why DB constraint is better than Ruby checks
+❌ Ruby-only check (unsafe)
+return if Transaction.exists?(job_id: job_id)
+Transaction.create!(...)
+
+
+Two workers can do this at the same time → duplicate rows 😬
+
+✅ DB constraint (safe)
+
+Database is the final authority
+
+Works across:
+
+multiple Sidekiq processes
+
+multiple servers
+
+crashes
+
+retries
+
+Typical real-world columns used instead of job_id
+
+Sometimes you won’t literally call it job_id.
+
+Examples:
+
+add_index :transactions, :payment_id, unique: true
+add_index :orders, :external_request_id, unique: true
+add_index :emails, [:user_id, :template], unique: true
+
+
+Anything that represents “this action should happen once”.
+
+Interview-ready explanation 🔥
+
+If interviewer asks “How do you use DB constraints for idempotency?”:
+
+We store a unique identifier for the job or business action in a table and add a unique index on it. If the job runs again, the database rejects the duplicate insert, making the job idempotent even across retries and crashes.
+
+Final mental model
+
+Sidekiq can retry jobs
+
+Ruby code can lie
+
+Database never lies
+
+That’s why this pattern is the best.

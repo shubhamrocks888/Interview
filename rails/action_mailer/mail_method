@@ -1,0 +1,222 @@
+Yes — mail has MANY options, not just to and subject.
+Online tests love this question because most people only know those two.
+
+I’ll give you everything you need, clearly categorized and easy to remember.
+
+🔑 mail METHOD — FULL PICTURE
+
+Basic syntax:
+
+mail(options = {})
+
+
+options is a hash.
+
+1️⃣ MOST COMMONLY USED OPTIONS (MUST KNOW)
+mail(
+  to: "user@example.com",
+  subject: "Welcome"
+)
+
+Option	Meaning
+to	Recipient
+subject	Email subject
+2️⃣ VERY COMMON (INTERVIEW FAVORITES)
+mail(
+  to: user.email,
+  from: "support@app.com",
+  cc: "manager@app.com",
+  bcc: "audit@app.com",
+  reply_to: "help@app.com",
+  subject: "Order Confirmed"
+)
+
+Option	Meaning
+from	Sender address
+cc	Carbon copy
+bcc	Blind carbon copy
+reply_to	Reply-to address
+3️⃣ MULTIPLE RECIPIENTS (COMMON MCQ)
+mail(
+  to: ["a@test.com", "b@test.com"],
+  cc: ["c@test.com"]
+)
+
+
+✔ Accepts string or array
+
+4️⃣ HEADERS (RARE BUT IMPRESSIVE)
+mail(
+  to: user.email,
+  subject: "Test",
+  headers: {
+    "X-Custom-Header" => "Value"
+  }
+)
+
+5️⃣ CONTENT TYPE / FORMAT
+mail(
+  to: user.email,
+  subject: "Hello",
+  content_type: "text/html"
+)
+
+
+Usually not needed because Rails infers from views.
+
+6️⃣ ATTACHMENTS (VERY IMPORTANT)
+attachments["invoice.pdf"] = File.read("invoice.pdf")
+
+mail(
+  to: user.email,
+  subject: "Invoice"
+)
+
+
+📌 Attachments are set before calling mail
+
+7️⃣ TEMPLATE OVERRIDES (TRICK QUESTION)
+mail(
+  to: user.email,
+  subject: "Welcome",
+  template_name: "custom_template"
+)
+
+
+Looks for:
+
+custom_template.html.erb
+
+8️⃣ TEMPLATE PATH (RARE)
+mail(
+  to: user.email,
+  subject: "Hello",
+  template_path: "shared/mailer"
+)
+
+9️⃣ DEFAULT OPTIONS (CLEAN CODE)
+class UserMailer < ApplicationMailer
+  default from: "no-reply@app.com"
+
+  def welcome_email(user)
+    @user = user
+    mail(to: user.email, subject: "Welcome")
+  end
+end
+
+🧠 MEMORY TRICK (FOR ONLINE TEST)
+
+Remember T-F-C-B-R-S-A-T
+
+To
+From
+Cc
+Bcc
+Reply_to
+Subject
+Attachments
+Template
+
+
+That alone covers 95% of questions.
+
+❌ COMMON WRONG ASSUMPTIONS
+
+❌ mail sends immediately
+✔ deliver_now / deliver_later sends
+
+❌ View must be passed explicitly
+✔ Auto-mapped by method name
+
+🧪 QUICK PRACTICE (ANSWER IN YOUR HEAD)
+
+Send email to user and admin, attach invoice, set reply_to
+
+attachments["invoice.pdf"] = File.read("invoice.pdf")
+
+mail(
+  to: user.email,
+  cc: "admin@app.com",
+  reply_to: "support@app.com",
+  subject: "Invoice"
+)
+
+✅ INTERVIEW SAFE SUMMARY
+
+If you know:
+
+to
+
+from
+
+cc / bcc
+
+reply_to
+
+attachments
+
+template_name
+
+###############  template_path vs template_name
+
+1️⃣ template_name
+
+What it does:
+
+Lets you override which view file is used for the email.
+
+Only changes the filename, not the folder.
+
+Example:
+
+# Mailer method
+def welcome_email(user)
+  @user = user
+  mail(
+    to: user.email,
+    subject: "Welcome",
+    template_name: "special_welcome"
+  )
+end
+
+
+Rails will look for:
+
+app/views/user_mailer/special_welcome.html.erb
+app/views/user_mailer/special_welcome.text.erb
+
+
+✅ Folder stays the same: user_mailer
+✅ Only the file name changes
+
+2️⃣ template_path
+
+What it does:
+
+Lets you override the folder path where Rails looks for the view.
+
+Useful if you want to reuse a shared template across multiple mailers.
+
+Example:
+
+def order_email(user)
+  @user = user
+  @order = order
+  mail(
+    to: user.email,
+    subject: "Order Confirmed",
+    template_path: "shared/mailer",
+    template_name: "order_notification"
+  )
+end
+
+
+Rails will look for:
+
+app/views/shared/mailer/order_notification.html.erb
+app/views/shared/mailer/order_notification.text.erb
+
+
+✅ Folder is overridden: shared/mailer
+✅ File name is overridden: order_notification
+

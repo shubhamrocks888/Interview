@@ -1,0 +1,73 @@
+1️⃣ In Postgres (most common with Rails)
+
+Suppose you have a users table:
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE,
+    name TEXT,
+    age INT
+);
+
+
+Now you want to insert a row, but if the email already exists, update the name and age.
+
+SQL Query:
+
+INSERT INTO users (email, name, age)
+VALUES
+  ('user1@example.com', 'John', 30),
+  ('user2@example.com', 'Jane', 25)
+ON CONFLICT (email)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  age = EXCLUDED.age;
+
+
+✅ Explanation:
+
+ON CONFLICT (email) → if email already exists (unique constraint)
+
+DO UPDATE SET ... → update the existing row with new values
+
+EXCLUDED.name → refers to the value we are trying to insert
+
+This is exactly what User.upsert_all does behind the scenes in Rails.
+
+2️⃣ In MySQL
+
+If the same table exists in MySQL:
+
+INSERT INTO users (email, name, age)
+VALUES
+  ('user1@example.com', 'John', 30),
+  ('user2@example.com', 'Jane', 25)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  age = VALUES(age);
+
+
+ON DUPLICATE KEY UPDATE is MySQL’s version of upsert
+
+Updates existing row if a unique key conflict occurs
+
+3️⃣ Rails upsert_all Example
+User.upsert_all([
+  { email: "user1@example.com", name: "John", age: 30 },
+  { email: "user2@example.com", name: "Jane", age: 25 }
+], unique_by: :email)
+
+
+Rails automatically generates the SQL above for your DB.
+
+If email exists → update, if not → insert
+
+Key Points
+
+Requires a unique index on the column(s) used for conflict detection (email in our case).
+
+Perfect for batch processing because you can insert/update many rows at once.
+
+Avoids race conditions — DB guarantees atomic insert or update.
+
+Much faster than checking each row manually before insert/update.

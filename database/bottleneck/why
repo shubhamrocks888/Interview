@@ -1,0 +1,123 @@
+DB Bottleneck Questions — Architect-Level Guide
+1️⃣ Understand the problem first
+
+Q: “Database is slow / bottlenecked, what will you do?”
+
+Key idea: Don’t jump to solutions. First, diagnose.
+
+Checklist you should mention:
+
+Is the bottleneck read-heavy or write-heavy?
+
+Are queries slow due to missing indexes?
+
+Are locks / transactions causing contention?
+
+Is hardware or network the constraint?
+
+Are you hitting connection limits?
+
+Architects expect this structured thinking first.
+
+2️⃣ Common solutions
+A. Query optimization
+
+Add proper indexes (single-column, composite, partial)
+
+Avoid SELECT * — fetch only needed columns
+
+Optimize joins, remove N+1 queries
+
+Use EXPLAIN to see query plan
+
+💡 This is the low-hanging fruit and the first thing to mention.
+
+B. Read Scaling
+
+Use read replicas (Postgres / MySQL)
+
+Distribute read traffic across replicas
+
+Use caching for frequently accessed data:
+
+Redis / Memcached
+
+Application-level cache (Rails cache)
+
+Pro tip: Always mention consistency trade-offs (eventually consistent replicas).
+
+C. Write Scaling
+
+Sharding / partitioning data (horizontal scaling)
+
+Queue writes to async jobs (for non-critical writes)
+
+Batch updates / inserts
+
+Architect keywords: partition key, hash-based sharding, write throughput, eventual consistency.
+
+D. Caching
+
+Frequently read data → cache in Redis / Memcached
+
+Materialized views for expensive aggregates
+
+TTL-based cache invalidation
+
+Example: Payment statuses, user profiles, reports
+
+E. Connection / Pooling
+
+Increase DB connection pool if underutilized
+
+Use connection pooling / PgBouncer for Postgres
+
+Avoid long-running transactions
+
+F. Monitoring / Alerting
+
+Track slow queries, locks, deadlocks
+
+Track CPU / memory / IO usage
+
+Track query execution plan changes
+
+Architects want to see data-driven decisions, not guesses.
+
+3️⃣ Bonus: Cloud / infra-level fixes
+
+Upgrade hardware / instance type (CPU / RAM / IO)
+
+Auto-scaling storage for cloud DBs
+
+Multi-AZ deployments for failover
+
+Mention these only after query-level and caching optimizations.
+
+4️⃣ Pitfalls to mention (architects like this)
+
+Don’t just scale vertically blindly → cost + diminishing returns
+
+Be careful with caching → stale data risk
+
+Sharding increases complexity → need careful planning
+
+Async writes → may break consistency guarantees
+
+5️⃣ One-liner killer answer
+
+“I’d first identify the bottleneck—slow queries, contention, or hardware limits. Then I’d optimize queries and indexes, add caching for hot data, scale reads with replicas, partition writes if needed, and monitor the system to make data-driven decisions. Only after that would I consider vertical or horizontal scaling.”
+
+🔥 Architect drill follow-ups
+
+After this, they often ask:
+
+“How do you handle 1B+ rows in a table?”
+
+“How do you prevent hot partitions in sharding?”
+
+“How do you design for high write throughput while keeping consistency?”
+
+“How do you prevent deadlocks?”
+
+These all build on this same logic — diagnose first → optimize → scale → monitor → fail gracefully.

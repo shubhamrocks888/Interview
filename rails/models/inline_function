@@ -1,0 +1,75 @@
+Your code
+if: -> { premium_user? && active? }
+
+What this is
+
+-> { ... } is lambda syntax
+
+Rails accepts it as a callable object
+
+Internally, Rails treats it as a Proc
+
+So conceptually: lambda
+technically in Ruby: Proc object created via lambda syntax
+
+Proof in plain Ruby
+condition = -> { premium_user? && active? }
+
+condition.class
+# => Proc
+
+condition.lambda?
+# => true
+
+
+✔️ Confirms it’s a lambda
+
+How Rails uses it
+
+Rails does NOT execute it immediately.
+
+Instead:
+
+Stores the lambda
+
+Calls it during validation
+
+Executes it in the context of the model instance
+
+That’s why this works:
+
+premium_user?
+active?
+
+
+Without self.
+
+Lambda vs Proc (quick clarity)
+Feature	lambda (->)	Proc
+Syntax	-> {}	Proc.new {}
+return behavior	Returns from lambda	Returns from method
+Arity	Strict	Lenient
+
+Rails supports both, but prefers lambdas.
+
+Rails also allows this form
+if: ->(user) { user.premium_user? && user.active? }
+
+
+Same result, sometimes clearer.
+
+Interview one-liner 🚀
+
+“Yes, -> {} is lambda syntax in Ruby. Rails stores it and evaluates it during validation in the context of the model instance.”
+
+Tiny syntax nitpick 👀
+
+You had an extra | at the end:
+
+if: -> { premium_user? && active? }|
+
+
+❌ Invalid Ruby
+✅ Correct version:
+
+if: -> { premium_user? && active? }

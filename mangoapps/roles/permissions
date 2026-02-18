@@ -1,0 +1,161 @@
+🔐 Permissions Model (RBAC)
+Core idea (say this first)
+
+“We used role-based access control, where roles map to permissions, and permissions map to concrete actions in the system.”
+
+That framing is important.
+
+🧱 Tables involved (quick recap)
+permissions
+id
+name
+description
+
+role_permissions
+role_id
+permission_id
+
+users
+id
+role_id
+
+🧑‍💼 Role → What they can do
+1️⃣ Admin (system owner)
+
+Scope: Global
+
+Typical permissions
+
+Manage users (create, deactivate, assign roles)
+
+Create / edit / delete courses
+
+Create / edit / delete programs
+
+Assign instructors & coordinators
+
+View all enrollments and progress
+
+Access all reports & analytics
+
+Override enrollments or completions
+
+System configuration
+
+Interview-ready line
+
+“Admins had unrestricted access and were responsible for system-wide configuration and governance.”
+
+2️⃣ Coordinator (program-level supervisor)
+
+Scope: Assigned programs / courses
+
+Typical permissions
+
+Create and manage programs (within scope)
+
+Add/remove courses in programs
+
+Control course ordering and rules
+
+Enroll users into programs
+
+View learner progress for assigned programs
+
+Generate program-level reports
+
+Communicate with instructors and learners
+
+Important distinction
+
+“Coordinators had operational control, but not system-level privileges.”
+
+Architects love this clarity.
+
+3️⃣ Instructor (content owner)
+
+Scope: Assigned courses
+
+Typical permissions
+
+Create and update course content
+
+Manage chapters and learning material
+
+View enrollments for their courses
+
+Track learner progress
+
+Grade quizzes / assessments (if applicable)
+
+Trigger course-level notifications
+
+Key sentence
+
+“Instructors owned content and learner outcomes, but couldn’t modify program structure or user roles.”
+
+4️⃣ Learner (end user)
+
+Scope: Self
+
+Typical permissions
+
+View enrolled courses and programs
+
+Consume content
+
+Track personal progress
+
+Complete chapters / assessments
+
+Download certificates (if eligible)
+
+🧠 How permissions were enforced (VERY important)
+Don’t just list permissions — explain enforcement.
+
+“Permissions were enforced at the policy layer, ensuring that access checks were centralized and not scattered across controllers.”
+
+If they ask deeper:
+
+Policies checked:
+
+Role
+
+Ownership (assigned program / course)
+
+Enrollment status
+
+🔍 Likely follow-up questions
+“Can one user have multiple roles?”
+
+Strong answer:
+
+“At the system level, a user had a primary role, but contextual permissions were applied via assignments—like an instructor being assigned to specific courses.”
+
+(You avoided over-complicating with multi-role users 👍)
+
+“How do you prevent privilege escalation?”
+
+Answer:
+
+“Role assignment was restricted to admins, and all sensitive actions were guarded by explicit permission checks.”
+
+“How did you handle future role additions?”
+
+Answer:
+
+“Because permissions were decoupled from roles, adding a new role was mainly a configuration change.”
+
+⚠️ Common mistakes to avoid
+
+❌ hardcoding role checks (if role == admin)
+
+❌ permissions scattered in controllers
+
+❌ no ownership validation
+
+🧠 30-second executive summary
+
+“We implemented RBAC where roles map to permissions and permissions map to actions.
+Admins handled system-level control, coordinators managed program operations, and instructors focused on content and learners.
+Authorization was centralized via policies to keep it secure and maintainable.”

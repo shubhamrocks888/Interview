@@ -1,0 +1,197 @@
+What is JWT? (Very Simple)
+
+JWT (JSON Web Token) is a stateless authentication mechanism
+used to prove who the user is after login.
+
+📌 Instead of storing session data on the server,
+the user carries the proof (token) on every request.
+
+One-line interview definition ⭐
+
+JWT is a compact, stateless token used for securely transmitting authentication information between client and server.
+
+Why JWT is needed (Problem → Solution)
+Without JWT (Session-based auth)
+
+Server stores session in memory / Redis
+
+Scaling servers becomes harder
+
+Session lookup needed on every request
+
+With JWT
+
+Server does not store session
+
+Token itself contains user identity
+
+Easy to scale across microservices
+
+JWT Structure (VERY IMPORTANT)
+
+A JWT has 3 parts, separated by dots (.):
+
+xxxxx.yyyyy.zzzzz
+
+1️⃣ Header
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+
+
+Algorithm used for signing
+
+Token type
+
+2️⃣ Payload (Claims)
+{
+  "user_id": 42,
+  "email": "user@test.com",
+  "role": "admin",
+  "exp": 1700000000
+}
+
+
+User data
+
+exp = expiry time (important!)
+
+Base64 encoded, NOT encrypted
+
+⚠️ Never put passwords here
+
+3️⃣ Signature
+HMACSHA256(
+  base64(header) + "." + base64(payload),
+  secret_key
+)
+
+
+Ensures token was not tampered
+
+Created using server secret
+
+JWT = Header + Payload + Signature
+
+📌 Anyone can read JWT,
+but only server can verify it.
+
+JWT Authentication Flow (Step by Step)
+1️⃣ User logs in
+POST /login
+
+2️⃣ Server verifies credentials
+user = User.authenticate(email, password)
+
+3️⃣ Server generates JWT
+payload = { user_id: user.id, exp: 24.hours.from_now.to_i }
+token = JWT.encode(payload, SECRET_KEY)
+
+4️⃣ Client stores JWT
+
+Browser → localStorage / cookie
+
+Mobile app → secure storage
+
+5️⃣ Client sends JWT on every request
+Authorization: Bearer <jwt_token>
+
+6️⃣ Server verifies JWT
+decoded = JWT.decode(token, SECRET_KEY)[0]
+current_user = User.find(decoded["user_id"])
+
+
+✔ If valid → allow request
+❌ If expired/tampered → 401 Unauthorized
+
+JWT in Microservices (Very Important)
+
+JWT shines here ⭐
+
+Client → API Gateway → User Service → Order Service → Payment Service
+
+
+User logs in once
+
+JWT is verified by any service
+
+No shared session store
+
+👉 Stateless authentication
+
+JWT vs Sessions (Interview Favorite)
+| Feature        | Session | JWT    |
+| -------------- | ------- | ------ |
+| Server storage | Yes     | No     |
+| Stateless      | ❌       | ✅      |
+| Scalability    | Hard    | Easy   |
+| Logout         | Easy    | Hard   |
+| Token size     | Small   | Larger |
+
+JWT Pros
+
+✔ Stateless
+✔ Scales well
+✔ Great for microservices
+✔ No DB lookup per request
+
+JWT Cons (Must Mention)
+
+❌ Cannot easily revoke token
+❌ Token theft = access until expiry
+❌ Payload is readable
+❌ Larger request size
+
+How do we handle Logout with JWT?
+
+Since server doesn’t store session:
+
+✔ Short expiry (exp)
+✔ Refresh tokens
+✔ Token blacklist (Redis)
+✔ Rotate signing keys
+
+JWT Security Best Practices (Say This)
+
+Always use HTTPS
+
+Keep expiry short
+
+Use refresh tokens
+
+Store JWT in HttpOnly cookies
+
+Never store sensitive data
+
+Common Interview Questions & Answers
+Q: Is JWT encrypted?
+
+❌ No, encoded + signed, not encrypted
+
+Q: Can JWT be tampered?
+
+❌ No, signature validation fails
+
+Q: Where do you store JWT?
+
+Browser: HttpOnly cookie
+
+Mobile: Secure storage
+
+Q: JWT vs OAuth?
+
+JWT = token format
+
+OAuth = authorization framework
+
+30-Second Interview Answer (Memorize)
+
+JWT is a stateless authentication mechanism where the server issues a signed token after login. The token contains user identity and expiry, and the client sends it with every request. The server verifies the signature instead of storing session data, which makes JWT ideal for scalable and microservices-based systems.
+
+
+######
+
+Base64 is encoding and reversible.
+HMACSHA256 is a cryptographic signing mechanism that uses hashing with a secret key.
+JWT is encoded and signed, not encrypted.

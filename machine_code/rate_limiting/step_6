@@ -1,0 +1,94 @@
+
+Conceptual Steps
+1️⃣ Two queues
+
+:mailers → main queue for regular emails
+
+:throttled_mailers → separate queue for jobs that exceed the limit
+
+2️⃣ Flow
+
+Fetch the ride → return unless completed
+
+Increment per-minute counter atomically (Rails.cache.increment)
+
+If limit exceeded:
+
+Instead of retrying in the same queue, enqueue the job to :throttled_mailers
+
+Set a wait time if desired (e.g., 1 minute)
+
+Return immediately
+
+Lock ride → check completion_email_sent → send email → mark as sent
+
+3️⃣ Benefits
+
+Main mailer queue stays responsive
+
+Throttled jobs are separated, so you can scale that queue independently
+
+Works well under very high concurrency, no risk of overwhelming the main mailer worker pool
+
+4️⃣ Key points to implement in Rails
+
+You can set the queue dynamically when scheduling:
+
+RideCompletionJob.set(wait: 1.minute, queue: :throttled_mailers).perform_later(ride.id)
+
+
+All other logic (locking, idempotency, rate-limit check) remains the same
+
+Optional: scale the :throttled_mailers queue with more workers if volume is very high
+
+If you want, I can now write the full Rails job code for this throttled-queue version so you can directly use it or study it for a senior-level task.
+
+
+
+
+#####
+
+class RideCompletionJob < ApplicationJob
+  queue_as :mailers
+
+  retry_on StandardError, attempts: 5
+
+  LIMIT = 100
+
+  def perform(ride_id)
+    ride = Ride.find_by(id: ride_id)
+    return unless ride&.completed?
+
+    # Atomic increment with concurrency safety
+    current_count = Rails.cache.increment(
+      email_rate_limit_key,
+      1,
+      initial: 1,
+      expires_in: 1.minute,
+      race_condition_ttl: 1.minute
+    )
+
+    # Smooth retry if limit exceeded
+    if current_count > LIMIT
+      RideCompletionJob.set(wait: 1.minute, queue: :throttled_mailers).perform_later(ride.id)
+      return
+    end
+
+    # Lock ride for idempotency
+    ride.with_lock do
+      return if ride.completion_email_sent
+
+      # Send email
+      RideMailer.ride_completed(ride).deliver_now
+
+      # Mark email as sent
+      ride.update!(completion_email_sent: true)
+    end
+  end
+
+  private
+
+  def email_rate_limit_key
+    "email_rate_limit:#{Time.current.to_i / 60}"
+  end
+end

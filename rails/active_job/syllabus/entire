@@ -1,0 +1,152 @@
+1️⃣ Duplication of jobs → Idempotent jobs (FOUNDATION)
+Problem
+
+Sidekiq is at-least-once
+
+Jobs can run more than once due to:
+
+retries
+
+Redis crash
+
+duplicate enqueue
+
+worker crash
+
+Solution
+
+➡️ Idempotent jobs
+
+How
+
+Business-level request_id
+
+DB uniqueness constraint
+
+find_or_create_by / upsert
+
+This is non-negotiable. Every serious Sidekiq system starts here.
+
+2️⃣ Rate limiting (how often jobs run)
+Problem
+
+External APIs limit requests
+
+You don’t want 1 user to spam jobs
+
+Solution
+
+➡️ Rate limiter
+
+Example
+sidekiq_options rate: { limit: 5, period: 1.minute }
+
+
+Meaning:
+
+Max 5 executions per minute
+
+Extra jobs wait
+
+3️⃣ Unique rate limiter per user
+Problem
+
+One user should not starve others
+
+Rate limits must be scoped
+
+Solution
+
+➡️ Keyed rate limiter
+
+limiter = Sidekiq::Limiter.rate(
+  "reports:user:#{user_id}",
+  5,
+  1.minute
+)
+
+limiter.within_limit do
+  generate_report
+end
+
+
+✔ User A ≠ User B
+✔ Fair usage
+
+4️⃣ Concurrency (how many jobs run in parallel)
+Problem
+
+Too many jobs → DB overload
+
+Too few jobs → slow system
+
+Solution
+
+➡️ Concurrency controls
+
+:concurrency: 10
+
+
+Sidekiq process runs 10 threads
+
+Each thread executes one job
+
+Scaling concurrency ≠ scaling throughput (DB may be bottleneck)
+
+5️⃣ Fair scheduling (avoid starvation)
+Problem
+
+One noisy queue dominates workers
+
+Solution
+
+➡️ Weighted queues
+
+:queues:
+  - [critical, 5]
+  - [default, 3]
+  - [low, 1]
+
+
+Meaning:
+
+Critical jobs picked more often
+
+Low priority still gets CPU time
+
+6️⃣ Throttling (slow down execution)
+Problem
+
+Sudden spike causes DB / API meltdown
+
+Solution
+
+➡️ Throttle execution rate
+
+Example:
+
+Sidekiq::Limiter.concurrent("api", 2)
+
+
+Only 2 jobs at a time
+
+Others wait
+
+🔗 How everything fits together (BIG PICTURE)
+ENQUEUE
+   ↓
+Duplicate enqueue? → Idempotency
+   ↓
+Too many jobs? → Rate limit / Throttle
+   ↓
+Too many parallel jobs? → Concurrency control
+   ↓
+One user spamming? → Per-user limiter
+   ↓
+One queue starving others? → Fair scheduling
+   ↓
+EXECUTE SAFELY
+
+Interview killer summary (say this)
+
+In Sidekiq, jobs are at-least-once, so duplication is handled using idempotent jobs with business-level keys and database constraints. Rate limiting and throttling protect external systems, concurrency controls protect internal resources, per-user limiters ensure fairness, and weighted queues prevent starvation.

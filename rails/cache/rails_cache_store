@@ -1,0 +1,89 @@
+Correct statement
+
+	Rails.cache stores data as key–value pairs, and the value can be almost anything.
+
+What “value can be anything” really means
+
+Rails.cache can store any Ruby object that can be serialized.
+
+Common valid values
+Rails.cache.write("a", 1)                 # Integer
+Rails.cache.write("b", "hello")           # String
+Rails.cache.write("c", [1, 2, 3])          # Array
+Rails.cache.write("d", { x: 1 })           # Hash
+Rails.cache.write("e", User.find(1))       # ActiveRecord object ⚠️
+Rails.cache.write("f", Time.current)       # Time
+
+
+Rails serializes these → stores bytes → deserializes on read.
+
+
+What you should NOT store (even if it works)
+	❌ Objects with live state
+	Rails.cache.write("conn", ActiveRecord::Base.connection)
+	Rails.cache.write("proc", -> { do_something })
+	Rails.cache.write("io", File.open("a.txt"))
+
+
+	These either:
+
+	Fail to serialize
+
+	Deserialize incorrectly
+
+	Cause subtle bugs
+
+⚠️ Special warning: ActiveRecord objects
+
+This works:
+
+Rails.cache.write("user", User.first)
+
+
+But it’s dangerous because:
+
+Stale attributes
+
+Associations not loaded
+
+Schema changes break deserialization
+
+Better:
+Rails.cache.write("user", User.first.attributes)
+
+or:
+
+Rails.cache.write("user", User.first.as_json)
+
+
+Key rules to memorize
+	Rule 1
+
+	Value must be serializable
+
+	Rule 2
+
+	Value must be safe to be stale
+
+	Rule 3
+
+	Value must be recomputable
+
+	If any rule fails → ❌ don’t cache it.
+
+
+
+What about keys?
+
+Keys are:
+
+Strings (recommended)
+
+Symbols (converted to strings)
+
+Rails.cache.write("users/count", 10)
+Rails.cache.write(:users_count, 10)
+
+Interview-ready one-liner
+
+Rails.cache stores key–value pairs where the value can be any serializable Ruby object, but it should only be used for temporary, reproducible data.

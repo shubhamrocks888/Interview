@@ -1,0 +1,198 @@
+This code is a rate limiter, not a “true” throttler.
+People often call it throttling, but algorithmically it’s fixed-window rate limiting.
+
+Now let’s break that down clearly.
+
+1️⃣ What your code actually implements
+
+Your code:
+
+current = Rails.cache.increment(key, 1, expires_in: @period)
+current <= @limit
+
+
+This is:
+
+Fixed Window Counter Rate Limiting
+
+Meaning
+
+Allow N requests
+
+Per fixed time window
+
+Then hard block everything else
+
+Example:
+
+limit = 5
+
+period = 60 seconds
+
+Requests 1–5 → allowed
+Request 6+   → blocked
+Window resets after 60s
+
+
+That is rate limiting, not true throttling.
+
+2️⃣ Why people still call this “throttling”
+
+In real systems:
+
+Rails apps
+
+Rack::Attack
+
+Nginx
+
+API gateways
+
+People casually say “throttle requests” even when they mean rate limit.
+
+So:
+
+Naming → throttling
+
+Behavior → rate limiting
+
+This is accepted industry shorthand.
+
+3️⃣ What a true throttler does (conceptually)
+
+A true throttler:
+
+Gradually slows requests
+
+Smooths bursts
+
+Does not hard-block immediately
+
+Example behavior:
+
+Request rate	Result
+Low	Fast
+Medium	Slight delay
+High	Large delay
+Extreme	Block
+
+Your code:
+
+❌ no delays
+
+❌ no smoothing
+
+❌ no gradual slowdown
+
+✅ hard block only
+
+4️⃣ Key difference in one table
+
+| Feature           | Your code | Rate Limiter | True Throttler |
+| ----------------- | --------- | ------------ | -------------- |
+| Fixed request cap | ✅         | ✅            | ❌              |
+| Hard blocking     | ✅         | ✅            | ❌              |
+| Sliding window    | ❌         | ❌            | Often          |
+| Gradual slowdown  | ❌         | ❌            | ✅              |
+| Burst smoothing   | ❌         | ❌            | ✅              |
+| Common in Rails   | ✅         | ✅            | Rare           |
+
+
+5️⃣ Why fixed-window rate limiting is used anyway
+
+Because it’s:
+
+Simple
+
+Fast
+
+Atomic
+
+Easy to reason about
+
+Good enough for most APIs
+
+Rails apps usually care more about:
+
+protecting DB
+
+preventing abuse
+
+stopping brute force
+
+Not about smoothing traffic perfectly.
+
+6️⃣ The classic drawback of your code (important)
+Boundary problem
+
+Example:
+
+limit = 5
+
+window = 60s
+
+User sends:
+
+5 requests at 00:59
+5 requests at 01:00
+
+
+That’s 10 requests in 1 second, but still allowed.
+
+This is a fixed window weakness.
+
+7️⃣ What would make it “more throttling-like”
+
+You’d need:
+
+Sliding window
+
+Token bucket
+
+Leaky bucket
+
+Delays instead of blocks
+
+Example:
+
+Token bucket → allows bursts but enforces average rate
+
+Leaky bucket → smooths traffic
+
+Those are true throttling algorithms.
+
+8️⃣ Interview-perfect answer 🎯
+
+You can say:
+
+“This implementation is a fixed-window rate limiter. It hard-blocks requests once the limit is exceeded. Throttling usually implies gradual slowing or smoothing, which this code doesn’t do.”
+
+That answer shows:
+
+technical accuracy
+
+maturity
+
+real-world understanding
+
+9️⃣ Why this distinction rarely matters in Rails apps
+
+Because:
+
+Most Rails apps just need protection
+
+APIs expect 429 responses
+
+Delaying requests complicates UX
+
+So this approach is practical and correct.
+
+10️⃣ Final takeaway
+
+✅ Your code = rate limiter
+
+❌ Not a true throttler
+
+✅ Industry often uses terms interchangeably
+
+✅ Perfect for Rails production use

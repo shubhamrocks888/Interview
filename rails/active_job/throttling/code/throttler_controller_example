@@ -1,0 +1,17 @@
+class SessionsController < ApplicationController
+  before_action :throttle_login, only: :create
+
+  def create
+    # login logic
+  end
+
+  private
+
+  def throttle_login
+    throttler = Throttler.new(limit: 5, period: 1.minute)
+
+    unless throttler.allow?(request.ip)
+      render json: { error: "Too many attempts" }, status: :too_many_requests
+    end
+  end
+end

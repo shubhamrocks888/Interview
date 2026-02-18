@@ -1,0 +1,181 @@
+| Method                    | Input                                | Output                 | Notes                                   |
+| ------------------------- | ------------------------------------ | ---------------------- | --------------------------------------- |
+| `.as_json`                | AR object, hash, array               | Ruby Hash/Array        | JSON-ready structure, not string        |
+| `.to_json`                | Anything that responds to `.as_json` | JSON string            | Rails convenience, often used in APIs   |
+| `JSON.generate(obj)`      | Ruby object                          | JSON string            | Pure Ruby method, similar to `.to_json` |
+| `JSON.parse(json_string)` | JSON string                          | Hash/Array/String/etc. | Convert back to Ruby, not AR object     |
+
+
+
+
+1️⃣ .as_json
+
+Purpose: Convert a Ruby object into a JSON-friendly Ruby structure (Hash, Array, String, Number, Boolean, nil).
+
+Returns: Ruby object (Hash/Array), not a JSON string.
+
+Does not include: Associations by default (can be added with include: option).
+
+user = User.first
+user.as_json
+# => { "id" => 1, "name" => "Alice", "email" => "alice@test.com" }
+
+
+Options:
+
+only: – include only specific fields
+
+except: – exclude fields
+
+methods: – include model methods
+
+include: – include associations
+
+user.as_json(only: [:id, :name], include: :posts)
+
+2️⃣ .to_json
+
+Purpose: Convert an object into an actual JSON string.
+
+Returns: JSON text.
+
+Works on: Anything that responds to .as_json.
+
+Commonly used for: APIs, sending JSON over HTTP, caching JSON strings.
+
+user.to_json
+# => '{"id":1,"name":"Alice","email":"alice@test.com"}'
+
+
+You can pass the same options as .as_json (they get passed internally).
+
+user.to_json(only: [:id, :name])
+# => '{"id":1,"name":"Alice"}'
+
+3️⃣ JSON.generate(obj)
+
+Purpose: Ruby standard library method to generate a JSON string from a Ruby object.
+
+Requires: Object must be JSON-compatible (Hash, Array, String, Number, Boolean, nil).
+
+JSON.generate(user.as_json)
+# => '{"id":1,"name":"Alice","email":"alice@test.com"}'
+
+
+Similar to .to_json, but pure Ruby, not Rails-specific.
+
+4️⃣ JSON.parse(json_string)
+
+Purpose: Convert JSON text back into Ruby objects.
+
+Returns: Hash, Array, String, Number, Boolean, or nil.
+
+Note: Does not reconstruct the original class (e.g., ActiveRecord object).
+
+json_string = user.to_json
+parsed = JSON.parse(json_string)
+# => { "id" => 1, "name" => "Alice", "email" => "alice@test.com" }
+parsed.class
+# => Hash
+
+
+Can use symbolize_names: true to get symbol keys:
+
+JSON.parse(json_string, symbolize_names: true)
+# => { id: 1, name: "Alice", email: "alice@test.com" }
+
+
+✅ Rule of thumb
+
+Use .as_json → when you need hash representation of an object (caching, preparing API response).
+
+Use .to_json → when you need JSON text (API response, storage in text file, sending over HTTP).
+
+Use JSON.parse → when reading JSON text back into Ruby objects.
+
+
+
+
+
+
+
+
+
+h! Let’s go carefully, step by step, because subtle differences matter here.
+
+1️⃣ JSON.parse(...)
+
+JSON.parse expects a JSON-formatted string, not a number or boolean directly.
+
+Correct usage:
+
+JSON.parse("1")      # works
+JSON.parse("true")   # works
+JSON.parse('"1"')    # works (string in JSON quotes)
+
+
+Incorrect usage:
+
+JSON.parse(1)        # ❌ ERROR: JSON::ParserError
+JSON.parse(true)     # ❌ ERROR: JSON::ParserError
+
+
+Why:
+
+JSON.parse only accepts strings.
+
+If you pass a raw Ruby number (1) or boolean (true), Ruby tries to treat it as JSON text → fails.
+
+✅ Correct examples:
+
+JSON.parse("1")      # => 1   (Fixnum)
+JSON.parse("true")   # => true (boolean)
+JSON.parse('"1"')    # => "1" (string)
+
+2️⃣ .as_json
+
+.as_json exists on almost all Ruby objects in Rails.
+
+Purpose: Convert Ruby object into a JSON-ready Ruby object (Hash, Array, string, number, boolean).
+
+Examples:
+
+1.as_json      # => 1
+"1".as_json    # => "1"
+true.as_json   # => true
+nil.as_json    # => nil
+
+
+Works on any primitive type, AR objects, arrays, hashes, etc.
+
+Unlike JSON.parse, .as_json doesn’t parse JSON — it just prepares the object for JSON serialization.
+
+3️⃣ Combining .as_json + to_json + JSON.parse
+1.as_json.to_json          # => "1"    (JSON string)
+JSON.parse(1.as_json.to_json)  # => 1    (back to Fixnum)
+
+"1".as_json.to_json        # => "\"1\"" (JSON string)
+JSON.parse("1".as_json.to_json) # => "1"  (back to string)
+
+true.as_json.to_json       # => "true"
+JSON.parse(true.as_json.to_json) # => true
+
+
+✅ This is the round-trip workflow: Ruby object → .as_json → .to_json → JSON.parse → Ruby object
+
+4️⃣ Quick table
+| Ruby object | `.as_json` | `.as_json.to_json` | `JSON.parse(.to_json)` |
+| ----------- | ---------- | ------------------ | ---------------------- |
+| `1`         | 1          | `"1"`              | 1                      |
+| `"1"`       | "1"        | `"\"1\""`          | "1"                    |
+| `true`      | true       | `"true"`           | true                   |
+| `nil`       | nil        | `"null"`           | nil                    |
+
+
+💡 Key takeaway:
+
+.as_json → safe on any Ruby object
+
+.to_json → converts it to JSON text
+
+JSON.parse → only works on JSON strings, not raw Ruby objects

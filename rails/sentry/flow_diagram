@@ -1,0 +1,72 @@
+🖼 Rails + Sentry Exception Flow Diagram
+Client Request (API)
+        │
+        ▼
+Rails Controller Action
+        │
+        ▼
+    Service Object / Model
+        │
+        ▼
+  Exception occurs? ────┐
+        │               │
+        │ Yes           │ No
+        ▼               ▼
+   Rescue Block?        Return normal response
+        │
+   ┌────┴────┐
+   │         │
+  Yes        No
+   │         │
+   ▼         ▼
+Capture & log?   Rails default 500
+  │
+  ▼
+Sentry.capture_exception(e)  ──► Sends error to Sentry Dashboard
+  │
+  ▼
+Add context (optional)
+  │
+  ▼
+Sentry Dashboard
+  ├─ Stack Trace
+  ├─ User Info
+  ├─ Tags (order_id, job, etc.)
+  ├─ Extra Data
+  └─ Alerts via Email/Slack
+
+🔹 How to explain in interview
+
+Client calls API → hits Rails controller
+
+Controller / Service Object runs → might raise exception
+
+Rescue block captures expected exceptions
+
+Optionally logs via Rails.logger
+
+Sends error to Sentry via Sentry.capture_exception
+
+Sentry records: stack trace, tags, extra info, user context
+
+Unexpected exceptions → bubble up → Rails renders 500 + Sentry auto-captures
+
+Interview line:
+“I capture expected exceptions in rescue blocks, log them, report to Sentry with context, and let unexpected errors bubble up so Rails and Sentry handle them automatically. This keeps monitoring reliable and debugging fast.”
+
+🔹 Bonus tip
+
+You can show async jobs too:
+
+Background Job (Sidekiq)
+        │
+        ▼
+  Job performs work
+        │
+Exception? ──► Retry_on / discard_on rules
+        │
+        ▼
+Sentry.capture_exception(e) (logs + alerts)
+
+
+Interviewers like it when you mention retry_on / discard_on in Sidekiq jobs.

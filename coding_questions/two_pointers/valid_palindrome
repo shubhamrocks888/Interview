@@ -1,0 +1,77 @@
+Valid Palindrome — what the question is actually asking
+
+Typical wording:
+
+“Given a string, determine if it is a palindrome, considering only alphanumeric characters and ignoring cases.”
+
+That sentence hides most of the difficulty.
+
+What “palindrome” means here
+
+A palindrome reads the same forward and backward.
+
+Classic:
+
+"madam"
+"racecar"
+
+
+But this problem is not about simple strings.
+
+The real rules (this is important)
+1️⃣ Ignore non-alphanumeric characters
+
+That means:
+
+spaces
+
+punctuation
+
+symbols
+
+All of these are skipped, not compared.
+
+Example:
+
+"A man, a plan, a canal: Panama"
+
+
+We do NOT compare commas, spaces, or colons.
+
+What actually gets compared:
+
+amanaplanacanalpanama
+
+2️⃣ Ignore case
+
+'A' == 'a'
+
+Case differences do not matter
+
+
+
+######
+
+def valid_palindrome(str)
+  left = 0
+  right = str.length - 1
+
+  while left < right
+    if !str[left].match?(/[a-z0-9]/i)
+      left += 1
+    elsif !str[right].match?(/[a-z0-9]/i)
+      right -= 1
+    elsif str[left].downcase != str[right].downcase
+      return false
+    else
+      left += 1
+      right -= 1
+    end
+  end
+
+  true
+end
+
+p valid_palindrome("n a m a N")                       # true
+p valid_palindrome("A man, a plan, a canal: Panama") # true
+p valid_palindrome("race a car!")                    # false

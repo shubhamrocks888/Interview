@@ -1,0 +1,34 @@
+| Symbol                   | HTTP Code | Meaning / Usage                                                                |
+| ------------------------ | --------- | ------------------------------------------------------------------------------ |
+| `:ok`                    | 200       | Request successful. Usually for GET requests or successful updates.            |
+| `:created`               | 201       | Resource successfully created. Usually used after POST that creates something. |
+| `:accepted`              | 202       | Request accepted but not processed yet.                                        |
+| `:no_content`            | 204       | Request succeeded but no response body. Often DELETE requests.                 |
+| `:bad_request`           | 400       | Client sent a bad request.                                                     |
+| `:unauthorized`          | 401       | Authentication failed.                                                         |
+| `:forbidden`             | 403       | User is authenticated but not allowed to access.                               |
+| `:not_found`             | 404       | Resource not found.                                                            |
+| `:unprocessable_entity`  | 422       | Validation errors, e.g., model save fails.                                     |
+| `:internal_server_error` | 500       | Server error.                                                                  |
+
+
+##
+
+def destroy
+  user = User.find(params[:id])
+  user.destroy
+  head :no_content                            # 204 No Content, no body
+end
+
+
+#####
+
+✅ Rules of thumb
+
+:ok → success, mostly for GET or PUT/PATCH
+
+:created → after creating a new resource (POST)
+
+:no_content → after deletion
+
+:unprocessable_entity → validation errors

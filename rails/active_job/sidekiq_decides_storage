@@ -1,0 +1,98 @@
+hort answer: ❌ No. Redis does NOT decide this.
+✔️ Sidekiq decides everything.
+
+Redis is dumb storage. Sidekiq is the brain.
+
+Who decides Redis data types?
+❌ Redis does NOT
+
+Choose list vs sorted set
+
+Know what a “job” is
+
+Know pending / retry / scheduled states
+
+Move jobs between states
+
+Redis only:
+
+“You told me to LPUSH → I store a list.”
+
+✔️ Sidekiq decides
+
+Sidekiq’s Ruby code explicitly says:
+
+Pending jobs → LIST
+
+Retry jobs → SORTED SET
+
+Scheduled jobs → SORTED SET
+
+Dead jobs → SORTED SET
+
+Running jobs → HASH / SET
+
+Redis just executes commands.
+
+Mapping: Job state → Redis data type
+
+| Job State         | Who decided? | Redis Data Type | Redis Key      |
+| ----------------- | ------------ | --------------- | -------------- |
+| Pending           | Sidekiq      | List            | `queue:<name>` |
+| Scheduled         | Sidekiq      | Sorted Set      | `schedule`     |
+| Retry             | Sidekiq      | Sorted Set      | `retry`        |
+| Dead              | Sidekiq      | Sorted Set      | `dead`         |
+| Running (monitor) | Sidekiq      | Hash            | `workers`      |
+| Processes         | Sidekiq      | Set             | `processes`    |
+
+
+FIFO queue
+
+Fast push/pop
+
+Atomic operations
+
+Scheduled / Retry → SORTED SET
+
+Time-based execution
+
+Sorted by timestamp
+
+Efficient polling
+
+Running → HASH
+
+Key-value structure
+
+Easy to update heartbeats
+
+Important mental model
+
+Redis is like a hard disk
+Sidekiq is the file system + OS
+
+Redis doesn’t know:
+
+what files are
+
+what folders are
+
+what a job is
+
+Sidekiq defines the structure.
+
+Interview-ready one-liner 💡
+
+Redis does not decide job storage; Sidekiq explicitly chooses Redis data structures like lists and sorted sets based on job state. Redis simply stores whatever Sidekiq tells it to.
+
+Bonus: Where this logic lives
+
+In Sidekiq source code:
+
+Sidekiq::Client
+
+Sidekiq::Scheduled
+
+Sidekiq::RetrySet
+
+Sidekiq::DeadSet

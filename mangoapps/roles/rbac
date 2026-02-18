@@ -1,0 +1,125 @@
+🔐 What is RBAC?
+
+RBAC = Role-Based Access Control
+
+“RBAC is an authorization model where access is granted based on roles, not on individual users.
+Each role has a predefined set of permissions, and users inherit permissions through their assigned role.”
+
+That’s the clean definition.
+
+🧱 Core idea (very important)
+User → Role → Permissions → Actions
+
+
+Users never get direct access to actions.
+They get a role, and the role decides what they can do.
+
+🧑‍💼 Why Admin can access everything
+How it works logically
+
+Admin role is assigned all permissions
+
+Policies check:
+
+If user has permission → allow
+
+Else → deny
+
+So:
+
+Admin passes every permission check
+
+Coordinators & instructors only pass scoped checks
+
+🧠 Interview-ready explanation (say this)
+
+“Admins don’t bypass authorization logic.
+They simply have all permissions assigned to their role, so they naturally pass every permission check.”
+
+That sentence is 🔥
+
+🧱 Example permissions
+permissions
+manage_users
+manage_courses
+manage_programs
+enroll_users
+view_all_reports
+update_course_content
+view_course_progress
+
+Role → Permission mapping
+Role	Permissions
+Admin	All permissions
+Coordinator	manage_programs, enroll_users, view_program_reports
+Instructor	update_course_content, view_course_progress
+🔍 How coordinators & instructors are restricted
+1️⃣ Permission-level restriction
+
+They don’t have system-level permissions like:
+
+manage_users
+
+assign_roles
+
+2️⃣ Scope-level restriction (VERY important)
+
+Even if they have a permission, it’s scoped.
+
+Example:
+
+Instructor can update_course_content
+
+BUT only for courses they’re assigned to
+
+Say this:
+
+“Permissions were always evaluated together with ownership or assignment checks.”
+
+Architects expect this.
+
+🧠 How authorization is enforced (implementation level)
+Centralized policies
+
+Instead of:
+
+if user.role == 'admin'
+
+
+We do:
+
+authorize :course, :update?
+
+
+And inside policy:
+
+Check permission
+
+Check ownership
+
+This keeps logic:
+
+Centralized
+
+Testable
+
+Secure
+
+🔍 Follow-up they might ask
+“How do you prevent privilege escalation?”
+
+Answer:
+
+“Only admins can assign roles or permissions, and all such actions are audited.”
+
+“Why not just check role in controller?”
+
+Answer:
+
+“Hardcoded role checks don’t scale. RBAC keeps authorization declarative and avoids duplication.”
+
+🧠 20-second summary (perfect closing)
+
+“RBAC works by assigning permissions to roles and roles to users.
+Admins can access everything because their role has all permissions, not because they bypass checks.
+Coordinators and instructors are restricted both by permission set and by ownership scope, with authorization enforced centrally via policies.”

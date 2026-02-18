@@ -1,0 +1,158 @@
+First: important correction ❗
+
+❌ receive is NOT asynchronous
+✅ send is asynchronous, receive is blocking (synchronous)
+
+This distinction is critical.
+
+1️⃣ What exactly is asynchronous here?
+send
+send(parent, {:hello, self()})
+
+
+Asynchronous ✅
+
+Fire-and-forget
+
+Child does not wait
+
+Child continues or exits immediately
+
+So yes:
+
+Child sending a message does not depend on parent at all.
+
+2️⃣ What exactly is receive then?
+receive do
+  {:hello, pid} -> ...
+end
+
+
+Blocking
+
+Runs inside the parent
+
+Parent waits until a matching message is found
+
+So:
+
+Parent decides when and what to read from its mailbox.
+
+3️⃣ Your confusion (very common) — let’s restate it
+
+You said:
+
+child sends a msg to parent but now it depends upon parent since mailbox used to read other msgs
+
+Correct interpretation:
+
+❌ Child does not depend on parent
+
+✅ Parent controls when it reads the mailbox
+
+✅ Messages wait patiently in mailbox
+
+Mailbox = buffer, not execution.
+
+4️⃣ Timeline example (this will fix it)
+Code
+send(parent, :hello)
+send(parent, :bye)
+
+Parent mailbox now:
+[:hello, :bye]
+
+
+Nothing happens yet.
+
+Now parent runs:
+receive do
+  :bye -> IO.puts("BYE")
+end
+
+
+Result:
+
+Parent scans mailbox
+
+Finds :bye
+
+Removes :bye
+
+Prints "BYE"
+
+Mailbox becomes:
+
+[:hello]
+
+
+👉 Child already finished long ago
+
+5️⃣ Key rule (MEMORIZE THIS)
+
+Sending a message never depends on the receiver’s state. Receiving a message depends entirely on the receiver’s code.
+
+This is the exact sentence interviewers want to hear.
+
+6️⃣ What if parent is busy doing something else?
+
+No problem.
+
+Messages accumulate
+
+Mailbox grows
+
+Parent reads later
+
+This is decoupling.
+
+7️⃣ What if parent never calls receive?
+
+Messages stay forever
+
+Eventually memory pressure
+
+But child is unaffected
+
+8️⃣ Why BEAM is designed this way (WHY question)
+
+Because:
+
+Processes run independently
+
+No shared memory
+
+No locks
+
+No callbacks
+
+🔥 Interview line:
+
+Message passing decouples execution timing between processes.
+
+9️⃣ Very important comparison (Rails)
+Rails
+
+Method call → caller waits
+
+Tight coupling
+
+Elixir
+
+Message send → no waiting
+
+Loose coupling
+
+🔑 Final mental model (LOCK THIS IN)
+
+send = drop letter in mailbox
+
+mailbox = storage
+
+receive = open mailbox and pick letters
+
+sender and receiver timelines are independent
+
+One-line interview answer (PERFECT)
+
+send is asynchronous and never waits for the receiver, while receive blocks the current process and pattern-matches messages from its mailbox.

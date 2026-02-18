@@ -1,0 +1,67 @@
+Yes — perform_later can be combined with scheduling so the job runs in the future, not immediately. Let me explain clearly.
+
+1️⃣ Basic perform_later
+MyJob.perform_later(1)
+
+
+Enqueues the job immediately in the queue (queue: default or the one defined)
+
+Sidekiq picks it as soon as a worker thread is free
+
+2️⃣ Scheduling a job in the future
+
+You can tell Rails/ActiveJob to wait for some time before executing:
+
+MyJob.set(wait: 10.minutes).perform_later(1)
+
+
+or schedule at a specific time:
+
+MyJob.set(wait_until: Date.tomorrow.noon).perform_later(1)
+
+How it works internally
+
+Rails/Sidekiq serializes the job JSON
+
+Puts it into Redis sorted set schedule, not the normal queue
+
+Sorted set score = timestamp when the job should run
+
+Sidekiq scheduler poller continuously checks the schedule set
+
+When timestamp ≤ current time → job is moved to the original queue for execution
+
+Example
+class MyJob < ApplicationJob
+  queue_as :critical
+end
+
+# Schedule job 5 minutes later
+MyJob.set(wait: 5.minutes).perform_later(user.id)
+
+
+Redis flow:
+
+ZADD schedule 1700000300 <job_json>
+(wait 5 minutes)
+LPUSH queue:critical <job_json>
+Worker picks it up → perform
+
+
+queue_as determines the queue when it finally runs
+
+retry still applies if job fails
+
+3️⃣ Key points
+
+perform_later by itself → immediate enqueue
+
+.set(wait: ...) or .set(wait_until: ...) → scheduled for future execution
+
+Scheduled jobs eventually move to the queue for normal execution
+
+Retry + queue logic works as usual
+
+Interview-ready one-liner 💡
+
+perform_later enqueues a job immediately, but combined with .set(wait: …) or .set(wait_until: …) it schedules the job to run in the future; Sidekiq stores it in the scheduled set and moves it to the queue when the time comes.

@@ -1,0 +1,118 @@
+3️⃣ Enrollment Workflow (Program & Course)
+
+They’ll usually ask this as:
+
+“Walk me through what happens when a user enrolls into a program.”
+
+🧭 High-level flow (say this first)
+
+“Enrollment was treated as a transactional workflow.
+When a user enrolled in a program, we created a program enrollment record and then enrolled the user into the program’s courses based on defined rules, ensuring idempotency and consistency.”
+
+That one sentence already signals maturity.
+
+🧱 Step-by-step: Program Enrollment
+1️⃣ Request comes in
+
+User / admin triggers enrollment
+
+Authorization checked (role-based)
+
+2️⃣ Create program_enrollment
+
+Inside a database transaction
+
+Status = enrolled
+
+Enforced unique constraint (user_id, program_id)
+
+3️⃣ Fetch program courses
+
+From program_courses
+
+Ordered by position
+
+Filter mandatory courses (if applicable)
+
+4️⃣ Create course enrollments
+
+For each course:
+
+Create course_enrollment if not already present
+
+Initial progress = 0%
+
+Status = enrolled
+
+⚠️ Important line:
+
+“We made course enrollment idempotent to handle retries and partial failures.”
+
+5️⃣ Commit transaction
+
+Either everything succeeds
+
+Or nothing is persisted
+
+🔐 Why transaction matters (they WILL ask)
+
+Answer:
+
+“To avoid partial states—like a program enrollment existing without corresponding course enrollments.”
+
+This is a must-say line.
+
+🔄 Idempotency (very important)
+Question:
+
+“What if the API is called twice?”
+
+Answer:
+
+“We relied on database uniqueness constraints and idempotent creation logic so duplicate requests wouldn’t create duplicate enrollments.”
+
+🧠 Architect follow-ups
+“What if a user is already enrolled in a course independently?”
+
+Answer:
+
+“We reused the existing course enrollment and linked it logically to the program, avoiding duplicate records.”
+
+“What about unenrollment?”
+
+Answer:
+
+“Unenrollment updated enrollment status rather than deleting records, preserving progress and audit history.”
+
+“How did you handle failures?”
+
+Answer:
+
+“We wrapped the workflow in transactions and logged failures. Any async steps were retried safely because the process was idempotent.”
+
+⚙️ Course-only Enrollment (short answer)
+
+If they ask:
+
+“What if user enrolls directly into a course?”
+
+Answer:
+
+“That path only created a course enrollment and didn’t affect program enrollment unless explicitly configured.”
+
+Clean separation 👌
+
+🧠 Director-level improvement answer
+
+If asked:
+
+“What would you improve?”
+
+Say:
+
+“For very large programs, I’d move course enrollment creation to a background job and make program enrollment asynchronous with progress tracking.”
+
+🧠 30-second summary
+
+“Enrollment was handled as a transactional, idempotent workflow.
+Program enrollment created course enrollments based on program rules, ensured consistency using DB constraints and transactions, and avoided duplicate or partial states.”

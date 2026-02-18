@@ -1,0 +1,40 @@
+1️⃣ Stub
+Definition
+
+A stub is used to replace a method with predefined behavior.
+
+You don’t care about how it works internally.
+
+You just want it to return what you want during the test.
+
+Example
+class User
+  def admin?
+    # complex logic
+    false
+  end
+end
+
+RSpec.describe User do
+  it "pretends the user is admin" do
+    user = User.new
+    allow(user).to receive(:admin?).and_return(true)
+
+    expect(user.admin?).to eq(true)
+  end
+end
+
+
+✅ Output: test passes
+
+The actual admin? logic never runs
+
+The method is stubbed to return true
+
+Key points about stubs
+
+Only replace the method return value
+
+Don’t check if method was called (optional)
+
+Example use: simulate API response, DB call, or external service

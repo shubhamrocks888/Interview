@@ -1,0 +1,18 @@
+| Aspect                                      | JSON (`as_json` / `to_json`)                                     Marshal (`Marshal.dump` / `Marshal.load`)                                          |
+| ------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Format**                                  | Text-based (string)                                               | Binary                                                                             |
+| **Human-readable**                          | ✅ Yes                                                             | ❌ No                                                                               |
+| **Purpose**                                 | Data interchange, APIs, caching hashes/arrays                     | Persist Ruby objects exactly, caching AR objects, storing Ruby objects             |
+| **Preserves object class**                  | ❌ No (usually Hash/Array after parse)                             | ✅ Yes (restores original class)                                                    |
+| **Preserves instance variables**            | ❌ No                                                              | ✅ Yes (all instance variables are restored)                                        |
+| **Preserves nested objects**                | ⚪ Yes, but becomes Hash/Array; loses original classes             | ✅ Yes, full nested object structure preserved                                      |
+| **Preserves references**                    | ❌ No (duplicate objects become separate after parse)              | ✅ Yes (shared objects references are preserved)                                    |
+| **Supports all Ruby objects?**              | ❌ Only JSON-compatible: Hash, Array, String, Number, Boolean, nil | ⚠️ Most Ruby objects, except IO, Proc, singleton objects                           |
+| **Schema changes / backward compatibility** | ✅ Safe — data is just hashes                                      | ❌ Can break if class structure changes (stale data issue)                          |
+| **Serialization speed**                     | Generally slower than Marshal                                     | Very fast (binary format, optimized for Ruby)                                      |
+| **Deserialization**                         | Produces Hash/Array; need manual conversion to original object    | Produces exact object as it was in memory                                          |
+| **Size efficiency**                         | Text-based, larger for complex objects                            | Binary, often smaller than JSON for complex objects                                |
+| **Use in Rails caching**                    | ✅ Good for storing data (hashes)                                  | ✅ Good for storing full AR objects, but risk of stale data                         |
+| **Use in APIs**                             | ✅ Standard                                                        | ❌ Not usable (binary, not cross-language)                                          |
+| **Safety**                                  | ✅ Safe to load from untrusted sources                             | ❌ Dangerous: `Marshal.load` can execute arbitrary code, avoid with untrusted input |
+| **Example**                                 | `user.as_json.to_json` → `'{"id":1,"name":"Alice"}'`              | `Marshal.dump(user)` → binary string; `Marshal.load` → original User object        |

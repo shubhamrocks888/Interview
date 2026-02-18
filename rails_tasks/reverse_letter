@@ -1,0 +1,84 @@
+Write a function that reverses only the alphabetic letters in a string, 
+while keeping all non-letter characters in their original positions. 
+# Letters = only [A–Z, a–z] 
+# Digits, hyphens (-), punctuation, spaces, and s
+pecial characters should stay exactly where they are 
+# Case must remain unchanged (uppercase stays uppercase, lowercase stays lowercase) 
+# You cannot remove characters and insert them again arbitrarily — 
+the relative positions of non-letters must remain unchanged 
+# input "a-bC-dEf-ghIj" 
+# output "j-Ih-gfE-dCba"
+
+
+💡 Idea (clean + interview-friendly)
+
+Convert string to an array (so we can modify characters)
+
+Use two pointers:
+
+left starts from beginning
+
+right starts from end
+
+Move pointers until they point to alphabetic characters only
+
+Swap letters
+
+Never move or touch non-letters (-, digits, spaces, symbols, etc.)
+
+Case stays intact automatically because we swap actual characters
+
+Time: O(n)
+Space: O(n) (string → array)
+
+
+
+✅ Ruby Implementation
+def reverse_only_letters(s)
+  chars = s.chars
+  left = 0
+  right = chars.length - 1
+
+  while left < right
+    if chars[left] !~ /[A-Za-z]/
+      left += 1
+    elsif chars[right] !~ /[A-Za-z]/
+      right -= 1
+    else
+      chars[left], chars[right] = chars[right], chars[left]
+      left += 1
+      right -= 1
+    end
+  end
+
+  chars.join
+end
+
+🧪 Example
+input  = "a-bC-dEf-ghIj"
+output = reverse_only_letters(input)
+
+puts output
+# => "j-Ih-gfE-dCba"
+
+🧠 Why this is a good interview answer
+
+✔ No extra arrays for letters
+
+✔ Non-letters never move
+
+✔ Case preserved naturally
+
+✔ Linear time
+
+✔ Clear pointer logic (easy to explain)
+
+If you want:
+
+same solution in Java / JavaScript / Python
+
+or a one-liner Ruby version (less readable but fun 😄)
+
+or an explanation diagram for interviews
+
+Just say the word 🚀

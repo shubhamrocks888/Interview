@@ -1,0 +1,113 @@
+dig in Ruby
+
+dig is used to safely access nested data
+👉 Works with Hash, Array, and combinations of both.
+
+If any level is missing → returns nil instead of raising an error.
+
+❌ Problem without dig
+data[:user][:profile][:email]
+# 💥 NoMethodError if any key is missing
+
+✅ Using dig
+data.dig(:user, :profile, :email)
+# => "test@example.com" or nil
+
+
+No exceptions. Peaceful Ruby 🧘‍♂️
+
+1️⃣ Hash#dig
+hash = {
+  user: {
+    profile: {
+      email: "a@b.com"
+    }
+  }
+}
+
+hash.dig(:user, :profile, :email)
+# => "a@b.com"
+
+hash.dig(:user, :address, :city)
+# => nil
+
+2️⃣ Array#dig
+arr = [
+  { name: "Alice" },
+  { name: "Bob" }
+]
+
+arr.dig(1, :name)
+# => "Bob"
+
+3️⃣ Mixed Array + Hash (🔥 very common)
+response = {
+  users: [
+    { id: 1, profile: { email: "a@b.com" } },
+    { id: 2, profile: { email: "c@d.com" } }
+  ]
+}
+
+response.dig(:users, 1, :profile, :email)
+# => "c@d.com"
+
+
+Perfect for API responses.
+
+4️⃣ dig vs [] chaining
+❌ Old way
+data[:a] && data[:a][:b] && data[:a][:b][:c]
+
+✅ dig
+data.dig(:a, :b, :c)
+
+
+Cleaner. Safer. Less headache.
+
+5️⃣ dig vs try (Rails)
+user.try(:profile).try(:email)
+
+
+vs
+
+user.dig(:profile, :email)
+
+
+👉 dig:
+
+Ruby native
+
+Works on Hash + Array
+
+No Rails dependency
+
+6️⃣ Important edge cases (interview gold 💎)
+🚨 dig does NOT rescue wrong types
+hash = { a: 1 }
+
+hash.dig(:a, :b)
+# 💥 TypeError (Integer does not have #dig)
+
+
+So:
+
+dig handles nil, not wrong structure
+
+7️⃣ dig + safe navigation (&.)
+user&.profile&.email
+
+
+vs
+
+hash.dig(:user, :profile, :email)
+
+
+👉 Use:
+
+&. for objects
+
+dig for data structures
+
+One-liner interview answer 🎯
+
+dig safely fetches nested values from Hashes and Arrays, returning nil if any level is missing instead of raising an error.

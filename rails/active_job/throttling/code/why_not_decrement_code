@@ -1,0 +1,257 @@
+Short answer (but accurate)
+
+❌ No — DECR itself in Redis is atomic.
+✅ But “increment → check → decrement” as a workflow is not atomic.
+
+That distinction matters a lot.
+
+Let’s separate the two things clearly
+1️⃣ Redis INCR / DECR commands
+
+These are atomic operations in Redis.
+
+INCR key
+DECR key
+
+
+Redis guarantees:
+
+No two clients can interleave a single command
+
+Each command runs completely before the next
+
+So:
+
+DECR is atomic by itself
+
+2️⃣ The problem is the sequence ❌
+
+This pattern is not atomic:
+
+count = INCR key
+if count > limit
+  DECR key
+end
+
+
+Why?
+
+Because multiple requests can do this at the same time.
+
+Race condition example (very important)
+
+Assume:
+
+limit = 5
+
+key value = 4
+
+Two requests arrive concurrently:
+
+Req A → INCR → 5
+Req B → INCR → 6
+
+
+Now both see:
+
+count > limit
+
+
+So both run:
+
+DECR
+
+
+Final value:
+
+6 → 5 → 4
+
+
+🔥 Now the counter is below the limit again
+🔥 Next request may pass incorrectly
+
+This is the race condition.
+
+Why Redis can’t “help” here automatically
+
+Redis guarantees atomicity per command, not per business logic.
+
+Atomicity does not span multiple commands unless:
+
+you use a Lua script
+
+or Redis transactions (with caveats)
+
+Correct mental model 🧠
+
+| Thing                         | Atomic? |
+| ----------------------------- | ------- |
+| `INCR key`                    | ✅       |
+| `DECR key`                    | ✅       |
+| `INCR → IF → DECR`            | ❌       |
+| `Rails.cache.increment`       | ✅       |
+| `increment + decrement logic` | ❌       |
+
+
+One atomic command
+
+No rollback
+
+No race condition
+
+TTL resets state
+
+If interviewer pushes: “Can we make it atomic?”
+
+Yes — with Redis Lua:
+
+local count = redis.call("INCR", KEYS[1])
+if count > tonumber(ARGV[1]) then
+  return 0
+end
+return 1
+
+
+This runs atomically on Redis.
+
+Interview-ready final statement 🎯
+
+Say this:
+
+“Redis DECR is atomic, but using INCR followed by conditional DECR is not atomic and causes race conditions under concurrency.”
+
+That answer is 100% correct and senior-level.
+
+
+
+##########
+
+
+Short answer (but accurate)
+
+❌ No — DECR itself in Redis is atomic.
+✅ But “increment → check → decrement” as a workflow is not atomic.
+
+That distinction matters a lot.
+
+Let’s separate the two things clearly
+1️⃣ Redis INCR / DECR commands
+
+These are atomic operations in Redis.
+
+INCR key
+DECR key
+
+
+Redis guarantees:
+
+No two clients can interleave a single command
+
+Each command runs completely before the next
+
+So:
+
+DECR is atomic by itself
+
+2️⃣ The problem is the sequence ❌
+
+This pattern is not atomic:
+
+count = INCR key
+if count > limit
+  DECR key
+end
+
+
+Why?
+
+Because multiple requests can do this at the same time.
+
+Race condition example (very important)
+
+Assume:
+
+limit = 5
+
+key value = 4
+
+Two requests arrive concurrently:
+
+Req A → INCR → 5
+Req B → INCR → 6
+
+
+Now both see:
+
+count > limit
+
+
+So both run:
+
+DECR
+
+
+Final value:
+
+6 → 5 → 4
+
+
+🔥 Now the counter is below the limit again
+🔥 Next request may pass incorrectly
+
+This is the race condition.
+
+Why Redis can’t “help” here automatically
+
+Redis guarantees atomicity per command, not per business logic.
+
+Atomicity does not span multiple commands unless:
+
+you use a Lua script
+
+or Redis transactions (with caveats)
+
+Correct mental model 🧠
+Thing Atomic?
+INCR key  ✅
+DECR key  ✅
+INCR → IF → DECR  ❌
+Rails.cache.increment ✅
+increment + decrement logic ❌
+Why Rails.cache.increment-only is safe
+current = Rails.cache.increment(...)
+current <= limit
+
+
+One atomic command
+
+No rollback
+
+No race condition
+
+TTL resets state
+
+If interviewer pushes: “Can we make it atomic?”
+
+Yes — with Redis Lua:
+
+local count = redis.call("INCR", KEYS[1])
+if count > tonumber(ARGV[1]) then
+  return 0
+end
+return 1
+
+
+This runs atomically on Redis.
+
+Interview-ready final statement 🎯
+
+Say this:
+
+“Redis DECR is atomic, but using INCR followed by conditional DECR is not atomic and causes race conditions under concurrency.”
+
+That answer is 100% correct and senior-level.
+
+You’re asking the right questions
+
+This exact confusion trips up many developers — your reasoning is solid.

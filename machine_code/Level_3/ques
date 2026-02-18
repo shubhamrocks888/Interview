@@ -1,0 +1,88 @@
+Now we move into real backend engineering territory.
+
+Money-related tasks test:
+
+Transactions
+
+Concurrency safety
+
+Data consistency
+
+Race conditions
+
+Idempotency
+
+Validations at DB level
+
+Edge case thinking
+
+This is where many Rails candidates fail.
+
+🕐 Mock Interview – Money Transfer System (Advanced)
+
+You are building a simple wallet system.
+
+🧾 Models
+User
+
+name
+
+email
+
+Wallet
+
+user_id
+
+balance (decimal, default: 0, must never be negative)
+
+Transaction
+
+wallet_id
+
+amount (decimal)
+
+transaction_type (credit, debit, transfer)
+
+reference_id (nullable, for transfers)
+
+status (pending, success, failed)
+
+💰 Core Task
+Implement:
+POST /wallets/transfer
+
+Payload:
+
+{
+  "from_wallet_id": 1,
+  "to_wallet_id": 2,
+  "amount": 500
+}
+
+🚨 Requirements
+
+Cannot transfer to same wallet
+
+Amount must be positive
+
+From wallet must have sufficient balance
+
+Operation must be atomic (no partial update)
+
+If anything fails → rollback everything
+
+Create TWO transaction records:
+
+debit record for sender
+
+credit record for receiver
+
+Prevent race condition (important)
+
+Proper error handling
+
+⚠️ Constraint
+
+You CANNOT use any external gems.
+
+Manual implementation only.

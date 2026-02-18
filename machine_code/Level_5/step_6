@@ -1,0 +1,149 @@
+We can implement list bookings of a user (GET /users/:id/bookings) and list shows of a movie (GET /movies/:id/shows) for a complete “Book My Show” API.
+
+###
+
+Step 1️⃣ If User Does NOT Exist
+Situation:
+
+User ID passed in URL does not exist.
+
+Response:
+
+Status: 404 Not Found
+
+Body:
+
+{
+  "error": "User not found"
+}
+
+
+Simple. Clear. RESTful.
+
+Step 2️⃣ If User Exists but Has No Bookings
+Situation:
+
+User exists, but no bookings yet.
+
+Response:
+
+Status: 200 OK
+
+Body:
+
+{
+  "user_id": 1,
+  "bookings": []
+}
+
+
+Why 200?
+Because request is valid — just empty data.
+
+Step 3️⃣ If User Exists and Has Bookings
+
+Now we decide the structure carefully.
+
+We need for each booking:
+
+Booking ID
+
+Seats booked
+
+Show time
+
+Movie title
+
+Recommended Response Structure
+{
+  "user_id": 1,
+  "bookings": [
+    {
+      "booking_id": 101,
+      "seats_booked": 3,
+      "show": {
+        "show_id": 10,
+        "show_time": "2026-02-15T18:00:00Z",
+        "movie": {
+          "movie_id": 5,
+          "title": "Avengers"
+        }
+      }
+    },
+    {
+      "booking_id": 102,
+      "seats_booked": 2,
+      "show": {
+        "show_id": 12,
+        "show_time": "2026-02-16T21:00:00Z",
+        "movie": {
+          "movie_id": 7,
+          "title": "Inception"
+        }
+      }
+    }
+  ]
+}
+
+Why This Structure?
+✅ 1. Clear ownership
+
+Everything is under "user_id".
+
+✅ 2. Proper nesting
+
+Booking → Show → Movie
+Matches DB relationships.
+
+✅ 3. Frontend friendly
+
+Frontend can directly display:
+
+You booked 3 seats for Avengers at 6 PM
+
+No extra API calls needed.
+
+Interview-Level Enhancement
+
+If interviewer asks:
+
+Why not just return flat data?
+
+Example flat:
+
+{
+  "booking_id": 101,
+  "seats_booked": 3,
+  "show_time": "...",
+  "movie_title": "Avengers"
+}
+
+
+
+#######
+
+class UsersController < ApplicationController
+  def bookings
+    user = User.includes(bookings: { show: :movie }).find_by(id: params[:id])
+    return render json: { errors: "User not found" }, status: :not_found unless user
+
+    result = user.bookings.map do |booking|
+      {
+        booking_id: booking.id,
+        seats_booked: booking.seats_booked,
+        show: {
+          show_id: booking.show.id,
+          show_time: booking.show.show_time,
+          movie: {
+            movie_id: booking.show.movie.id,
+            title: booking.show.movie.title
+          }
+        }
+      }
+    end
+
+    render json: { user_id: user.id, bookings: result }, status: :ok
+  end
+end
+
+

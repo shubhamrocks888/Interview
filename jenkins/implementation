@@ -1,0 +1,170 @@
+Great question — this is pure backend + DevOps, and interviewers love when candidates can explain it end-to-end, not just “Jenkins runs a pipeline”.
+
+I’ll explain:
+
+What actually happens
+
+Where the webhook lives
+
+Whether Rails is involved
+
+How you would do it in a Rails app
+
+Interview-ready answer
+
+1️⃣ What does “Jenkins triggered via webhook” really mean?
+
+It means:
+
+Some external system sends an HTTP request to Jenkins to start a job.
+
+Most commonly:
+
+GitHub
+
+GitLab
+
+Bitbucket
+
+Not Rails (usually).
+
+2️⃣ Typical real flow (most common)
+Developer pushes code
+        |
+        v
+GitHub/GitLab
+        |
+        |  (Webhook HTTP POST)
+        v
+Jenkins
+        |
+        v
+Build → Test → Docker → Deploy
+
+
+So yes:
+
+Totally backend
+
+No UI
+
+Just HTTP
+
+3️⃣ Where is the webhook configured?
+On GitHub / GitLab side
+
+You configure:
+
+URL: https://jenkins.example.com/github-webhook/
+
+Event: push / pull_request
+
+Secret (HMAC)
+
+GitHub sends JSON payload like:
+
+{
+  "ref": "refs/heads/main",
+  "after": "commit_hash",
+  "repository": {...}
+}
+
+4️⃣ What does Jenkins do with that webhook?
+
+In Jenkins:
+
+Job is configured as “GitHub webhook trigger”
+
+Jenkins verifies signature
+
+Jenkins pulls code
+
+Jenkins runs pipeline
+
+Example Jenkinsfile:
+
+pipeline {
+  stages {
+    stage('Test') {
+      steps { sh 'bundle exec rspec' }
+    }
+    stage('Build Docker') {
+      steps { sh 'docker build -t app .' }
+    }
+    stage('Deploy') {
+      steps { sh 'ecs deploy ...' }
+    }
+  }
+}
+
+5️⃣ Is Rails involved at all?
+❌ Normally: NO
+
+Rails:
+
+Is the application being built
+
+Not the trigger
+
+Jenkins reacts to:
+
+Git events, not app events
+
+6️⃣ When would Rails trigger Jenkins? (edge case)
+
+Rails might trigger Jenkins if:
+
+You want manual deployments
+
+Or internal admin workflow
+
+Example:
+
+Admin clicks “Deploy”
+Rails → Jenkins API
+
+7️⃣ How Rails triggers Jenkins (if needed)
+
+Rails sends HTTP request:
+
+require "net/http"
+
+uri = URI("https://jenkins.example.com/job/deploy/build")
+req = Net::HTTP::Post.new(uri)
+req.basic_auth("jenkins_user", "api_token")
+
+Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+  http.request(req)
+end
+
+
+But again:
+👉 This is rare in modern CI/CD
+
+8️⃣ Where Jenkins fits in your Rails + Elixir + Kafka system
+Git Push
+   |
+   v
+GitHub Webhook
+   |
+   v
+Jenkins
+   |
+   +-- Build Rails Docker image
+   +-- Build Elixir Docker image
+   +-- Run tests
+   +-- Push to ECR
+   +-- Deploy to ECS
+
+
+Jenkins does infrastructure automation, not business logic.
+
+9️⃣ Interview-ready answer (very strong)
+
+Say this:
+
+“Jenkins is typically triggered via webhooks from the Git provider like GitHub. This is a backend HTTP callback that Jenkins listens to. Rails is not involved in triggering Jenkins; Rails is the artifact being built and deployed.”
+
+If they push:
+
+“Rails could call Jenkins via API, but that’s uncommon in standard CI/CD setups.”

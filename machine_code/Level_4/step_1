@@ -1,0 +1,58 @@
+✅ STEP 1 — Think About Fields
+
+User model has:
+
+email
+
+full_name
+
+referral_code
+
+referred_by_id
+
+Before writing code, answer this:
+
+❓ Why do we need referred_by_id instead of referral_code to store relation?
+
+Think carefully.
+
+Correct reasoning:
+
+referral_code is public identifier
+
+referred_by_id is foreign key to users table
+
+We never store referral_code as relation
+
+Make sure you understand this.
+
+
+########
+
+cclass User < ApplicationRecord
+  validates :email,
+            presence: true,
+            uniqueness: true,
+            format: { with: URI::MailTo::EMAIL_REGEXP }
+
+  validates :full_name, presence: true
+  validates :referral_code, presence: true, uniqueness: true
+
+  belongs_to :referrer,
+             class_name: "User",
+             foreign_key: :referred_by_id,
+             optional: true
+
+  has_many :referrals,
+           class_name: "User",
+           foreign_key: :referred_by_id,
+           dependent: :nullify
+
+  before_validation :generate_referral_code, on: :create
+
+  private
+
+  def generate_referral_code
+    self.referral_code ||= SecureRandom.alphanumeric(8)
+  end
+end

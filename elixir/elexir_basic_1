@@ -1,0 +1,138 @@
+### Elixir
+
+1. Elixir is a functional, immutable language built on the Erlang VM (BEAM), designed for highly concurrent,
+	fault tolerant systems.
+
+2. 	Ruby vs Elixir (MOST IMPORTANT QUESTION)
+	How to answer (memorize this)
+	
+	Ruby				Elixir
+	Object-oriented		Functional
+	Mutable objects		Immutable data
+	Threads / GIL		Lightweight processes (BEAM)
+	Exceptions			“Let it crash”
+	Shared memory		Message passing
+
+3.	Key line to say:
+
+	“Elixir achieves concurrency using lightweight processes and message passing instead of shared mutable state.”
+
+4.  Immutability (They WILL ask)
+	Example
+
+	list = [1, 2, 3]
+	new_list = list ++ [4]
+
+
+	📌 list is unchanged.
+
+	Interview line:
+
+	“In Elixir, data is immutable, so every transformation returns a new value, which avoids race conditions.”
+
+5.  Elixir collections (basic)
+
+	list: [1,2,3]
+
+	map: %{name: "Shubham", age: 30}
+
+	access: user.name
+
+
+6. Concurrency (THIS IS WHY ELIXIR EXISTS)
+	Core idea
+	Thousands of lightweight processes
+
+	Each process has its own memory
+
+	Communicate via messages
+
+	Example:
+		spawn(fn ->
+		  IO.puts("Hello from process")
+		end)
+
+
+		Say this confidently:
+
+		“Elixir processes are not OS threads. They are lightweight and managed by the BEAM VM.”
+
+7.		GenServer (High chance question)
+		What is GenServer?
+
+		A behavior for implementing server-like processes with state.
+
+		Simple explanation
+
+		Handles state
+
+		Handles messages
+
+		Runs in its own process
+
+		Interview answer:
+
+		“GenServer is used to manage stateful processes in a concurrent and fault-tolerant way.”
+
+		No need to code unless asked.
+
+8. 		OTP & “Let it crash” (VERY IMPRESSIVE if said)
+		OTP stands for:
+
+		Open Telecom Platform
+
+		Core concepts:
+
+		Supervisor
+
+		Worker
+
+		Restart strategies
+
+		Golden line:
+
+		“Instead of defensive coding, Elixir embraces ‘let it crash’ and uses supervisors to restart failed processes.”
+
+		🔥 This line scores points.
+
+9.	Phoenix vs Rails (if asked)
+	
+	Rails	Phoenix
+	Monolith MVC	Lightweight, real-time friendly
+	Thread based	Process based
+	REST focused	WebSockets / LiveView
+
+	Say:
+
+	“Phoenix leverages BEAM concurrency, which makes it excellent for real-time systems.”
+
+
+10.  Rapid-Fire Questions (Practice Now)
+
+		Is Elixir object-oriented? ❌ (Functional)
+
+		Mutable or immutable? ❌ Mutable → ✅ Immutable
+
+		What is BEAM? → Erlang VM
+
+		How does Elixir handle concurrency? → Processes + message passing
+
+		What is pattern matching? → Matching data structure to variables
+
+		What is GenServer? → Stateful process abstraction
+
+		What is OTP? → Framework for fault tolerance
+
+		Shared memory? ❌ No
+
+		Exceptions? → Let it crash
+
+		Why Elixir over Ruby? → Scalability & concurrency
+
+		🎯 Final Interview Strategy (VERY IMPORTANT)
+
+		If stuck → say this:
+
+		“I’m still early in Elixir, but my strong Ruby background helps me understand functional concepts, concurrency models, and OTP design patterns.”
+
+		This is completely acceptable.

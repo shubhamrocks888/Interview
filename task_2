@@ -1,0 +1,155 @@
+Task 1 — Create Rails CRUD Endpoints (User & Posts) (30 min)
+Create CRUD API endpoints for managing Users along with their Post using Ruby on Rails API only app. (Apply proper validations wherever applied)
+Endpoints:
+Create: create user along with respective posts
+Lists: Posts along with user details
+Update: Specific post only
+Models (for reference only):
+User: email, full_name
+Post: title, status, user_id
+Assume the following relationships:
+A User has many Posts
+A Post belongs to a User.
+Prerequisite:
+- Any latest Ruby version install
+- Any latest rails app (API only, no frontend needed) install and running
+
+
+
+#### app/models/user.rb
+
+class User < ApplicationRecord
+	validates :email, presence: true
+	valdates :full_name,  presence: true
+
+	has_many :posts
+end
+
+### app/models/post.rb
+
+class Post < ApplicationRecord
+	validates :title , presence: true
+	validaets :status, presence: true
+end
+
+# app/controllers/users_controller.rb
+
+class User < ApplicationController
+
+	before_action :set_user, only: [:show, :edit, :update, :destroy]
+
+	def index
+		render json: User.all 
+	end
+
+	def show
+		render json: @user
+	end
+
+	def new
+		@user = User.new(user_params)
+	end
+
+	def update
+		if @user.save
+			render json: { msg: "User updated"}
+		else
+			render json: {error: @user.errors} , status: :unprocessable_entity
+		end
+	end
+
+	def create
+		if @user.save
+			render json: { msg: "User created"}
+		else
+			render json: {error: @user.errors} , status: :unprocessable_entity
+		end
+		end
+
+	def destroy
+	end
+
+	private
+
+	def set_user
+		@user = User.find_by(id: params[:id])
+	end
+
+	def user_params
+		params.require(:user).permit(:email, :full_name)
+	end
+
+end
+
+# app/controllers/posts_controller.rb
+
+class User < ApplicationController
+
+	before_action :set_post, only: [:show, :edit, :update, :destroy]
+
+	def index
+		result = []
+		Post.includes(:user).each do |post|
+			result << { 
+			post_id: post.id, 
+			post_title: post.title, 
+			post_status: post.status, 
+			post_user_id: post.user_id, 
+			post_user_name: 
+			post.user.full_name
+			}
+		end
+		render json: {post_lists: result}
+	end
+
+	def show
+		render json: @post, status: :ok
+	end
+
+	def new
+		@post = Post.new(post_params)
+	end
+
+	def update
+		if @post.save
+			render json: { msg: "Post updated"}
+		else
+			render json: {error: @post.errors} , status: :unprocessable_entity
+		end
+	end
+
+	def create
+		
+		@post.user_id = params[:user_id]
+		if @post.save
+			ender json: { msg: "Post created"}
+		else
+			render json: {error: @post.errors} , status: :unprocessable_entity
+		end
+	end
+
+	def destroy
+		@post.destroy
+		render json: { msg: "Post deleted"}
+	end
+
+	private
+
+	def set_post
+		@post = Post.find_by(id: params[:id])
+	end
+
+	def post_params
+		params.require(:post).permit(:title, :status)
+	end
+end
+
+
+### app/routes.rb
+
+	resources :users do
+		resources :posts, shallow: true
+	end
+
+
+

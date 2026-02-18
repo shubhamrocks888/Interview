@@ -1,0 +1,65 @@
+###### CREATE FLOW
+
+before_validation
+→ validate
+→ after_validation
+→ before_save
+→ before_create
+-> before_commit
+→ INSERT
+→ after_create
+→ after_save
+→ after_commit
+
+
+#### UPDATE FLOW
+
+before_validation
+→ validate
+→ after_validation
+→ before_save
+→ before_update
+→ UPDATE
+→ after_update
+→ after_save
+→ after_commit
+
+
+### DELETE 
+
+before_destroy
+→ DELETE
+→ after_destroy
+→ after_commit (on: :destroy)
+
+
+################
+
+BEGIN TRANSACTION
+│
+├── before_validation
+├── validate
+├── after_validation
+├── before_save
+├── before_create
+├── INSERT
+├── after_create
+├── after_save
+│
+COMMIT
+│
+└── after_commit   ✅ (outside transaction)
+
+
+###
+
+BEGIN TRANSACTION
+│
+├── before_save
+├── before_create
+├── INSERT ❌ fails
+│
+ROLLBACK
+│
+└── after_rollback   ✅
+

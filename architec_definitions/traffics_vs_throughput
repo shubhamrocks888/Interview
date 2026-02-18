@@ -1,0 +1,171 @@
+If traffic exceeds sustainable throughput, scaling workers alone will worsen the problem,
+
+What does it mean
+
+This is a very important systems concept, and interviewers love it. Let’s break it down calmly and intuitively.
+
+First: what is sustainable throughput?
+
+Sustainable throughput =
+👉 the maximum number of requests per second your system can handle without falling behind.
+
+If your app can:
+
+Process 100 requests/sec
+
+And traffic comes in at 80 requests/sec → ✅ fine
+
+Traffic comes in at 150 requests/sec → ❌ system starts choking
+
+That 100 req/sec is your sustainable throughput.
+
+Now the sentence 👇
+
+“If traffic exceeds sustainable throughput, scaling workers alone will worsen the problem.”
+
+What it really means
+
+When incoming traffic > what your system can process, simply adding more workers (threads/processes) can actually make things worse, not better.
+
+Why? Because the real bottleneck is elsewhere.
+
+Think of a real-life analogy 🚦
+Toll booth example
+
+Road allows 100 cars/min
+
+Toll booth processes 100 cars/min
+
+Now:
+
+Cars arrive at 200 cars/min
+
+What if you:
+
+Add more toll workers
+
+But still have only one lane road?
+
+👉 Result:
+
+More workers fighting for the same lane
+
+More congestion
+
+Slower overall throughput
+
+The road is the bottleneck, not the workers.
+
+In software terms (Rails-style)
+
+Let’s say:
+
+DB can handle 100 queries/sec
+
+Each request hits DB once
+
+Traffic = 200 req/sec
+
+You add more Puma workers/threads
+
+What happens?
+
+More concurrent DB queries
+
+DB starts:
+
+Locking
+
+Queueing
+
+Context switching
+
+Queries get slower
+
+Requests pile up
+
+Timeouts increase
+
+👉 Throughput stays the same or drops
+👉 Latency explodes
+
+Why scaling workers makes it worse
+1️⃣ Contention increases
+
+More threads fighting for:
+
+DB connections
+
+CPU
+
+Locks
+
+2️⃣ Context switching overhead
+
+CPU spends time switching instead of working
+
+3️⃣ Queue growth
+
+Requests pile up faster than they’re processed
+
+4️⃣ Cascading failures
+
+Timeouts → retries → even more load 💥
+
+Key insight (this is the money line)
+
+You can’t out-scale a bottleneck.
+
+If the bottleneck is:
+
+Database
+
+External API
+
+Disk
+
+Network
+
+Adding workers just means:
+👉 more pressure on the same weak point
+
+Correct ways to fix it (instead of just scaling)
+If it’s I/O-bound
+
+Add DB indexes
+
+Reduce N+1 queries
+
+Cache (Redis, HTTP cache)
+
+Read replicas
+
+Async / background jobs
+
+Rate limiting
+
+If it’s CPU-bound
+
+Optimize code
+
+Move heavy work to background jobs
+
+Scale horizontally (more machines)
+
+Use faster algorithms
+
+If traffic is simply too high
+
+Backpressure
+
+Queueing
+
+Load shedding
+
+Circuit breakers
+
+Return 429 (Too Many Requests)
+
+One-liner for interviews 🎯
+
+“If incoming traffic exceeds sustainable throughput, adding more workers increases contention on the real bottleneck (like the database), causing higher latency and even lower throughput.”

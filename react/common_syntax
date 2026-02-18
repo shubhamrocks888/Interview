@@ -1,0 +1,115 @@
+The syntax you’re confused about
+() => setCount(count + 1)
+
+
+This is just a JavaScript arrow function.
+
+Step 1️⃣ What is ()?
+()
+
+
+It means a function with no parameters.
+
+Same as:
+
+function () {
+}
+
+Step 2️⃣ What is =>?
+
+=> means arrow function (ES6).
+
+So:
+
+() => {
+  // function body
+}
+
+Step 3️⃣ What is setCount(count + 1)?
+
+count → current state value
+
+setCount → function to update state
+
+count + 1 → new value
+
+Equivalent to:
+
+setCount(count + 1);
+
+Step 4️⃣ Combine everything
+() => setCount(count + 1)
+
+
+Means:
+
+A function that, when called, increases count by 1
+
+Same as writing:
+
+function increment() {
+  setCount(count + 1);
+}
+
+Why do we need a function here?
+❌ Wrong
+<button onClick={setCount(count + 1)}>
+
+
+This runs immediately during render ❌
+
+✅ Correct
+<button onClick={() => setCount(count + 1)}>
+
+
+Because:
+
+onClick expects a function
+
+React calls it only when user clicks
+
+Even simpler example (pure JS)
+const sayHi = () => console.log("Hi");
+
+
+Calling it:
+
+sayHi(); // prints Hi
+
+
+Same pattern:
+
+const increment = () => setCount(count + 1);
+
+React-friendly best practice (important)
+
+Instead of:
+
+() => setCount(count + 1)
+
+
+Prefer:
+
+() => setCount(prev => prev + 1)
+
+Why?
+
+Because React state updates are async and batched.
+
+setCount(prev => prev + 1);
+
+
+Means:
+
+“Give me the latest value and increment it”
+
+Mental model 🧠
+() => setCount(count + 1)
+
+
+=
+➡️ “When event happens, update state”
+
+Interview explanation (short)
+
+This syntax is an arrow function passed as a callback, so state updates only happen when the event occurs, not during render.

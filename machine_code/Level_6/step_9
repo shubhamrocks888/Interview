@@ -1,0 +1,144 @@
+🎯 Task
+
+When a ride is completed:
+
+Send email to rider
+
+Include ride + driver details
+
+Send asynchronously
+
+Ensure email is sent only after successful DB commit
+
+✅ Step 1 — Generate Mailer
+rails generate mailer RideMailer
+
+✅ Step 2 — Mailer Class Structure
+
+Create a mailer with:
+
+default sender
+
+method: ride_completed(ride)
+
+instance variables:
+
+@ride
+
+@rider
+
+@driver
+
+subject: "Your ride has been completed"
+
+recipient: rider email
+
+✅ Step 3 — Email Views
+
+Create:
+
+ride_completed.html.erb
+ride_completed.text.erb
+
+
+Include:
+
+Rider name
+
+Driver name
+
+Pickup
+
+Drop
+
+Fare
+
+Completion timestamp
+
+✅ Step 4 — Trigger Email After Completion
+
+Inside ride completion flow:
+
+Update status to completed inside transaction
+
+After transaction finishes
+
+Call mailer with deliver_later
+
+Important:
+Mailer call must NOT be inside transaction block.
+
+✅ Step 5 — Production-Ready Trigger (Better Version)
+
+Move email trigger to model:
+
+Use after_commit callback
+
+Condition: if status changed to completed
+
+Call deliver_later
+
+✅ Step 6 — Background Job
+
+Ensure:
+
+ActiveJob configured
+
+Queue adapter set (e.g., sidekiq in production)
+
+
+############################################################
+
+
+### app/mailers/ride_mailer.rb
+
+class RideMailer < ApplicationMailer
+  default from: "no-reply@rideapps.com"
+
+  def ride_completed(ride)
+    @ride   = ride
+    @rider  = ride.rider
+    @driver = ride.driver
+
+    mail(
+      to: @rider.email,
+      subject: "Your ride has been completed"
+    )
+  end
+end
+
+
+### app/views/ride_mailer/ride_completed.html.erb
+
+<h1>Welcome to Ride App</h1>
+
+<p>Your ride has been successfully completed. Below are the details:</p>
+
+<ul>
+  <li><strong>Rider Name:</strong> <%= @rider.name %></li>
+  <li><strong>Driver Name:</strong> <%= @driver.name %></li>
+  <li><strong>Pickup:</strong> <%= @ride.pickup_lat %>, <%= @ride.pickup_lng %></li>
+  <li><strong>Drop:</strong> <%= @ride.drop_lat %>, <%= @ride.drop_lng %></li>
+  <li><strong>Fare:</strong> <%= @ride.fare %></li>
+  <li><strong>Completed At:</strong> <%= @ride.updated_at %></li>
+</ul>
+
+
+
+####
+
+class Ride < ApplicationRecord
+  enum status: { requested: 0, accepted: 1, started: 2, completed: 3, cancelled: 4 }
+
+  after_commit :send_completion_email, if: :saved_change_to_completed?
+
+  private
+
+  def saved_change_to_completed?
+    saved_change_to_status? && completed?
+  end
+
+  def send_completion_email
+    RideMailer.ride_completed(self).deliver_later
+  end
+end

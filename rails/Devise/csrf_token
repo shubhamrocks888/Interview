@@ -1,0 +1,91 @@
+🔐 CSRF Token in Rails
+1️⃣ What is CSRF?
+
+CSRF (Cross-Site Request Forgery) is an attack where a malicious website tricks a logged-in user into making unwanted requests to your web app.
+
+Example:
+
+User is logged in to bank.com
+
+Visits malicious.com
+
+Malicious page sends:
+
+POST https://bank.com/transfer
+
+
+Without protection, this could transfer money using the user’s session.
+
+2️⃣ How Rails protects
+
+Rails uses a CSRF token:
+
+A random, per-session value generated for each user session
+
+Embedded in HTML forms or sent via headers (for Ajax)
+
+Rails verifies the token on each non-GET request (POST, PATCH, DELETE)
+
+2.1 Session-Based Storage
+
+CSRF token is stored in Rails session, which is itself stored in the browser (cookie)
+
+On request:
+
+session[:_csrf_token]
+
+
+Forms embed this token:
+
+<%= form_with model: @user do |f| %>
+  <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+<% end %>
+
+
+When the form is submitted, Rails compares the token in params/header with the session token.
+
+2.2 How Devise interacts with CSRF
+
+Devise uses session cookies for authentication
+
+Any malicious POST from another site won’t have the correct CSRF token → Rails rejects the request (HTTP 422)
+
+Example: password reset form, sign in form, account update form → all protected
+
+3️⃣ CSRF Token Flow
+
+1️⃣ User logs in → session cookie created (via Warden/Devise)
+2️⃣ Rails generates CSRF token → stores in session
+3️⃣ Rails embeds token in all forms / Ajax headers
+4️⃣ Browser submits form → token included in POST params or header
+5️⃣ Rails compares submitted token with session token
+
+✅ Match → request processed
+❌ Mismatch → Rails raises ActionController::InvalidAuthenticityToken
+
+4️⃣ CSRF Token Details
+
+Random per session → changes on login/logout
+
+Rotates automatically in Rails 5+ (per session or per form)
+
+Works only with session-based authentication, not stateless APIs (like JWT)
+
+5️⃣ Devise + CSRF Considerations
+Feature	How CSRF is handled
+Sign in	CSRF token required in POST form
+Sign up	CSRF token required
+Password reset	CSRF token validated on submission
+Remember-me auto-login	Not affected, because GET requests don’t require CSRF
+API / JSON	Must use skip_before_action :verify_authenticity_token or tokens via headers
+6️⃣ Interview-Trap Points
+
+CSRF protects against “logged-in user tricks”, not brute-force login attacks
+
+GET requests are safe, CSRF applies only to state-changing requests
+
+Devise forms are automatically protected if you use form_for / form_with
+
+7️⃣ One-Line Interview Answer
+
+“CSRF tokens are per-session random tokens stored in Rails session and embedded in forms; Rails validates them on non-GET requests to prevent cross-site request forgery, and Devise uses them to protect all authentication and account-related forms.”

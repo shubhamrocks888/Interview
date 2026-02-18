@@ -1,0 +1,39 @@
+2️⃣ Movie Model
+Requirements:
+
+Fields: title, description, duration
+
+Associations:
+
+has_many :shows
+
+Validations:
+
+title presence and uniqueness
+
+duration presence, must be positive
+
+🧠 Think Before Writing
+
+Should we delete shows if a movie is deleted? → Yes, use dependent: :destroy
+
+Any callbacks needed? → Not for now
+
+✍️ Task:
+
+Write Movie model with:
+
+has_many :shows
+
+Validations as above
+
+Paste your Movie model.
+
+
+########
+
+class Movie < ApplicationRecord
+	validates :title, presence: true, uniqueness: true
+	validates :duration, presence: true, numericality: { greater_than: 0}
+	has_many :shows, dependent: :destroy
+end

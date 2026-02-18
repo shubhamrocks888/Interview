@@ -1,0 +1,191 @@
+Supervisor is the missing piece that makes everything you learned production-ready.
+
+We’ll go slow, structured, one step at a time. No jumping.
+
+STEP 1 — Why Supervisor exists (core idea)
+
+Right now you have this:
+
+A GenServer running
+
+It sends emails
+
+It holds state
+
+❌ Problem:
+
+If the GenServer crashes, your system is dead.
+
+Elixir’s answer is NOT:
+
+try/catch everywhere
+
+rescue blocks
+
+defensive programming
+
+Elixir’s answer is:
+
+Let it crash — and restart it automatically
+
+That’s exactly what a Supervisor does.
+
+STEP 2 — What a Supervisor is (plain English)
+
+A Supervisor is:
+
+A process whose only job is to start, stop, and restart other processes.
+
+It does not do business logic.
+
+STEP 3 — Supervisor mental model (very important)
+Supervisor
+   |
+   +── MyServer (GenServer)
+
+
+If MyServer crashes:
+
+Supervisor notices
+
+Restarts it based on rules
+
+🔥 Interview line:
+
+“Supervisors provide fault tolerance by monitoring child processes and restarting them when they fail.”
+
+STEP 4 — Minimal Supervisor syntax (just structure)
+defmodule MySupervisor do
+  use Supervisor
+end
+
+
+Nothing else yet.
+
+STEP 5 — Starting a Supervisor
+
+Supervisor also needs to be started.
+
+Supervisor.start_link(children, strategy: :one_for_one)
+
+
+But we usually wrap it in a module.
+
+STEP 6 — Define children (VERY IMPORTANT)
+
+Children are the processes the supervisor manages.
+
+children = [
+  MyServer
+]
+
+
+This works only if MyServer.start_link/1 exists.
+
+STEP 7 — Complete minimal Supervisor
+defmodule MySupervisor do
+  use Supervisor
+
+  def start_link(_) do
+    Supervisor.start_link(__MODULE__, :ok)
+  end
+
+  def init(:ok) do
+    children = [
+      MyServer
+    ]
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+end
+
+
+Meaning:
+
+Start MyServer
+
+If it crashes → restart only that one
+
+STEP 8 — Connect GenServer to Supervisor
+
+Your GenServer must have this:
+
+def start_link(_) do
+  GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+end
+
+
+Supervisor will call this automatically.
+
+STEP 9 — Test “let it crash”
+
+Add this inside handle_cast:
+
+def handle_cast({:send_email, "crash"}, state) do
+  raise "Boom!"
+end
+
+
+Now run:
+
+MyServer.send_email("crash")
+
+
+What happens:
+
+GenServer crashes
+
+Supervisor restarts it
+
+System keeps running
+
+🔥 THIS is “let it crash”.
+
+STEP 10 — Restart strategies (interview MUST-KNOW)
+Strategy	Meaning
+:one_for_one	Restart only the crashed child
+:one_for_all	Restart all children
+:rest_for_one	Restart crashed + those started after it
+
+Most common:
+✅ :one_for_one
+
+STEP 11 — Application module (real apps)
+
+In real apps, supervisors are started automatically.
+
+defmodule MyApp.Application do
+  use Application
+
+  def start(_type, _args) do
+    children = [
+      MySupervisor
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+  end
+end
+
+
+This is the root supervisor.
+
+STEP 12 — Rails analogy (helps a LOT)
+Rails	Elixir
+Sidekiq retries	Supervisor restarts
+Rescue + retry	Let it crash
+Systemd / PM2	BEAM supervision tree
+STEP 13 — Interview-ready summary (memorize)
+
+Say this confidently:
+
+“Supervisors monitor GenServers and restart them on failure. Instead of defensive coding, Elixir uses supervision trees to achieve fault tolerance, following the let-it-crash philosophy.”
+
+STOP HERE 🛑
+
+You now understand:
+
+Why supervisors exist
+
+How they restart GenServers
+
+How they fit into production systems

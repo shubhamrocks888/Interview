@@ -1,0 +1,243 @@
+Step 0: Setup
+0.1 Install Razorpay Gem (Rails)
+# Gemfile
+gem 'razorpay'
+
+bundle install
+
+0.2 Configure Razorpay
+# config/initializers/razorpay.rb
+Razorpay.setup(ENV['RAZORPAY_KEY_ID'], ENV['RAZORPAY_KEY_SECRET'])
+
+
+RAZORPAY_KEY_ID → public key
+
+RAZORPAY_KEY_SECRET → private key
+
+Never expose secret key to frontend
+
+Step 1: Backend - Create Order API
+1.1 Controller
+# app/controllers/payments_controller.rb
+class PaymentsController < ApplicationController
+  def create_order
+    amount = params[:amount].to_i # in paise
+
+    # Create order in Razorpay
+    order = Razorpay::Order.create(
+      amount: amount,
+      currency: 'INR'
+    )
+
+    # Save order in DB
+    @order = Order.create!(
+      user_id: current_user.id,
+      amount: amount,
+      razorpay_order_id: order.id,
+      status: 'created'
+    )
+
+    render json: {
+      order_id: order.id,
+      key: ENV['RAZORPAY_KEY_ID'],
+      amount: amount
+    }
+  end
+end
+
+1.2 DB Table
+# orders table
+# id | user_id | amount | razorpay_order_id | razorpay_payment_id | status | refunded_amount | currency | timestamps
+
+
+Step 1 explanation:
+User clicks “Pay ₹500”, backend creates Razorpay order → returns order_id + key_id → frontend can open checkout. DB row is saved with status = created.
+
+Step 2: Frontend - Open Razorpay Checkout
+2.1 HTML / JS
+<button id="pay-btn">Pay ₹500</button>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById("pay-btn").onclick = async function () {
+  // Call backend to create order
+  const res = await fetch('/payments/create_order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: 50000 }) // paise
+  });
+  const data = await res.json();
+
+  var options = {
+    key: data.key,
+    order_id: data.order_id,
+    amount: data.amount,
+    currency: "INR",
+    name: "My Store",
+    description: "Test Payment",
+    handler: async function(response) {
+      // Step 3: Send payment response to backend
+      await fetch('/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(response)
+      });
+      alert('Payment Success!');
+    },
+    modal: {
+      ondismiss: function() {
+        alert('Payment cancelled or window closed.');
+      }
+    }
+  };
+
+  var rzp = new Razorpay(options);
+  rzp.open();
+};
+</script>
+
+
+Step 2 explanation:
+Frontend receives order_id + key_id → opens Razorpay Checkout → user enters card/UPI details.
+
+Step 3: Backend - Verify Payment
+# app/controllers/payments_controller.rb
+def verify
+  payment_response = {
+    razorpay_order_id: params[:razorpay_order_id],
+    razorpay_payment_id: params[:razorpay_payment_id],
+    razorpay_signature: params[:razorpay_signature]
+  }
+
+  Razorpay::Utility.verify_payment_signature(payment_response)
+
+  # Idempotency: skip if already paid
+  order = Order.find_by(razorpay_order_id: params[:razorpay_order_id])
+  return render json: { success: true } if order.status == 'paid'
+
+  order.update(
+    razorpay_payment_id: params[:razorpay_payment_id],
+    status: 'paid'
+  )
+
+  # Trigger business logic (email, inventory, etc.)
+  render json: { success: true }
+rescue Razorpay::SignatureVerificationError
+  render json: { success: false }, status: 400
+end
+
+
+Step 3 explanation:
+Frontend sends payment_id + order_id + signature. Backend verifies signature → updates DB → status = paid.
+
+Step 4: Webhooks
+4.1 Webhook Controller
+# app/controllers/webhooks_controller.rb
+class WebhooksController < ApplicationController
+  skip_before_action :verify_authenticity_token
+
+  def razorpay
+    payload = request.body.read
+    signature = request.headers['X-Razorpay-Signature']
+
+    Razorpay::Utility.verify_webhook_signature(
+      payload,
+      signature,
+      ENV['RAZORPAY_WEBHOOK_SECRET']
+    )
+
+    data = JSON.parse(payload)
+    if data['event'].start_with?('payment.')
+      payment = data['payload']['payment']['entity']
+      order = Order.find_by(razorpay_order_id: payment['order_id'])
+
+      # Idempotency: skip if already updated
+      if order.status != 'paid' && payment['status'] == 'captured'
+        order.update(
+          razorpay_payment_id: payment['id'],
+          status: 'paid'
+        )
+      elsif payment['status'] == 'failed'
+        order.update(
+          razorpay_payment_id: payment['id'],
+          status: 'failed'
+        )
+      end
+    elsif data['event'] == 'refund.processed'
+      refund = data['payload']['refund']['entity']
+      order = Order.find_by(razorpay_payment_id: refund['payment_id'])
+      order.update(
+        status: 'refunded',
+        refunded_amount: refund['amount']
+      )
+    end
+
+    render plain: 'ok'
+  rescue Razorpay::SignatureVerificationError
+    render plain: 'invalid', status: 400
+  end
+end
+
+
+Step 4 explanation:
+Webhooks handle success, failure, refunds, and ensure backend is always in sync, even if frontend never calls /verify.
+
+Step 5: Refund API
+def refund
+  order = Order.find(params[:id])
+  payment_id = order.razorpay_payment_id
+
+  # Full refund
+  refund = Razorpay::Payment.refund(payment_id)
+
+  # Optionally update DB now, or rely on webhook
+  render json: { refund_id: refund.id, status: refund.status }
+end
+
+
+Step 5 explanation:
+Refund can be full or partial. Webhook will update DB status automatically.
+
+Step 6: Retry Flow
+
+User clicks retry → create new Razorpay order via Step 1
+
+Frontend opens checkout → new payment attempt
+
+Old failed attempt remains in DB (status = failed)
+
+Backend tracks latest payment per order, or creates new order per attempt
+
+Step 7: Database Table (orders)
+create_table "orders", force: :cascade do |t|
+  t.bigint "user_id"
+  t.integer "amount"
+  t.string "currency", default: "INR"
+  t.string "razorpay_order_id"
+  t.string "razorpay_payment_id"
+  t.string "status", default: "created" # created/paid/failed/refunded
+  t.integer "refunded_amount", default: 0
+  t.timestamps
+end
+
+✅ Key Concepts Covered
+
+Payment creation → Step 1
+
+Frontend checkout → Step 2
+
+Frontend verification → Step 3
+
+Webhook sync → Step 4
+
+Refund handling → Step 5
+
+Retry attempts → Step 6
+
+Idempotency → Prevent double updates
+
+Single orders table handles payments + refunds
+
+Failed payments → tracked via webhook
+
+Partial / full refunds → tracked via webhook

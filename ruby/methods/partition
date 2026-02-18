@@ -1,0 +1,76 @@
+🔹 What is partition?
+
+partition is an Enumerable method that divides elements into two arrays:
+
+First array → elements for which the block returns true
+
+Second array → elements for which the block returns false
+
+It always returns an array of two arrays.
+
+📌 Syntax
+collection.partition { |element| condition }
+
+
+condition → a block that returns true or false for each element
+
+Returns: [matching_elements, non_matching_elements]
+
+✅ Simple Example 1: Even / Odd numbers
+numbers = [1, 2, 3, 4, 5, 6]
+
+evens, odds = numbers.partition { |n| n.even? }
+
+puts evens.inspect  # => [2, 4, 6]
+puts odds.inspect   # => [1, 3, 5]
+
+
+First array: numbers where n.even? is true
+
+Second array: the rest
+
+✅ Example 2: Partition strings by length
+words = ["apple", "cat", "banana", "dog"]
+
+long_words, short_words = words.partition { |w| w.length > 3 }
+
+puts long_words.inspect   # => ["apple", "banana"]
+puts short_words.inspect  # => ["cat", "dog"]
+
+✅ Example 3: Partition employees by role
+developers, non_developers = employees.values.partition { |e| e[:role] == "developer" }
+
+puts developers.map { |e| e[:role] }       # => ["developer", "developer", "developer"]
+puts non_developers.map { |e| e[:role] }   # => ["manager", "manager", "qa", "qa"]
+
+🔄 How it works internally
+
+Think of it like this:
+
+true_arr = []
+false_arr = []
+
+collection.each do |item|
+  if yield(item)
+    true_arr << item
+  else
+    false_arr << item
+  end
+end
+
+[true_arr, false_arr]
+
+🧠 Key Points
+
+Returns exactly 2 arrays
+
+The block decides membership in the first array
+
+Useful for splitting collections quickly
+
+Works on Array, Hash, Range, Set (anything Enumerable)
+
+🔹 partition vs group_by
+Method	Difference
+partition	Splits into 2 arrays only (true/false)
+group_by	Can split into any number of groups based on block result

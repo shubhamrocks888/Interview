@@ -1,0 +1,98 @@
+Sidekiq is a separate server/process, just like rails s is for your web app.
+
+Mental model (lock this in)
+Thing	Command	Purpose
+Rails web server	rails s / puma	Handles HTTP requests
+Sidekiq server	bundle exec sidekiq	Runs background jobs
+
+They are independent processes.
+
+How you start Sidekiq
+Basic command
+bundle exec sidekiq
+
+
+That’s the equivalent of:
+
+rails s
+
+
+for background jobs.
+
+With options (very common)
+bundle exec sidekiq -c 10 -q default -q mailers
+
+
+-c 10 → 10 threads
+
+-q → queue priority/order
+
+Using config file (production-style)
+bundle exec sidekiq -C config/sidekiq.yml
+
+
+Example sidekiq.yml:
+
+:concurrency: 10
+:queues:
+  - critical
+  - default
+  - low
+
+What happens when you run bundle exec sidekiq
+
+Boots Rails environment
+
+Connects to Redis
+
+Registers itself in Redis (processes)
+
+Starts heartbeats
+
+Starts worker threads
+
+Begins fetching jobs
+
+👉 All without touching rails s
+
+Can Rails app work without Sidekiq running?
+
+✅ Yes (for web requests)
+
+But:
+
+Background jobs will not execute
+
+Jobs will pile up in Redis
+
+Can Sidekiq run without Rails server?
+
+✅ Yes
+
+Sidekiq only needs:
+
+Rails codebase
+
+Redis
+
+It doesn’t need rails s running
+
+In production (important)
+
+Usually you run:
+
+multiple web servers
+
+multiple Sidekiq servers
+
+Example:
+
+3 web servers (rails s / puma)
+2 sidekiq servers (bundle exec sidekiq)
+
+
+Totally independent scaling.
+
+Interview-ready one-liner 🔥
+
+Yes, Sidekiq runs as a separate server process. Just like rails s starts the web server, bundle exec sidekiq starts the Sidekiq worker server to process background jobs.

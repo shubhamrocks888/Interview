@@ -1,0 +1,126 @@
+Good question — this is a very common misunderstanding.
+
+Short answer
+
+👉 No error is thrown.
+Everything “works”, but your system silently hurts itself.
+
+What actually happens (no TTL, no race protection)
+
+When expires_in is reached and many requests arrive together:
+
+Rails.cache.fetch("expensive_data") { heavy_computation }
+
+Timeline again
+T=0    cache expires
+T=0.1  100 requests hit at the same time
+
+For EACH request
+
+Cache lookup → MISS
+
+Rails runs the block
+
+heavy_computation executes
+
+Result written back to cache (last write wins)
+
+❗ Important: this is NOT an exception scenario
+
+❌ No RaceConditionError
+
+❌ No Redis error
+
+❌ No Rails error
+
+❌ No log warning
+
+From Rails’ point of view:
+
+“Cache miss? Okay, recompute.”
+
+So what goes wrong?
+1️⃣ Database / API overload
+
+100 identical expensive queries
+
+DB CPU spikes
+
+Connection pool exhausted
+
+Other requests slow down
+
+2️⃣ Cascading failures
+
+Requests become slow
+
+Load balancer retries
+
+Timeouts start happening
+
+Eventually real errors appear, but later
+
+Examples you’ll see:
+
+ActiveRecord::ConnectionTimeoutError
+
+Net::ReadTimeout
+
+502 / 504 at gateway
+
+📌 These are secondary failures, not cache errors.
+
+3️⃣ Non-deterministic cache value
+
+All requests recompute
+
+Last one writes value
+
+Usually same data, but:
+
+Time-based queries
+
+External APIs
+
+Partial failures
+→ Cache ends up with unpredictable value
+
+Why this bug is dangerous
+
+Because:
+
+App works fine in low traffic
+
+No errors in logs
+
+Fails only under load
+
+Looks like “random slowness”
+
+📌 This is why cache stampede bugs survive to production.
+
+With race_condition_ttl, contrast
+Rails.cache.fetch(
+  "expensive_data",
+  expires_in: 10.minutes,
+  race_condition_ttl: 5.seconds
+) { heavy_computation }
+
+
+Now:
+
+One request recomputes
+
+Others serve stale data
+
+No DB storm
+
+No hidden failures
+
+Key takeaway (memorize)
+
+Cache stampede does not cause immediate errors — it causes silent overload, which later manifests as timeouts and outages.
+
+Interview-ready answer
+
+Without race-condition protection, concurrent cache misses cause multiple expensive recomputations. No error is raised, but the system experiences unnecessary load, leading to timeouts and degraded performance.

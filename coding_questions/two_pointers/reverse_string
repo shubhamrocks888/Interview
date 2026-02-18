@@ -1,0 +1,35 @@
+Reverse String — what the question is actually testing
+
+On the surface, the question sounds trivial:
+
+“Reverse a string.”
+
+But interviewers do not care that you can reverse text.
+They care how you think about space, mutation, and traversal.
+
+Hidden constraints behind this question
+
+Most interview versions quietly imply:
+
+You are given a mutable sequence (array of characters, not an immutable string)
+
+You should reverse it in place
+
+You should use O(1) extra space
+
+You should do it in O(n) time
+
+
+
+
+def reverse_string(str)
+    left = 0
+    right = str.length-1
+    
+    while left < right
+        str[left], str[right] = str[right], str[left]
+        left+=1
+        right-=1
+    end
+    str
+end

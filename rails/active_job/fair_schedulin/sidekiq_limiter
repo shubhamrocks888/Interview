@@ -1,0 +1,136 @@
+Problem (recap)
+
+Sidekiq concurrency = 10
+
+User-1, User-2, User-3 each enqueue 10 report jobs
+
+Requirement: each user should get a fair chance
+
+No user should occupy all workers
+
+✅ Sidekiq Enterprise solution (CORRECT & CLEAN)
+
+Sidekiq Enterprise gives built-in, crash-safe, Redis-backed rate & concurrency limiters.
+
+👉 No manual Redis code
+👉 No TTL guessing
+👉 No edge-case bugs
+
+🧠 Core idea
+
+Limit concurrent jobs per user using a concurrency limiter keyed by user_id.
+
+🧱 Worker code (Sidekiq Enterprise)
+class ReportGenerationJob
+  include Sidekiq::Worker
+
+  sidekiq_options queue: :reports
+
+  def perform(user_id)
+    limiter = Sidekiq::Limiter.concurrent(
+      "reports:user:#{user_id}",
+      1
+    )
+
+    limiter.within_limit do
+      generate_report(user_id)
+    end
+  end
+end
+
+🔍 Line-by-line explanation
+1️⃣ Sidekiq::Limiter.concurrent
+Sidekiq::Limiter.concurrent("reports:user:#{user_id}", 1)
+
+
+Means:
+
+“Allow only 1 job at a time for this key.”
+
+Key is per user → fairness guaranteed.
+
+2️⃣ within_limit
+limiter.within_limit do
+
+
+What happens internally:
+
+If limit is free → job runs
+
+If limit exceeded → job waits in Redis
+
+No busy retry
+
+No manual cleanup
+
+3️⃣ Crash safety (IMPORTANT)
+
+If worker crashes:
+
+Sidekiq Enterprise automatically releases slot
+
+Uses Redis + TTL + heartbeats internally
+
+You don’t write any of that code
+
+📊 Execution behavior
+Time	Worker slots
+Start	U1, U2, U3 each get 1 slot
+Next	Extra jobs wait
+Completion	Next job for that user runs
+
+➡️ Perfect fairness
+
+🏆 Interview-ready explanation (say this)
+
+“Using Sidekiq Enterprise, I would apply a per-user concurrency limiter.
+Each user is allowed only one concurrent report job, enforced by Sidekiq’s Redis-backed limiters.
+This prevents starvation and is crash-safe out of the box.”
+
+This is a gold answer.
+
+💎 Even better: combine with rate limiting
+Example
+
+Max 5 reports per hour per user
+
+rate_limiter = Sidekiq::Limiter.rate(
+  "reports:user:#{user_id}",
+  5,
+  1.hour
+)
+
+rate_limiter.within_limit do
+  generate_report(user_id)
+end
+
+
+You can even combine both:
+
+concurrency.within_limit do
+  rate.within_limit do
+    generate_report(user_id)
+  end
+end
+
+❓ If interviewer asks: “Why not open-source Sidekiq?”
+
+Answer:
+
+“Open-source Sidekiq doesn’t provide fairness or per-key concurrency.
+Enterprise solves this safely without custom Redis logic.”
+
+🧠 What interviewer is REALLY testing
+Skill	Demonstrated
+Distributed locking	✅
+Crash safety	✅
+Fair scheduling	✅
+Practical tradeoffs	✅
+Tool knowledge	✅
+🏁 Final takeaway
+
+Manual Redis = works but risky
+
+Sidekiq Enterprise = correct, simple, battle-tested
+
+This is how large Rails systems do it

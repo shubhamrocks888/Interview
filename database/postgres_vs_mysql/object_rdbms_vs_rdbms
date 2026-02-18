@@ -1,0 +1,59 @@
+Why PostgreSQL is called Object-Relational (ORDBMS)
+
+PostgreSQL goes beyond tables and supports object-like features inside the database:
+
+Custom Data Types
+
+You can create your own types (ENUMs, composite types, JSON, arrays).
+
+Example: a address type with street, city, pincode.
+
+Table Inheritance
+
+One table can inherit from another (similar to class inheritance).
+
+Useful for polymorphic-like behavior.
+
+Functions & Procedures as First-Class Objects
+
+Functions can return complex types, tables, JSON, etc.
+
+Functions themselves are treated like database objects.
+
+Advanced JSON & Array Support
+
+PostgreSQL treats JSON, arrays, hstore as native objects, not hacks.
+
+📌 Because of these object-like abstractions, PostgreSQL is called an
+Object-Relational Database.
+
+Why MySQL is called a Relational Database
+
+MySQL sticks closely to the traditional relational model:
+
+Tables, Rows, Columns
+
+Data is primarily stored and accessed in flat tables.
+
+Limited Custom Types
+
+Mostly standard SQL types (INT, VARCHAR, DATE, etc.).
+
+No Table Inheritance
+
+Relationships are handled via foreign keys only.
+
+Procedures exist, but limited
+
+Stored procedures are more restricted and less expressive.
+
+📌 So MySQL focuses on relations between tables, not object behavior.
+
+One-liner you can use in interviews 🎯
+
+PostgreSQL is object-relational because it supports custom types, inheritance, and complex data structures inside the database, whereas MySQL follows a traditional relational model focused on tables and foreign keys.
+
+Rails-friendly explanation (bonus)
+
+PostgreSQL aligns better with Rails’ rich domain models because it can store structured data (JSON, arrays) and enforce complex constraints at the database level.
+

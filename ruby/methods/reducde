@@ -1,0 +1,97 @@
+🔹 What is reduce?
+
+reduce accumulates a single value from a collection by applying a block to each element and carrying forward a “memo” (accumulator).
+
+Think of it as folding an array into one value.
+
+📌 Basic Syntax
+collection.reduce(initial_value) do |memo, element|
+  # compute new memo
+end
+
+
+memo → the running total (or result)
+
+element → current item
+
+initial_value → optional starting value; if omitted, first element is used
+
+✅ Simple Examples
+1️⃣ Sum of numbers
+numbers = [1, 2, 3, 4]
+
+sum = numbers.reduce(0) { |total, n| total + n }
+
+puts sum
+
+
+Step by step:
+
+total = 0, n = 1 → total + n = 1
+
+total = 1, n = 2 → total + n = 3
+
+total = 3, n = 3 → total + n = 6
+
+total = 6, n = 4 → total + n = 10
+
+➡ Output: 10
+
+2️⃣ Product of numbers
+numbers = [2, 3, 4]
+
+product = numbers.reduce(1) { |prod, n| prod * n }
+puts product
+
+
+➡ Output: 24 (2 × 3 × 4)
+
+3️⃣ Without initial value
+numbers = [2, 3, 4]
+
+sum = numbers.reduce { |total, n| total + n }
+
+
+First element 2 is used as memo
+
+Block starts with total = 2, n = 3
+
+✅ Works fine, but safer to provide initial value to avoid errors on empty arrays.
+
+4️⃣ Using Symbol Shortcut
+[1, 2, 3, 4].reduce(:+)   # => 10
+[2, 3, 4].reduce(:*)      # => 24
+
+
+:+ → addition
+
+:* → multiplication
+
+Very concise and common in interviews.
+
+5️⃣ Real-World Example
+Count total projects for employees
+total_projects = employees.values.reduce(0) do |sum, emp|
+  sum + emp[:projects].size
+end
+
+puts total_projects
+
+
+Iterates over each employee
+
+Adds number of projects
+
+Returns total
+
+🧠 Key Points for Interviews
+
+reduce is for folding/accumulating a single value
+
+Can be sum, product, hash, array, string concatenation
+
+Optional initial value is safer, especially for empty arrays
+
+Symbol shortcut (:+, :*) makes code concise
+
+Works on any Enumerable: Array, Hash, Range

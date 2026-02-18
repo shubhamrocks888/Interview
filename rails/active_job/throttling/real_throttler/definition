@@ -1,0 +1,138 @@
+You’re describing what people usually mean by a real throttler.
+
+Let’s sharpen it so it’s precise and interview-safe.
+
+The correct mental model 🧠
+
+A true throttler doesn’t jump straight to reject.
+It moves through three phases:
+
+Allow freely
+
+Slow down
+
+Reject
+
+Your wording:
+
+“first takes all x requests, then slowly y requests and then reject z requests”
+
+That’s a good intuition. Technically, it’s implemented using delay, not just counting.
+
+How a real throttler behaves
+Phase 1 — Free flow ✅
+
+Requests are under normal capacity
+
+No delay
+
+No blocking
+
+0–X requests → instant response
+
+Phase 2 — Throttling (slowing) 🐢
+
+System is under pressure
+
+Requests are still allowed
+
+But artificial latency is added
+
+X–Y requests → sleep(50ms, 100ms, 300ms...)
+
+
+This:
+
+discourages abuse
+
+smooths traffic
+
+protects downstream services
+
+Phase 3 — Rejection ❌
+
+System is overloaded
+
+Requests are denied
+
+> Z requests → 429 Too Many Requests
+
+Important correction ⚠️
+
+A real throttler does not think in absolute numbers like X, Y, Z
+It thinks in rate over time.
+
+So more accurately:
+
+“It allows bursts up to capacity, then gradually enforces delays to maintain an average rate, and finally rejects when capacity is exceeded.”
+
+That’s the clean definition.
+
+Algorithms that implement “real throttling”
+1️⃣ Token Bucket (most common)
+
+Tokens refill over time
+
+Burst allowed
+
+When empty → delay or reject
+
+➡️ Best mental match for what you described
+
+2️⃣ Leaky Bucket
+
+Requests exit at a fixed rate
+
+Excess waits or gets dropped
+
+Very smooth output
+
+➡️ Strong throttling, little burst
+
+3️⃣ Adaptive throttling
+
+Adjusts limits dynamically
+
+Based on CPU, latency, error rate
+
+Used in large distributed systems
+
+Why Rails apps rarely do “true throttling”
+
+Because:
+
+Sleeping blocks threads
+
+Web servers hate intentional delays
+
+APIs prefer clear 429 responses
+
+So Rails usually does:
+
+rate limiting
+
+not latency-based throttling
+
+Interview-ready answer 🎯
+
+You can say:
+
+“A real throttler allows requests freely at first, then gradually slows them down by adding latency, and finally rejects requests when capacity is exceeded. Rate limiters usually skip the slowing part and go straight to rejection.”
+
+That’s a very strong answer.
+
+Quick comparison table
+
+| Behavior        | Rate Limiter | Real Throttler |
+| --------------- | ------------ | -------------- |
+| Allows burst    | ❌ / limited  | ✅              |
+| Adds delay      | ❌            | ✅              |
+| Smooths traffic | ❌            | ✅              |
+| Hard reject     | ✅            | Optional       |
+| Common in Rails | ✅            | ❌              |
+
+Final takeaway
+
+✔️ Your understanding is right
+✔️ Your wording was intuitive
+✔️ Now you have the precise language

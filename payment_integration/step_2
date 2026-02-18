@@ -1,0 +1,61 @@
+STEP 2️⃣: Frontend Opens Razorpay Checkout
+2.1 Frontend receives from backend
+{
+  "order_id": "order_Lk8XwP9abc123",
+  "key": "rzp_test_xxxxx"
+}
+
+2.2 Frontend initializes Razorpay Checkout
+
+Example JavaScript:
+
+var options = {
+  key: "rzp_test_xxxxx",       // public key from backend
+  order_id: "order_Lk8XwP9abc123",
+  amount: 50000,               // paise
+  currency: "INR",
+  name: "My Rails Store",
+  description: "Order Payment",
+  handler: function(response) {
+    // Step 3: Send payment response to backend
+  }
+};
+
+var rzp = new Razorpay(options);
+rzp.open();
+
+What happens internally now?
+
+Razorpay opens a secure popup / modal in the browser.
+
+User sees payment options:
+
+Card
+
+UPI
+
+Netbanking
+
+User enters card/UPI details
+
+Razorpay talks to bank/payment network
+
+💡 Important
+
+At this stage, your Rails backend is not involved in the money transfer
+
+Rails does not know if payment is successful yet
+
+DB state during checkout
+id	razorpay_order_id	razorpay_payment_id	amount	status
+1	order_Lk8XwP9abc123	NULL	50000	created
+
+💡 Status still created, payment_id is still NULL.
+
+Interview-grade explanation for this step
+
+At step 2, the frontend opens Razorpay Checkout using the public key and order_id.
+Razorpay handles all sensitive payment details, and the backend is not yet aware of success or failure.
+
+
+

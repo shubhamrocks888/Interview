@@ -1,0 +1,164 @@
+1️⃣ What is an “event” (very simple)
+
+An event is:
+
+A fact that something already happened in the system.
+
+Not a command.
+Not an instruction.
+Just a statement of truth.
+
+Example:
+
+“UserSignedUp”
+
+“OrderPlaced”
+
+“NotificationRequested”
+
+2️⃣ What does an event look like (concrete)
+
+When Rails produces an event, it’s just data.
+
+Example (JSON):
+
+{
+  "event_type": "notification_requested",
+  "user_id": 123,
+  "email": "user@example.com",
+  "template": "welcome",
+  "occurred_at": "2026-01-18T10:00:00Z"
+}
+
+
+This is what Kafka stores.
+
+Kafka doesn’t care what it means.
+Kafka just stores bytes.
+
+3️⃣ Why Rails produces an event instead of calling Elixir directly
+
+This is the key architectural reason.
+
+❌ Direct call (bad for this use case)
+Rails → HTTP → Elixir
+
+
+Problems:
+
+Rails waits
+
+Elixir down → Rails fails
+
+No retry
+
+Tight coupling
+
+✅ Event-based (Kafka)
+Rails → Kafka → Elixir
+
+
+Benefits:
+
+Rails responds immediately
+
+Elixir can be slow or down
+
+Event is durable
+
+Can be retried
+
+Can be consumed by many services
+
+🔥 Interview line:
+
+“Events decouple producers and consumers in time and availability.”
+
+4️⃣ Why Elixir needs the event (this answers your question directly)
+
+Elixir does not need Rails.
+It needs information about what happened.
+
+Elixir wants to know:
+
+Who?
+
+What?
+
+When?
+
+With what data?
+
+The event carries that context.
+
+Example:
+
+Rails says: “A notification was requested.”
+
+Elixir says: “Okay, I’ll send it asynchronously.”
+
+5️⃣ Important: Event ≠ Business logic
+
+Rails:
+
+Decides that notification is needed
+
+Applies business rules
+
+Emits event
+
+Elixir:
+
+Reacts to event
+
+Does the heavy async work
+
+No business decision
+
+🔥 Interview sentence:
+
+“Rails emits domain events; Elixir reacts to them.”
+
+6️⃣ Why Kafka stores the event (VERY IMPORTANT)
+
+Kafka gives:
+
+Feature	Why it matters
+Durability	Event not lost
+Ordering	Process in sequence
+Replay	Reprocess if bug
+Fan-out	Multiple consumers
+Backpressure	Rails not blocked
+7️⃣ Real-world failure example (interviewer favorite)
+
+Scenario:
+
+Rails sends notification
+
+Elixir service is down
+
+Without Kafka:
+❌ Notification lost
+
+With Kafka:
+✅ Event stored
+✅ Elixir comes back
+✅ Event processed later
+
+8️⃣ One-sentence interview answer (perfect)
+
+Say this:
+
+“An event represents a fact that occurred in the system. Rails emits events to Kafka to decouple business logic from asynchronous processing, allowing Elixir services to react reliably, independently, and at scale.”
+
+That answer is very strong.
+
+9️⃣ One more level (if interviewer pushes)
+
+If they ask:
+
+“Why not let Elixir decide when to send notifications?”
+
+Answer:
+
+“Rails owns business decisions, while Elixir focuses on high-concurrency execution. Events allow that separation of concerns.”

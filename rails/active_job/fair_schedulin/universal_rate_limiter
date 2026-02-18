@@ -1,0 +1,168 @@
+class RateLimiter
+	LIMIT = 5
+	WINDOW = 1.minute
+
+	def self.allowed?(user_id,action)
+		cache_key = "rate:#{action}:user:#{user-id}"
+
+		current = Rails.cache.increment(
+		cache_key,
+		1,
+		expires_in: WINDOW,
+		initial: 0)
+
+		count <= LIMIT
+	end
+end
+
+#################
+
+1️⃣ Real-time RATE LIMITING (HTTP requests)
+Requirement
+
+User can hit endpoint 10 times per minute
+
+Redis-based implementation (Rails.cache)
+class RateLimiter
+  LIMIT = 10
+  WINDOW = 1.minute
+
+  def self.allowed?(user_id, action)
+    key = "rate:#{action}:user:#{user_id}"
+
+    count = Rails.cache.increment(
+      key,
+      1,
+      expires_in: WINDOW,
+      initial: 0
+    )
+
+    count <= LIMIT
+  end
+end
+
+Controller usage
+before_action :check_rate_limit
+
+def check_rate_limit
+  unless RateLimiter.allowed?(current_user.id, action_name)
+    render json: { error: "Too many requests" }, status: 429
+  end
+end
+
+🧠 What this gives you
+
+✔ Per-user
+✔ Per-action
+✔ Works across servers
+✔ Auto-reset via TTL
+
+🧱 2️⃣ Real-time CONCURRENCY LIMITING (HTTP requests)
+Requirement
+
+User can only have 1 active report generation at a time
+
+Implementation
+class ConcurrencyLimiter
+  TTL = 10.minutes
+
+  def self.acquire(user_id, action)
+    key = "lock:#{action}:user:#{user_id}"
+
+    acquired = Rails.cache.write(
+      key,
+      true,
+      expires_in: TTL,
+      unless_exist: true
+    )
+
+    acquired
+  end
+
+  def self.release(user_id, action)
+    Rails.cache.delete("lock:#{action}:user:#{user_id}")
+  end
+end
+
+Controller usage
+def generate_report
+  unless ConcurrencyLimiter.acquire(current_user.id, :report)
+    render json: { error: "Report already in progress" }, status: 409
+    return
+  end
+
+  begin
+    enqueue_report_job
+    render json: { status: "started" }
+  ensure
+    # Release immediately if only protecting enqueue,
+    # or release later via Sidekiq callback
+  end
+end
+
+🧠 Why TTL again?
+
+Same reason as Sidekiq:
+
+App crash
+
+Request aborted
+
+Server restart
+
+TTL guarantees recovery.
+
+🧱 3️⃣ Combine RATE + CONCURRENCY (real world)
+def generate_report
+  unless RateLimiter.allowed?(current_user.id, :report)
+    render status: 429
+    return
+  end
+
+  unless ConcurrencyLimiter.acquire(current_user.id, :report)
+    render status: 409
+    return
+  end
+
+  enqueue_report_job
+end
+
+🔥 Production-grade improvement (VERY STRONG)
+Release concurrency from Sidekiq
+
+Acquire lock in controller
+
+Release lock when background job finishes
+
+This ties real-time API and background execution together.
+
+🧠 Interview-ready summary (say this)
+
+“For real-time user actions, we implement rate and concurrency limiting using Redis.
+Redis counters with TTL handle rate limits, and Redis locks with TTL handle concurrency.
+This works across app servers and provides crash safety, similar to Sidekiq Enterprise limiters.”
+
+🏆 Bonus points (if interviewer is senior)
+
+Mention:
+
+Rack middleware
+
+NGINX / Envoy rate limiting
+
+Sliding window / token bucket
+
+API Gateway limits
+
+Example line:
+
+“At scale, we often push rate limiting to API gateways or edge proxies.”
+
+🏁 Final mental model
+HTTP request
+   ↓
+Rate limiter (Redis + TTL)
+   ↓
+Concurrency limiter (Redis + TTL)
+   ↓
+Business logic

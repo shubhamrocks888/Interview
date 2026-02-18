@@ -1,0 +1,176 @@
+def perform(user_id)
+	MAX_CONCURRENCY = 2
+	RETRY = 5.seconds
+
+	def perfom(user_id)
+		key = "welcome:email:concurrency:user-id:#{user_id}"
+
+		count = Rails.cache.increment(key, 1, expires_in: 1.minute)
+
+		if count > MAX_CONCURRENCY
+			Rails.cache.decrement(key)
+			self.class.perform_in(RETRY, user_id)
+			return
+		end
+
+		begin
+			UserMailer.welcome_email(user_id).deliver_now
+		ensure
+			Rails.cache.decrement(key)
+		end
+	end
+end
+
+
+##########
+
+
+🚨 What’s wrong with this code (real prod issues)
+1️⃣ Silent job loss (same bug again)
+return if current > 2
+
+
+Job is acknowledged as success
+
+No retry
+
+No reschedule
+
+Job is lost forever
+
+❌ Unacceptable in production
+
+2️⃣ Over-increment bug
+
+Even rejected jobs do:
+
+Rails.cache.increment(key)
+
+
+Then return ❌
+So concurrency counter keeps increasing until TTL expires.
+
+Result:
+
+You block the user for 5 minutes
+
+Even though nothing is running
+
+3️⃣ Crash window = leaked slot
+ensure
+  Rails.cache.decrement(key)
+
+
+If:
+
+process is SIGKILLed
+
+machine dies
+
+Redis hiccup
+
+➡ decrement never happens
+➡ user stuck until TTL
+
+TTL helps, but still sloppy.
+
+4️⃣ Mailer is blocking
+deliver_now
+
+
+Occupies Sidekiq thread
+
+Makes concurrency tracking inaccurate
+
+Slows throughput
+
+5️⃣ No fairness / starvation protection
+
+One user can still:
+
+enqueue infinite jobs
+
+starve themselves forever
+
+🧠 Key insight (this is senior-level)
+
+Concurrency limit ≠ admission control
+
+You must:
+
+Acquire slot
+
+If failed → retry later
+
+If acquired → always release
+
+Never leak or inflate counters
+
+✅ Production-ready OSS concurrency limiter
+Pattern: Try → Delay → Execute → Release
+MAX_CONCURRENCY = 2
+RETRY_DELAY    = 5.seconds
+
+def perform(user_id)
+  key = "welcome_email_concurrency:user:#{user_id}"
+
+  current = Rails.cache.increment(key, 1, expires_in: 10.minutes)
+
+  if current > MAX_CONCURRENCY
+    Rails.cache.decrement(key)
+    self.class.perform_in(RETRY_DELAY, user_id)
+    return
+  end
+
+  begin
+    UserMailer.welcome_email(user_id).deliver_now
+  ensure
+    Rails.cache.decrement(key)
+  end
+end
+
+Why this is better
+
+✅ No silent drops
+✅ No counter inflation
+✅ Slot always released
+✅ Crash-safe via TTL
+✅ Backpressure instead of failure
+
+💎 Still not perfect (honesty)
+
+Even this:
+
+Can still starve under extreme load
+
+Needs jitter to avoid thundering herd
+
+Needs max retry protection
+
+This is why Sidekiq Enterprise exists.
+
+💎 Enterprise version (actual correct solution)
+sidekiq_options concurrency: { limit: 2, key: ->(args) { args.first } }
+
+
+Atomic
+
+Fair
+
+Crash-safe
+
+Zero custom logic
+
+🧠 Interview-ready explanation (🔥)
+
+Naive cache-based concurrency limits either leak slots or drop jobs.
+A production-safe design must release counters on rejection, retry with backoff, and protect against crashes.
+
+TL;DR
+
+| Version                  | Prod ready |
+| ------------------------ | ---------- |
+| Naive increment/return   | ❌          |
+| With decrement on reject | ⚠️         |
+| With delay + ensure      | ✅          |
+| Sidekiq Enterprise       | 💎         |

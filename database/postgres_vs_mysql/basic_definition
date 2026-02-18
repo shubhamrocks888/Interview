@@ -1,0 +1,16 @@
+PostgreSQL is an advanced, feature-rich, object-relational database that focuses on data integrity, complex queries, and strict SQL compliance.
+It’s preferred when applications need complex joins, transactions, JSON support, and strong consistency.
+
+MySQL is a fast, lightweight relational database designed for simplicity and high read performance.
+It’s commonly used for web applications where speed and ease of use matter more than advanced querying.
+
+One-line comparison (interviewer gold ✨)
+
+PostgreSQL = correctness, complexity, scalability
+MySQL = speed, simplicity, web-friendly
+
+If they ask “which one should I choose?”
+
+Choose PostgreSQL → fintech, analytics, SaaS, complex business logic
+
+Choose MySQL → blogs, CMS, simple CRUD, read-heavy apps

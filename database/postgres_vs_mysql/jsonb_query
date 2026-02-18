@@ -1,0 +1,16 @@
+JSONB queries (strong typing + indexing)
+👉 Find users with premium plan
+SELECT *
+FROM users
+WHERE meta ->> 'plan' = 'premium';
+
+👉 Index it
+CREATE INDEX ON users USING GIN (meta);
+
+❌ MySQL
+
+JSON exists
+
+Indexing + performance is weaker
+
+Query syntax is messy

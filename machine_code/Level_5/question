@@ -1,0 +1,106 @@
+Perfect! 🎬 Let’s shift to a “Book My Show” style system.
+
+We’ll do it interview-style, step by step like we did with referrals & coupons.
+
+We won’t jump into full code. We’ll break it down properly.
+
+🎯 Task — Book My Show Lite (API Only)
+
+Create Rails API endpoints for booking movie tickets. Apply proper validations.
+
+1️⃣ Models
+
+Think of the entities:
+
+| Model   | Fields (minimal)                                  | Notes / Relationships               |
+| ------- | ------------------------------------------------- | ----------------------------------- |
+| Movie   | title, description, duration                      | Has many shows                      |
+| Show    | movie_id, show_time, total_seats, available_seats | Belongs to movie, has many bookings |
+| User    | email, full_name                                  | Can book many tickets               |
+| Booking | user_id, show_id, seats_booked                    | Belongs to user & show              |
+
+
+Movie has_many :shows
+
+Show belongs_to :movie
+
+Show has_many :bookings
+
+User has_many :bookings
+
+Booking belongs_to :user and belongs_to :show
+
+3️⃣ API Endpoints
+| Action                 | Endpoint                | Description                            |
+| ---------------------- | ----------------------- | -------------------------------------- |
+| List movies            | GET /movies             | Returns all movies                     |
+| List shows for a movie | GET /movies/:id/shows   | Returns all shows for a movie          |
+| Book tickets           | POST /bookings          | Create a booking for a user for a show |
+| Show bookings          | GET /users/:id/bookings | List bookings of a user                |
+
+4️⃣ Constraints / Validations
+Booking a Show
+
+Show exists
+
+Seats requested ≤ available seats
+
+Seats requested ≥ 1
+
+User exists
+
+Prevent race conditions (two users booking same seats at same time)
+
+🧠 Important Design Thinking
+
+Critical problem:
+
+Two users try to book the last 2 seats at the same time.
+
+Solution:
+
+Wrap seat decrement in DB transaction
+
+Use lock on Show row
+
+Validate available seats before creating booking
+
+Optional advanced:
+
+Maintain seat map (for booked seat numbers)
+
+Use Redis for high traffic / caching availability
+
+✅ Step-by-Step Plan (Interview Style)
+
+Create Models & Associations
+
+Movie, Show, User, Booking
+
+Validations
+
+Booking validations: seats ≤ available, user exists
+
+Controller for Booking
+
+Check show exists
+
+Check user exists
+
+Check seats available
+
+Wrap in transaction + lock
+
+Update Show
+
+Decrement available seats atomically
+
+Return JSON
+
+Booking details or errors
+
+📝 Next Step
+
+We’ll start step 1 — Model design with associations and validations.
+
+Do you want to start with User, Movie, Show, Booking models first, one by one, like we did before?

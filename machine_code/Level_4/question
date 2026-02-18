@@ -1,0 +1,128 @@
+Task 2 — Create Rails Coupon & Referral CRUD APIs (30 min)
+
+Create CRUD API endpoints for managing Users, Coupons, and Coupon Redemptions using a Ruby on Rails API-only app.
+(Apply proper validations wherever applicable.)
+
+Endpoints:
+1️⃣ Create: Register User (with optional referral)
+
+Create a new user
+
+Accept optional referral_code
+
+If referral code exists, associate user with referrer
+
+2️⃣ Create: Create Coupon
+
+Create a new coupon
+
+Coupon should support:
+
+Code
+
+Discount type (percentage / flat)
+
+Discount value
+
+Expiry date
+
+Usage limit
+
+Active status
+
+3️⃣ Apply Coupon
+
+Apply a coupon to a specific user
+
+Validate:
+
+Coupon exists
+
+Coupon is active
+
+Coupon is not expired
+
+Usage limit not exceeded
+
+Coupon not already redeemed by the same user
+
+4️⃣ List:
+
+List all users with:
+
+Their referral details
+
+Coupons redeemed
+
+List all coupons with:
+
+Usage count
+
+Active status
+
+5️⃣ Update:
+
+Update coupon details (expiry date, usage limit, active status)
+
+Models (for reference only):
+User:
+
+email
+
+full_name
+
+referral_code
+
+referred_by_id
+
+Coupon:
+
+code
+
+discount_type
+
+discount_value
+
+expiry_date
+
+usage_limit
+
+usage_count
+
+active
+
+CouponRedemption:
+
+user_id
+
+coupon_id
+
+redeemed_at
+
+Assume the following relationships:
+
+A User can refer many Users
+
+A User belongs to a referrer (optional)
+
+A User can redeem many Coupons
+
+A Coupon can be redeemed by many Users
+
+A CouponRedemption belongs to User and Coupon
+
+Prerequisite:
+
+Any latest Ruby version installed
+
+Any latest Rails API-only app installed and running
+
+No frontend required
+
+If you want, next I can:
+
+🔥 Make it slightly harder (interviewer-level tricky version)
+
+🔥 Add hidden edge cases interviewer may ask
+
+🔥 Turn this into a machine codin

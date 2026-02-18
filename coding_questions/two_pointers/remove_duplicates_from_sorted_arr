@@ -1,0 +1,156 @@
+Remove Duplicates from Sorted Array — what the question means
+
+Typical wording:
+
+“Given a sorted array, remove the duplicates in place such that each unique element appears only once. Return the number of unique elements.”
+
+This sounds simple… but the wording is very intentional.
+
+Key constraints hidden in the question
+1️⃣ The array is sorted
+
+This is the biggest hint.
+
+Because it’s sorted:
+
+All duplicates are next to each other
+
+You never need to search the whole array to find duplicates
+
+🧠 If it wasn’t sorted → this problem would be much harder.
+
+2️⃣ “Remove duplicates in place”
+
+This means:
+
+❌ Do NOT create a new array
+
+❌ Do NOT use extra memory like sets or hashes
+
+✅ Modify the given array itself
+
+You’re allowed to overwrite values.
+
+3️⃣ “Return the number of unique elements”
+
+This is subtle and important.
+
+They do not care about:
+
+elements beyond that count
+
+cleaning the array length
+
+Only the first k elements must be unique and correct.
+
+Example:
+
+Input:  [1,1,2,2,3]
+Output: k = 3
+Array:  [1,2,3,?,?]
+
+
+Those ? values don’t matter.
+
+What the array should look like after
+
+If input is:
+
+[1,1,2,2,3]
+
+
+After operation:
+
+[1,2,3,2,3]   ← valid
+
+
+Return:
+
+3
+
+
+As long as:
+
+array[0..k-1] == [1,2,3]
+
+
+You pass.
+
+Why this is a two-pointer problem
+
+You need:
+
+one pointer to read values
+
+one pointer to write unique values
+
+This is not start/end — it’s slow / fast.
+
+Mental model (very important)
+
+Think like this:
+
+One pointer scans every element (fast)
+
+Another pointer tracks where the next unique value should go (slow)
+
+When you see a new value → write it at slow pointer → move slow
+
+🧠 You’re compressing the array in place.
+
+What interviewers are testing
+
+This question checks if you:
+
+Understand sorted data advantages
+
+Can modify arrays in place
+
+Know slow/fast pointer pattern
+
+Don’t overuse extra memory
+
+Follow problem constraints strictly
+
+It’s a discipline test, not a trick.
+
+Common wrong approaches
+
+❌ Using Set
+
+❌ Creating a new array
+
+❌ Deleting elements (expensive)
+
+❌ Shifting elements one by one
+
+All of these violate constraints.
+
+Interview-ready explanation (say this)
+
+“Since the array is sorted, duplicates are adjacent. I use two pointers: one scans the array, and the other tracks the position to write the next unique element. This removes duplicates in place in linear time.”
+
+That explanation is exactly what interviewers want 🔥
+
+
+
+
+
+
+
+##########
+
+def remove_duplicates(arr)
+  return 0 if arr.empty?
+
+  write = 0
+
+  (1...arr.length).each do |read|
+    if arr[read] != arr[write]
+      write += 1
+      arr[write] = arr[read]
+    end
+  end
+
+  write + 1
+end

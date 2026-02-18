@@ -1,0 +1,70 @@
+1️⃣ Job fails with an exception
+def perform
+  raise "Something went wrong"
+end
+
+
+Sidekiq sees the exception
+
+Checks the job’s retry option (sidekiq_options retry: 5)
+
+Schedules the job in the retry set with a timestamp (exponential backoff)
+
+✅ Job will retry automatically
+
+2️⃣ Job crashes due to worker process crash
+
+Examples:
+
+Ruby process killed (kill -9)
+
+Server crash / power outage
+
+Out-of-memory
+
+What happens:
+
+The job was already removed from the Redis queue and running in memory
+
+Sidekiq detects the worker is dead via heartbeat monitoring
+
+Sidekiq re-enqueues the job to the original queue
+
+✅ Job will retry, even if it never raised an exception
+
+This is why Sidekiq guarantees at-least-once execution, not exactly-once.
+
+3️⃣ Job silently fails (no exception)
+def perform
+  return if some_condition
+end
+
+
+Sidekiq sees no exception
+
+It thinks job succeeded
+
+❌ Job will not retry
+
+Important: retries happen only on exceptions or worker crashes, not for normal returns.
+
+4️⃣ Job retry lifecycle in Redis
+
+Failed jobs with retry → go to retry sorted set
+
+Retry timestamp calculated with exponential backoff + jitter
+
+Poller thread moves job back to original queue when retry time comes
+
+Visual flow
+Job runs
+   |
+   |--- Raises exception → retry set → re-enqueued → executed again
+   |
+   |--- Worker crashes → detected → re-enqueued → executed again
+   |
+   |--- Returns normally → considered success → no retry
+
+5️⃣ Interview-ready one-liner 💡
+
+Sidekiq retries a job automatically if it raises an exception or the worker crashes mid-job, but it does not retry jobs that exit successfully without raising an error.

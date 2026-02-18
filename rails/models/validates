@@ -1,0 +1,81 @@
+1️⃣ Presence / Absence
+validates :email, presence: true
+validates :middle_name, absence: true
+
+2️⃣ Uniqueness
+validates :email, uniqueness: true
+validates :username, uniqueness: { case_sensitive: false }
+validates :email, uniqueness: { scope: :account_id }
+
+
+⚠️ Always back this with a DB unique index.
+
+3️⃣ Length
+validates :password, length: { minimum: 6 }
+validates :username, length: { maximum: 20 }
+validates :code, length: { is: 6 }
+
+4️⃣ Numericality
+validates :age, numericality: true
+validates :age, numericality: { greater_than: 0 }
+validates :price, numericality: { only_integer: true }
+
+5️⃣ Format (Regex)
+validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
+validates :phone, format: { with: /\A\d{10}\z/ }
+
+6️⃣ Inclusion / Exclusion
+validates :role, inclusion: { in: %w[admin user guest] }
+validates :status, exclusion: { in: %w[blocked deleted] }
+
+7️⃣ Confirmation
+validates :password, confirmation: true
+
+
+Requires:
+
+password_confirmation
+
+8️⃣ Acceptance (checkbox use case)
+validates :terms_of_service, acceptance: true
+
+
+Common in sign-up forms.
+
+9️⃣ Comparison (Rails 6+)
+validates :end_date, comparison: { greater_than: :start_date }
+
+🔟 Associated / Nested
+validates :profile, associated: true
+
+
+Runs validations on associated models.
+
+1️⃣1️⃣ Conditional validations
+validates :discount, presence: true, if: :premium_user?
+validates :code, presence: true, unless: -> { free_user? }
+
+1️⃣2️⃣ Custom validations (validate)
+validate :custom_logic
+
+def custom_logic
+  errors.add(:base, "Something went wrong") if bad_state?
+end
+
+1️⃣3️⃣ Strict validations (raise exception)
+validates :email, presence: true, strict: true
+
+
+Raises ActiveModel::StrictValidationFailed.
+
+Interview cheat-sheet (🔥 remember this)
+
+If interviewer asks:
+
+“What validations does Rails provide?”
+
+You say:
+
+“Presence, absence, uniqueness, length, numericality, format, inclusion/exclusion, confirmation, acceptance, comparison, associated, conditional, and custom validations.”
+
+That’s a solid senior-level answer.

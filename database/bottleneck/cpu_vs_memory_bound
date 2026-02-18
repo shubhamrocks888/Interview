@@ -1,0 +1,99 @@
+1️⃣ CPU-bound queries
+
+Definition:
+Queries whose performance is limited by CPU computation, not I/O or memory.
+
+Causes:
+
+Heavy aggregations (SUM, COUNT, AVG) on large datasets
+
+Complex JOINs / nested queries
+
+Functions in WHERE clauses that prevent index usage
+
+Sorting large datasets without indexes
+
+Symptoms:
+
+CPU usage on DB server is very high
+
+Query execution time scales with dataset size
+
+Disk I/O is low — meaning the CPU is busy crunching data
+
+Architect-level fix:
+
+Add proper indexes to reduce scan costs
+
+Pre-aggregate data (materialized views)
+
+Denormalize if necessary
+
+Avoid unnecessary computations inside the DB
+
+Example:
+
+SELECT SUM(amount) FROM payments WHERE EXTRACT(YEAR FROM created_at) = 2025;
+
+
+If created_at isn’t indexed, DB computes SUM for all rows → CPU-intensive.
+
+2️⃣ Memory-bound queries
+
+Definition:
+Queries whose performance is limited by memory capacity or memory access, often causing disk spills when RAM is exhausted.
+
+Causes:
+
+Large sorts / GROUP BY operations that don’t fit in memory
+
+Hash joins with large tables
+
+Materialized aggregates on tables bigger than available RAM
+
+Symptoms:
+
+Memory usage spikes during query
+
+Temporary files / disk spills (temp files) appear
+
+CPU may not be fully used — the DB waits on memory / I/O
+
+Architect-level fix:
+
+Increase memory allocated to DB (Postgres work_mem)
+
+Break queries into smaller batches
+
+Add indexes to reduce the need for full table scans
+
+Use streaming / cursor-based queries instead of loading all rows at once
+
+Example:
+
+SELECT user_id, COUNT(*) 
+FROM logins 
+GROUP BY user_id;
+
+
+If logins table is huge, hash aggregation may exceed work_mem → spills to disk → memory-bound.
+
+3️⃣ Quick comparison table
+Aspect	CPU-bound query	Memory-bound query
+Bottleneck	CPU cycles	RAM / memory allocation
+Symptoms	High CPU, low disk I/O	High memory, disk spills
+Common causes	Complex aggregations, JOINs	Large sorts, GROUP BY, hash joins
+Fix	Indexes, pre-aggregation, denormalization	Increase work_mem, batch queries, streaming results
+4️⃣ Architect-level talking points for interview
+
+“I monitor both CPU and memory usage to identify if the query is CPU-bound or memory-bound.”
+
+“CPU-bound → optimize computation, use indexes, pre-aggregate data.”
+
+“Memory-bound → increase memory allocation, batch processing, or streaming.”
+
+“Always consider dataset size and query pattern before deciding on scaling hardware vs optimizing queries.”
+
+💡 One-liner to impress:
+
+“CPU-bound queries are limited by processing power, memory-bound queries by RAM; identifying which is the bottleneck lets me choose between computation optimization, indexing, pre-aggregation, or batching.”

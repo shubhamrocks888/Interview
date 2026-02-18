@@ -1,0 +1,48 @@
+If you want to keep it minimal, you can get away with just one table — usually called orders — that tracks everything related to payments and refunds.
+
+Here’s how it can look:
+
+Table: orders
+Column	Type	Description
+id	bigint / pk	Rails primary key
+user_id	bigint	The customer who placed the order
+amount	integer	Order amount in paise
+razorpay_order_id	string	Order ID returned by Razorpay
+razorpay_payment_id	string	Payment ID returned by Razorpay (if payment attempted)
+status	string	created / paid / failed / refunded
+refunded_amount	integer	Amount refunded, if any
+currency	string	Default INR
+created_at / updated_at	datetime	Rails timestamps
+Notes:
+
+Single table can handle everything:
+
+Order creation (created)
+
+Payment success (paid)
+
+Payment failed (failed)
+
+Refund (refunded, with refunded_amount column)
+
+Partial refunds:
+
+You can still use one table:
+
+refunded_amount tracks how much has been refunded
+
+status = refunded when full refund, or status = partially_refunded if partial
+
+Foreign keys:
+
+user_id → link to your users table
+
+Optional: Separate refunds table
+
+Only needed if you want multiple partial refunds per order
+
+Minimal approach: single orders table is enough
+
+💡 Interview-ready line:
+
+You can manage Razorpay integration with a single orders table that stores order_id, payment_id, status, and refunded amount. This is sufficient for normal payments, failed payments, and partial or full refunds.

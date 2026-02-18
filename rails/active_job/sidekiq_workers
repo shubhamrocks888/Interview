@@ -1,0 +1,74 @@
+Yes — you can control how many Sidekiq processes you run, but this is different from concurrency. Let me break it down clearly.
+
+1️⃣ Threads vs Processes
+
+| Concept | Sidekiq term     | Description                                                                                   |
+| ------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| Thread  | `concurrency`    | Number of jobs a **single Sidekiq process** can run in parallel.                              |
+| Process | OS-level process | Each Sidekiq process is independent, with its own threads, memory, and Redis connection pool. |
+
+
+2️⃣ How to run multiple Sidekiq processes
+
+You can start multiple Sidekiq processes either:
+
+a) Using separate command line instances
+bundle exec sidekiq -q critical,5 -q default,2 -c 10
+bundle exec sidekiq -q critical,5 -q default,2 -c 10
+
+
+Each process is independent
+
+Each process has its own concurrency threads
+
+b) Using systemd / Procfile / Docker
+
+Procfile example (Heroku / Foreman):
+
+worker1: bundle exec sidekiq -q critical -c 10
+worker2: bundle exec sidekiq -q default -c 5
+
+
+Docker Compose example:
+
+sidekiq:
+  image: myapp
+  command: bundle exec sidekiq -q critical -c 10
+  deploy:
+    replicas: 2
+
+
+This launches 2 separate Sidekiq processes
+
+Each process has 10 threads → total 20 jobs can run concurrently
+
+3️⃣ Why multiple processes?
+
+Memory isolation: Each process has its own memory, avoids long-running memory leaks affecting all threads.
+
+Parallelism: MRI Ruby has GIL, so multiple processes improve CPU-bound job performance.
+
+Fault tolerance: If one process crashes, others keep running.
+
+4️⃣ Interaction with concurrency
+
+concurrency sets threads per process
+
+Number of processes sets total Sidekiq workers
+
+Total possible concurrent jobs:
+
+total_jobs = processes * concurrency
+
+
+Example:
+
+2 processes
+
+concurrency = 10
+
+→ Sidekiq can run 20 jobs at the same time
+
+Interview-ready one-liner 💡
+
+You can control Sidekiq processes by running multiple OS-level Sidekiq instances, each with its own concurrency threads, allowing you to scale horizontally across CPU cores and improve fault tolerance.

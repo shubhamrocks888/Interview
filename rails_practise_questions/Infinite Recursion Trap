@@ -1,0 +1,14 @@
+Infinite Recursion Trap
+class User < ApplicationRecord
+  def status
+    self.status = "active"
+  end
+end
+
+❌ Bug
+
+Infinite recursion
+
+Getter mutates state
+
+💥 SystemStackError

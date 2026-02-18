@@ -1,0 +1,201 @@
+Token Bucket is the cleanest “real throttler” to learn.
+
+I’ll implement it step by step, then explain how it maps to real throttling behavior.
+
+1️⃣ Token Bucket idea (quick recap)
+
+Bucket has capacity (max tokens)
+
+Tokens refill over time
+
+Each request consumes 1 token
+
+If no token → request is rejected (or delayed)
+
+This allows:
+
+bursts ✅
+
+average rate enforcement ✅
+
+smooth throttling ✅
+
+2️⃣ Simple Token Bucket in Ruby (in-memory)
+Basic implementation
+class TokenBucket
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity
+    @refill_rate = refill_rate # tokens per second
+    @tokens = capacity
+    @last_refill = Time.now
+  end
+
+  def allow?
+    refill_tokens
+
+    if @tokens >= 1
+      @tokens -= 1
+      true
+    else
+      false
+    end
+  end
+
+  private
+
+  def refill_tokens
+    now = Time.now
+    elapsed = now - @last_refill
+
+    new_tokens = elapsed * @refill_rate
+    @tokens = [@capacity, @tokens + new_tokens].min
+
+    @last_refill = now if new_tokens > 0
+  end
+end
+
+3️⃣ How to use it
+bucket = TokenBucket.new(
+  capacity: 10,
+  refill_rate: 1 # 1 token per second
+)
+
+if bucket.allow?
+  puts "Request allowed"
+else
+  puts "Throttled"
+end
+
+4️⃣ What this gives you (important)
+Example behavior
+
+capacity = 10
+
+refill_rate = 1 token/sec
+
+| Time              | Tokens | Result        |
+| ----------------- | ------ | ------------- |
+| Start             | 10     | burst allowed |
+| 10 quick requests | 0      | all allowed   |
+| Next request      | 0      | blocked       |
+| After 3 sec       | 3      | 3 allowed     |
+| After long idle   | 10     | full again    |
+
+This is real throttling behavior.
+
+5️⃣ Why this is better than fixed-window rate limiting
+
+| Feature         | Fixed Window | Token Bucket |
+| --------------- | ------------ | ------------ |
+| Burst handling  | ❌            | ✅            |
+| Smooth refill   | ❌            | ✅            |
+| Boundary issues | ❌            | ✅            |
+| Real throttling | ❌            | ✅            |
+
+6️⃣ But ⚠️ this version is NOT production-safe
+
+Why?
+
+In-memory → per process only
+
+Not shared across servers
+
+Not atomic
+
+Thread-unsafe
+
+So let’s do production-ready Redis version.
+
+7️⃣ Token Bucket using Redis (Rails.cache)
+Concept
+
+We store:
+
+token count
+
+last refill timestamp
+
+Implementation
+class RedisTokenBucket
+  def initialize(capacity:, refill_rate:)
+    @capacity = capacity
+    @refill_rate = refill_rate
+  end
+
+  def allow?(key)
+    now = Time.now.to_f
+
+    data = Rails.cache.read(bucket_key(key)) || {
+      tokens: @capacity,
+      last_refill: now
+    }
+
+    tokens = data[:tokens]
+    last_refill = data[:last_refill]
+
+    # refill
+    elapsed = now - last_refill
+    tokens = [@capacity, tokens + elapsed * @refill_rate].min
+
+    if tokens >= 1
+      tokens -= 1
+      Rails.cache.write(
+        bucket_key(key),
+        { tokens: tokens, last_refill: now },
+        expires_in: ttl
+      )
+      true
+    else
+      Rails.cache.write(
+        bucket_key(key),
+        { tokens: tokens, last_refill: now },
+        expires_in: ttl
+      )
+      false
+    end
+  end
+
+  private
+
+  def bucket_key(key)
+    "token_bucket:#{key}"
+  end
+
+  def ttl
+    (@capacity / @refill_rate).ceil
+  end
+end
+
+8️⃣ Important interview note ⚠️
+
+This Redis version is logically correct but still has:
+
+race conditions under concurrency
+
+True production systems use:
+
+Redis Lua scripts
+
+Atomic math in Redis
+
+Or specialized gateways (Envoy, Nginx)
+
+If you mention this → you sound senior 👌
+
+9️⃣ Interview-ready explanation 🎯
+
+You can say:
+
+“Token bucket allows short bursts by consuming pre-filled tokens, then enforces an average rate using time-based refill. It’s closer to real throttling than fixed-window rate limiting.”
+
+That answer is 🔥.
+
+🔟 Final takeaway
+
+✔️ Rate limiter → counts requests
+
+✔️ Token bucket → controls flow
+
+✔️ Your intuition about slow → reject was correct
+
+✔️ This is real throttling

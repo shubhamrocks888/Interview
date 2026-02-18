@@ -1,0 +1,16 @@
+Correct way to get full rows of duplicates
+
+	User.where(email: User.group(:email).having("Count(*)>1").select(:email))
+
+
+6️⃣ Optional: Only one row per duplicate group (like “first” per group)
+
+
+
+
+
+BY JOIN
+
+
+select u1.* from users u1 inner join users u2 on u1.email = u2.email
+where u1.id < u2.id and u1.email in(select email from u1 group by email having count(*) > 1)

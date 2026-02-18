@@ -1,0 +1,90 @@
+What bundle update rails really does
+bundle update rails
+
+
+👉 Bundler will:
+
+Update rails
+
+Update all gems that are direct dependencies of Rails, such as:
+
+activesupport
+
+activerecord
+
+actionpack
+
+actionmailer
+
+railties
+
+Update their transitive dependencies if required
+
+But ❗ It will NOT update unrelated gems like:
+
+sidekiq
+
+devise
+
+pundit
+
+rspec
+
+(unless Rails explicitly requires a newer version)
+
+Why this happens
+
+Rails is a meta-gem.
+
+gem 'rails'
+
+
+actually pulls in:
+
+rails
+ ├─ actionpack
+ ├─ activerecord
+ ├─ activesupport
+ ├─ actionmailer
+ ├─ actionview
+ ├─ railties
+
+
+So Bundler must update all of these together.
+
+With --conservative
+bundle update rails --conservative
+
+
+👉 This means:
+
+Update Rails only as much as needed
+
+Avoid updating other gems unless unavoidable
+
+This is the recommended command for upgrades.
+
+What will NOT be updated
+
+Gem	Updated?
+
+r| Gem           | Updated? |
+| ------------- | -------- |
+| rails         | ✅ Yes    |
+| activerecord  | ✅ Yes    |
+| activesupport | ✅ Yes    |
+| sidekiq       | ❌ No     |
+| devise        | ❌ No     |
+| pry           | ❌ No     |
+
+Quick mental model 🧠
+
+bundle update → everything
+
+bundle update rails → rails + its dependency tree
+
+bundle update rails --conservative → rails + minimum required deps
+
+Interview one-liner 🎯
+
+bundle update rails updates Rails and its dependent gems, but not unrelated gems. Using --conservative limits the changes to the minimum required versions.

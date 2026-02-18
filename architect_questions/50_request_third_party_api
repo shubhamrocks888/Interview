@@ -1,0 +1,134 @@
+Problem recap (say this clearly first)
+
+We receive 100+ requests per hour, but a 3rd-party API allows only 50 requests/hour.
+If we hit it directly → we’ll get rate-limited / blocked.
+
+So we need control, buffering, and reliability.
+
+High-level solution (one-liner)
+
+Decouple incoming requests from the 3rd-party API using a queue + rate-limited worker.
+
+This sentence alone already sounds senior 😄
+
+Core Architecture
+1️⃣ Accept all incoming requests
+
+Don’t call the 3rd-party API synchronously.
+
+Immediately enqueue requests.
+
+Examples:
+
+Queue: Redis / Sidekiq / SQS / Kafka / RabbitMQ
+
+Return response like:
+
+202 Accepted
+
+or request_id for tracking
+
+👉 This keeps your system fast and stable.
+
+2️⃣ Rate-limited background worker
+
+A single worker (or controlled concurrency) processes the queue.
+
+Worker is configured to call max 50 times/hour.
+
+Ways to enforce limit:
+
+Token bucket
+
+Leaky bucket
+
+Fixed window counter in Redis
+
+Example (conceptual):
+
+Redis counter:
+key: third_party_api_calls:2026-02-02-10
+limit: 50
+
+
+If limit reached → worker sleeps / reschedules job.
+
+3️⃣ Delay / schedule extra requests
+
+Since requests > limit:
+
+Options:
+
+Process 50 now
+
+Remaining 50 → processed next hour
+
+This is called:
+
+Backpressure handling
+
+4️⃣ Idempotency & retries (important!)
+
+If API call fails:
+
+Retry with exponential backoff
+
+Ensure idempotency keys so retries don’t duplicate actions.
+
+Data Flow (explain verbally)
+Client → API Server
+        → Queue
+        → Rate-limited Worker
+        → 3rd Party API
+
+
+This is a classic async + throttling design.
+
+Bonus points (architect-level extras)
+✅ Priority queue
+
+Critical requests first
+
+Low-priority delayed
+
+✅ Caching
+
+If same request data:
+
+Serve from cache
+
+Avoid API call
+
+✅ Circuit breaker
+
+If 3rd-party is down:
+
+Stop calling temporarily
+
+Protect your system
+
+✅ Monitoring
+
+Track:
+
+queue size
+
+API failures
+
+rate-limit hits
+
+If interviewer asks: “What if request is user-blocking?”
+
+Answer:
+
+If it must be real-time, we either
+
+Reject excess requests gracefully, or
+
+Negotiate higher rate limit with the provider
+
+Never violate 3rd-party limits.
+
+Short crisp interview answer (memorize this)
+
+“I would decouple the incoming requests using a queue and process them via a rate-limited background worker. The worker enforces the 50/hour limit using Redis counters or a token bucket. Extra requests are delayed, retried safely, and monitored. This prevents rate-limit violations while keeping the system scalable and reliable.”

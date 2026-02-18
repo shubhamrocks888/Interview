@@ -1,0 +1,145 @@
+🔐 Devise Account Confirmation (confirmable)
+1️⃣ What is confirmable?
+
+The confirmable module ensures that a user confirms their email address before they can log in.
+Devise sends a confirmation email with a secure token and prevents login until confirmed.
+
+Enable it in your model:
+
+devise :confirmable
+
+2️⃣ DB Columns for Confirmable
+
+When you enable confirmable, Devise expects:
+
+t.string   :confirmation_token
+t.datetime :confirmed_at
+t.datetime :confirmation_sent_at
+t.string   :unconfirmed_email # optional, used if user changes email
+
+
+confirmation_token → unique token for email verification
+
+confirmed_at → timestamp when the account was confirmed
+
+confirmation_sent_at → tracks when token was sent
+
+unconfirmed_email → optional, temporarily stores new email before confirmation
+
+3️⃣ Account Creation & Confirmation Flow
+3.1 User signs up
+
+Devise generates a confirmation token:
+
+raw_token = Devise.friendly_token
+user.confirmation_token = Devise.token_generator.digest(User, :confirmation_token, raw_token)
+user.confirmation_sent_at = Time.current
+user.save!
+
+
+Sends email with raw token link:
+
+https://example.com/users/confirmation?confirmation_token=RAW_TOKEN
+
+
+User cannot log in until confirmed
+
+3.2 User clicks confirmation link
+
+Link hits:
+
+GET /users/confirmation?confirmation_token=RAW_TOKEN
+
+
+Devise controller:
+
+User.confirm_by_token(params[:confirmation_token])
+
+
+Devise internally:
+
+Hashes RAW_TOKEN and matches confirmation_token in DB
+
+If valid and not expired:
+
+Sets confirmed_at = Time.current
+
+Clears confirmation_token
+
+If expired → user must request new confirmation email
+
+3.3 Email Change Scenario
+
+If user changes email after confirmation:
+
+user.unconfirmed_email = "new@example.com"
+
+
+Devise sends new confirmation token to new email
+
+Only after confirmation, email is updated from unconfirmed_email
+
+4️⃣ Login Check With Confirmable
+
+During login:
+
+Devise checks:
+
+if user.confirmed?
+  # allow login
+else
+  # prevent login
+end
+
+
+confirmed? returns true if confirmed_at is set
+
+Tokens ensure only the email owner can confirm
+
+5️⃣ Expiry & Resending
+
+Confirmation token can expire (default: configurable in config/initializers/devise.rb)
+
+User can request resend:
+
+user.send_confirmation_instructions
+
+
+Generates a new token, updates confirmation_sent_at
+
+6️⃣ DB Columns Updated During Confirmation
+Column	When Updated
+confirmation_token	Cleared after confirmation
+confirmed_at	Set when account is confirmed
+confirmation_sent_at	Updated when sending confirmation instructions
+unconfirmed_email	Updated when email is changed, cleared after confirmation
+7️⃣ Security Considerations
+
+Token is hashed in DB → raw token only sent via email
+
+Prevents login without email verification
+
+Can expire → prevents using old tokens
+
+Email change requires confirmation → prevents hijacking accounts
+
+8️⃣ Flow Diagram (Interview-Friendly)
+User Sign Up
+     ↓
+Generate confirmation_token + confirmation_sent_at
+     ↓
+Send email with raw token
+     ↓
+User clicks link
+     ↓
+Hash token → compare with DB
+     ↓
+Valid & not expired?
+    ↓             ↓
+Yes → confirmed_at set  No → error / resend
+     ↓
+User can now log in
+
+9️⃣ One-Line Interview Answer
+
+“Devise’s confirmable module ensures that users verify their email before logging in. It generates a unique confirmation token, sends it via email, and prevents login until confirmed_at is set. The token is hashed in the database and can expire, ensuring secure account verification.”

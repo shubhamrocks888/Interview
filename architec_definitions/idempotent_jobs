@@ -1,0 +1,128 @@
+What does idempotent background job mean?
+
+A background job is idempotent if:
+
+Running the same job multiple times produces the same final result as running it once.
+
+In simple words:
+👉 Duplicate execution should NOT cause duplicate side effects.
+
+Why this matters (very important)
+
+Background jobs can run more than once because of:
+
+Retries after failure
+
+Worker crashes
+
+Network timeouts
+
+At-least-once delivery (Sidekiq, SQS, Kafka)
+
+So the system must assume:
+
+“This job might execute again.”
+
+Non-idempotent job (❌ bad)
+def perform(user_id)
+  user = User.find(user_id)
+  user.balance += 100
+  user.save!
+end
+
+
+If job runs twice:
+
+User gets ₹200 instead of ₹100 💥
+
+❌ Not idempotent
+
+Idempotent job (✅ good)
+Example 1: Use a unique operation key
+def perform(user_id, transaction_id)
+  return if Transaction.exists?(transaction_id: transaction_id)
+
+  User.transaction do
+    Transaction.create!(transaction_id: transaction_id, user_id: user_id, amount: 100)
+    user = User.lock.find(user_id)
+    user.balance += 100
+    user.save!
+  end
+end
+
+
+Even if job runs twice:
+
+Second run sees transaction already exists
+
+No duplicate effect
+
+✅ Idempotent
+
+Common idempotency patterns
+1️⃣ Database uniqueness constraint (best)
+add_index :payments, :reference_id, unique: true
+
+Payment.create!(reference_id: ref_id) # second run raises error
+
+
+DB is the source of truth.
+
+2️⃣ “Set state” instead of “increment”
+
+❌ Bad:
+
+user.login_count += 1
+
+
+✅ Good:
+
+user.last_login_at = Time.current
+
+
+Setting values is naturally idempotent.
+
+3️⃣ Check-before-act
+return if order.paid?
+order.mark_paid!
+
+4️⃣ Distributed lock / dedup (Redis)
+Sidekiq.redis do |r|
+  r.setnx("job:#{job_id}", true)
+end
+
+
+Prevents parallel execution.
+
+Sidekiq-specific concepts (interview gold)
+
+Sidekiq provides at-least-once execution
+
+Jobs can and will retry
+
+Hence jobs must be idempotent
+
+👉 Exactly why Sidekiq docs stress this.
+
+Real-world examples
+Email sending
+
+❌ Non-idempotent:
+
+Send email blindly → user gets 5 emails
+
+✅ Idempotent:
+
+Store email_sent_at
+
+Send only if nil
+
+File upload to S3
+
+Use deterministic object key
+
+Same upload overwrites instead of creating duplicates
+
+One-liner for interviews 🎯
+
+“An idempotent background job guarantees that even if it runs multiple times due to retries or failures, the system state remains correct and side effects happen only once.”

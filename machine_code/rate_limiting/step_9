@@ -1,0 +1,82 @@
+######### step 9 real token bucket using redis
+
+
+
+class RideCompletionJob < ApplicationJob
+  queue_as :mailers
+
+  retry_on StandardError, attempts: 5
+
+  LIMIT = 100                 # max tokens per minute
+  REFILL_INTERVAL = 1         # refill interval in seconds
+  THROTTLED_QUEUE = :throttled_mailers
+
+  def perform(ride_id)
+    ride = Ride.find_by(id: ride_id)
+    return unless ride&.completed?
+
+    # Try to consume a token
+    unless consume_token
+      # No tokens available → retry later in throttled queue
+      self.class.set(wait: 1.minute, queue: THROTTLED_QUEUE).perform_later(ride.id)
+      return
+    end
+
+    # Lock ride for idempotency
+    ride.with_lock do
+      return if ride.completion_email_sent
+
+      # Send email
+      RideMailer.ride_completed(ride).deliver_now
+
+      # Mark email as sent
+      ride.update!(completion_email_sent: true)
+    end
+  end
+
+  private
+
+  # Redis token bucket with smooth refill
+  def consume_token
+    redis = Rails.cache.redis # assuming Rails.cache is Redis-backed
+
+    tokens_key = "ride_email_tokens"
+    timestamp_key = "ride_email_last_refill"
+
+    redis.multi do |multi|
+      # Get current tokens and last refill time
+      multi.get(tokens_key)
+      multi.get(timestamp_key)
+    end.tap do |results|
+      current_tokens = results[0].to_f
+      last_refill = results[1].to_i
+      last_refill = Time.now.to_i if last_refill.zero?
+
+      # Calculate refill based on elapsed time
+      elapsed = Time.now.to_i - last_refill
+      refill_amount = (LIMIT / 60.0) * elapsed  # tokens per second
+
+      current_tokens = [current_tokens + refill_amount, LIMIT].min
+
+      if current_tokens >= 1
+        # Consume a token
+        current_tokens -= 1
+        redis.multi do |multi|
+          multi.set(tokens_key, current_tokens)
+          multi.set(timestamp_key, Time.now.to_i)
+        end
+        return true
+      else
+        # No tokens available
+        redis.multi do |multi|
+          multi.set(tokens_key, current_tokens)
+          multi.set(timestamp_key, last_refill)
+        end
+        return false
+      end
+    end
+  rescue
+    # Fallback: allow job to proceed if Redis fails
+    true
+  end
+end

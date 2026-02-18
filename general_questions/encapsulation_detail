@@ -1,0 +1,132 @@
+Simple Ruby example of Encapsulation
+class BankAccount
+  def initialize(balance)
+    @balance = balance   # data
+  end
+
+  def deposit(amount)   # method
+    @balance += amount
+  end
+
+  def withdraw(amount)  # method
+    raise "Insufficient funds" if amount > @balance
+    @balance -= amount
+  end
+
+  private
+
+  def balance
+    @balance
+  end
+end
+
+How to explain this to an interviewer (step by step)
+1️⃣ Bundling data and methods together
+
+The BankAccount class bundles data (@balance) and methods (deposit, withdraw) that operate on that data.
+
+@balance + deposit + withdraw
+
+
+All live in one class → encapsulation.
+
+2️⃣ Restricting direct access
+
+The balance cannot be accessed or modified directly from outside.
+
+account.balance     # ❌ NoMethodError
+account.@balance    # ❌ invalid
+
+
+Access is restricted.
+
+3️⃣ Controlled access via methods
+
+Balance can only be changed through well-defined methods.
+
+account.deposit(100)
+account.withdraw(50)
+
+
+Rules are enforced:
+
+no negative balance
+
+no arbitrary modification
+
+One-liner interview definition 🔥
+
+Encapsulation is bundling data and the methods that operate on that data inside a class, while restricting direct access to the internal state and exposing only controlled interfaces.
+
+Ultra-short version (if interviewer wants quick answer)
+
+In Ruby, instance variables are encapsulated because they can’t be accessed directly from outside the object — they’re modified only through public methods.
+
+Bonus: Why this matters (1 sentence)
+
+Encapsulation prevents invalid states and protects business rules.
+
+If you want, I can also:
+
+contrast encapsulation vs abstraction (very common follow-up)
+
+show a bad example without encapsulation
+
+give a real Rails model example
+
+Just tell me 👍
+
+show a bad example without encapsulation
+
+Perfect follow-up 👍
+A bad example makes the concept stick for interviewers.
+
+❌ Bad example — no encapsulation
+class BankAccount
+  attr_accessor :balance
+end
+
+account = BankAccount.new
+account.balance = 100
+
+account.balance = -10     # ❌ allowed
+account.balance = "oops"  # ❌ allowed
+
+Why this is a bad design (explain to interviewer)
+1️⃣ No restriction on direct access
+
+The internal data (balance) is fully exposed.
+
+account.balance = -10
+
+
+Anyone can change it directly.
+
+2️⃣ Business rules are broken
+
+There’s no validation, no protection.
+
+Balance can be negative
+
+Balance can be a string
+
+No consistency
+
+3️⃣ Data and behavior are NOT bundled properly
+
+The class only stores data, but behavior is outside.
+
+This is just a data bag, not an object.
+
+What interviewer wants to hear 🎯
+
+This violates encapsulation because internal state is publicly accessible and can be modified without enforcing invariants.
+
+Quick comparison (nice to say out loud)
+Bad example	Good encapsulation
+attr_accessor :balance	private @balance
+Direct modification	Controlled methods
+Invalid state possible	Rules enforced
+One-liner summary 🔥
+
+Without encapsulation, any part of the code can put the object into an invalid state.

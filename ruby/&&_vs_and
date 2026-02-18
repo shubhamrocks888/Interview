@@ -1,0 +1,89 @@
+Short answer: they both mean “AND” but behave very differently because of precedence.
+
+1️⃣ && — high precedence (use this most of the time)
+
+&& binds tightly, like most operators.
+
+a = true && false
+# => false
+
+
+This works exactly how you expect.
+
+Example
+result = user.present? && user.admin?
+
+
+This is safe and predictable.
+
+2️⃣ and — low precedence (control-flow style)
+
+and has very low precedence, almost like if / unless.
+
+a = true and false
+# => true 😳
+
+
+Why?
+
+Ruby parses it like this:
+
+(a = true) and false
+
+
+So a gets true, and then and false is evaluated separately.
+
+3️⃣ The famous gotcha 🔥
+a = false && true
+# => false
+
+a = false and true
+# => false? NOPE → false assigned first, then `and true`
+
+
+Let’s break it:
+
+a = false and true
+# parsed as:
+(a = false) and true
+
+
+So a is false.
+
+4️⃣ Practical rule (VERY IMPORTANT)
+✅ Use && for conditions and expressions
+if logged_in && admin
+  puts "Access granted"
+end
+
+✅ Use and for control flow
+save_user and notify_admin
+
+
+This reads nicely like English and is intentional.
+
+5️⃣ Another real-world Rails example
+
+❌ Buggy:
+
+user = User.find_by(email: email) and return
+
+
+Ruby thinks:
+
+(user = User.find_by(...)) and return
+
+
+✅ Correct:
+
+user = User.find_by(email: email) || return
+
+
+OR:
+
+return unless user = User.find_by(email: email)
+
+6️⃣ Interview one-liner 🧠
+
+&& is for logic, and is for flow control.
+&& has high precedence, and has low precedence.

@@ -1,0 +1,186 @@
+🗂 Architect-Level Background Jobs Cheat Sheet
+1️⃣ Basics of Background Jobs
+
+Q: What are background jobs?
+A: Tasks executed asynchronously outside the request–response cycle, used for long-running or non-critical work (emails, reports, 3rd-party calls).
+
+Q: Why use background jobs?
+A: Reduce request latency, isolate failures, improve UX.
+
+Trap: “Push everything async?”
+Answer: No — async hides latency, doesn’t remove bottlenecks. Critical operations may need synchronous guarantees.
+
+2️⃣ Reliability & Failures
+
+Q: What happens if a job fails?
+A: Sidekiq retries with exponential backoff, up to max attempts. Failed jobs exceeding retries go to Dead Letter Queue (DLQ).
+
+Keywords to mention:
+
+exponential backoff
+
+jitter (randomized delay)
+
+retry cap
+
+dead-letter queue
+
+alerting / monitoring
+
+Architect nuance: Retries can break FIFO ordering. Must enforce idempotency.
+
+3️⃣ Idempotency
+
+Definition: Running a job multiple times results in the same final state.
+
+Implementation techniques:
+
+Unique business key / idempotency key
+
+DB constraints (UNIQUE, UPSERT)
+
+State-based updates (update only if status = pending)
+
+External API idempotency (pass key downstream)
+
+Deduplication at enqueue time (optional)
+
+One-liner:
+
+“Idempotency ensures duplicate executions do not corrupt state using unique keys and DB constraints.”
+
+4️⃣ Ordering / Dependencies
+
+Q: How do you ensure job order?
+
+FIFO per queue is guaranteed
+
+Multiple queues → no global order
+
+Retry can break order
+
+Solutions:
+
+Job chaining / batches (Sidekiq Pro/Enterprise)
+
+Sequence numbers / dependency table
+
+Dedicated queue + single worker (strict sequential execution)
+
+One-liner:
+
+“Dependent jobs should enqueue only after previous job succeeds; use batches or dedicated queues for strict order.”
+
+5️⃣ Scaling & Traffic Control
+
+Scenario: Downstream API allows 50 req/hour, traffic = 100/hr
+
+Solutions:
+
+| Approach           | Architect-approved solution                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| Queue all requests | ❌ Infinite backlog → starvation                                  |
+| Delay jobs         | ❌ Jobs may never execute                                         |
+| Rate limiting      | ✅ Bound system → apply backpressure                              |
+| Algorithms         | ✅ Leaky bucket → constant rate<br>✅ Token bucket → allows bursts |
+
+
+Keywords: backpressure, bounded queue, leaky bucket, token bucket, SLA, fair throttling
+
+6️⃣ Retry Storm Prevention
+
+Problem: Many jobs fail at same time → retries overwhelm system
+
+Solution:
+
+Exponential backoff
+
+Jitter (randomized delay)
+
+Retry caps / DLQ
+
+Circuit breakers
+
+Architect-level line:
+
+“Retry storms are prevented with exponential backoff + jitter + circuit breakers, not fixed delays.”
+
+7️⃣ Rate Limiting & Backpressure
+
+Q: Why not just enqueue everything?
+
+Answer: Unlimited input + limited output → infinite backlog → starvation.
+
+Techniques:
+
+Rate limit at ingress (before Sidekiq enqueue)
+
+Bounded queues (e.g., max 100 jobs)
+
+Reject / defer excess requests
+
+Use leaky/token bucket for fairness
+
+Optional AWS / infra note: Use autoscaling cautiously; scaling workers doesn’t increase throughput if downstream is the bottleneck.
+
+8️⃣ Monitoring / Observability
+
+Metrics to track:
+
+Queue depth / latency
+
+Job failure rate
+
+Retry count
+
+Downstream API usage / rate
+
+SLA compliance
+
+Tools: Sidekiq Web UI, Prometheus, Grafana, Sentry
+
+9️⃣ Security & Incident Handling
+
+Scenario: Someone steals Razorpay key
+
+Response:
+
+Rotate credentials immediately
+
+Block attacker (IP whitelisting)
+
+Audit logs → assess damage
+
+Notify ops / finance / Razorpay
+
+Apply least privilege keys, rate limits, secret management
+
+One-liner:
+
+“Treat stolen credentials as a security incident; contain, audit, rotate, and prevent recurrence.”
+
+10️⃣ Architect Mindset Notes
+
+Async ≠ scalable — always consider downstream limits
+
+Retries ≠ idempotency — make jobs safe to rerun
+
+FIFO ≠ global order — use sequences/batches for dependencies
+
+Queue depth ≠ success — enforce backpressure / bounded queues
+
+Security — always think blast radius, least privilege, detection
+
+✅ Cheat sheet for interviews
+
+Magic sentences to impress architects:
+
+“Async hides latency, but backpressure is required to match output capacity.”
+
+“Idempotency is enforced via unique keys and database constraints, so retries are safe.”
+
+“Retry storms are prevented using exponential backoff with jitter and circuit breakers.”
+
+“Leaky bucket enforces constant throughput; token bucket allows bursts with average rate.”
+
+“Dependent jobs enqueue only after prior job succeeds; for strict order, use batches or a dedicated queue.”

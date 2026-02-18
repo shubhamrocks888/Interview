@@ -1,0 +1,64 @@
+1️⃣ What is a Kafka Topic?
+
+A topic is like a category or feed name where events/messages are stored.
+
+Producers publish messages to a topic
+
+Consumers subscribe to a topic to read messages
+
+Topics allow Kafka to organize and separate different kinds of events
+
+2️⃣ Example with your scenario
+Topics we might have:
+Topic Name	What goes inside
+orders	All order_created events
+email_events	All email_sent events
+analytics_events	Dashboard/analytics events
+Flow Example:
+Order Service (Producer)
+        ↓ produces to "orders" topic
+       Kafka Topic: "orders"
+        ↓
+Email Service (Consumer) → reads "orders" → sends email → produces "email_sent" to "email_events" topic
+Analytics Service (Consumer) → reads "orders" → updates dashboard
+
+3️⃣ Key points to remember
+
+1️⃣ Topic = logical stream of events
+
+Doesn’t depend on number of consumers
+
+2️⃣ Multiple consumers can read the same topic independently
+
+Email Service and Analytics Service both read orders topic
+
+3️⃣ You can have multiple topics for different purposes
+
+Keep events organized, easier to scale, and decouple services
+
+4️⃣ Simple Analogy
+
+Topic = mailbox label
+
+“orders” → contains all order letters
+
+“email_events” → contains all email letters
+
+Producer = person drops letter into the correct mailbox (topic)
+
+Consumer = person checks that mailbox when ready
+
+5️⃣ Interview-Perfect Answer
+
+“A Kafka topic is a named stream of events. Producers publish messages to a topic, and consumers subscribe to it. In our example, the Order Service produces order_created events to the orders topic, and both Email Service and Analytics Service consume from it independently.”
+
+✅ Bonus Tip
+
+Always emphasize topic is logical, not tied to consumers
+
+Multiple consumers can consume the same topic at different speeds
+
+
+
+
+

@@ -1,0 +1,148 @@
+Processes in Elixir (spawn, self, interaction)
+Interview-ready definition (say this first)
+
+In Elixir, a process is a lightweight, isolated unit of execution managed by the BEAM VM. Processes communicate only by message passing.
+
+1️⃣ Creating a process (spawn)
+Basic syntax
+pid = spawn(fn ->
+  IO.puts("Hello from another process")
+end)
+
+
+spawn creates a new process
+
+Returns a PID (process identifier)
+
+🔥 Interview line:
+
+spawn starts a new lightweight process and immediately returns its PID.
+
+Rails comparison:
+
+Roughly like starting a background thread
+
+But much cheaper and isolated
+
+2️⃣ Getting current process (self())
+self()
+
+
+Returns:
+
+PID of current process
+
+Example:
+
+IO.inspect(self())
+
+
+🔥 Interview line:
+
+self() is commonly used to send replies back to the calling process.
+
+3️⃣ Process interaction: send + receive
+Example: two processes talking
+parent = self()
+
+spawn(fn ->
+  send(parent, {:hello, self()})
+end)
+
+receive do
+  {:hello, pid} ->
+    IO.puts("Message from #{inspect(pid)}")
+end
+
+What’s happening step by step:
+
+Parent gets its PID
+
+Child process is spawned
+
+Child sends message to parent
+
+Parent receives message from mailbox
+
+🔥 Interview line:
+
+Processes interact by sending immutable messages to each other’s mailboxes.
+
+4️⃣ Message order & handling
+
+Messages are:
+
+Asynchronous
+
+Stored in mailbox
+
+Process handles:
+
+One message at a time
+
+receive do
+  msg -> IO.inspect(msg)
+end
+
+5️⃣ Why processes don’t share memory (VERY IMPORTANT)
+
+No shared state
+
+No locks
+
+No race conditions
+
+🔥 Interview line:
+
+Process isolation eliminates shared memory issues common in threaded systems.
+
+6️⃣ Process crash behavior
+spawn(fn ->
+  raise "boom"
+end)
+
+
+Child crashes
+
+Parent continues running
+
+🔥 Interview line:
+
+A process crash does not affect other processes unless explicitly linked.
+
+7️⃣ Linked processes (spawn_link) – PREVIEW
+spawn_link(fn ->
+  raise "boom"
+end)
+
+
+Crash propagates
+
+Used with supervisors
+
+You can say:
+
+In production systems, processes are usually linked and supervised rather than spawned manually.
+
+8️⃣ Real-world example (Kafka / background job)
+
+You can explain:
+
+Each Kafka consumer can run in its own process. Messages from Kafka are sent to the consumer process mailbox, processed sequentially, and failures are isolated to that process.
+
+9️⃣ When NOT to use raw spawn
+
+Senior insight:
+
+Raw spawn is mainly for learning or short-lived tasks. In real applications, we use OTP abstractions like GenServer and Supervisor.
+
+🔑 60-second summary (MEMORIZE)
+
+Processes in Elixir are created using spawn, identified by PIDs, and communicate via asynchronous message passing. Each process has isolated memory and handles messages sequentially, making concurrency safe and scalable.
+
+Next step (recommended order)
+
+Now that you know:
+✔ pattern matching
+✔ spawn / self
+✔ send / receive

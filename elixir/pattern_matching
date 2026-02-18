@@ -1,0 +1,206 @@
+Pattern Matching vs Ruby Parameters
+1️⃣ How Ruby handles parameters (baseline)
+
+Ruby methods accept parameters and you validate inside the method.
+
+def process(result)
+  if result[:status] == :ok
+    result[:data]
+  else
+    raise "Error"
+  end
+end
+
+What’s happening:
+
+Method accepts any shape
+
+Validation happens inside
+
+Errors are runtime & manual
+
+2️⃣ How Elixir handles the same thing (pattern matching)
+def process({:ok, data}), do: data
+def process({:error, _reason}), do: :error
+
+What’s happening:
+
+Function only matches valid shapes
+
+Invalid inputs never enter the function
+
+No if, no conditionals
+
+🔥 Interview line:
+
+Elixir validates data at the function boundary using pattern matching.
+
+3️⃣ Key conceptual difference (VERY IMPORTANT)
+Ruby:
+
+“Accept anything, then check.”
+
+Elixir:
+
+“Only accept what I know how to handle.”
+
+This is the core philosophy difference.
+
+4️⃣ Why pattern matching exists in Elixir
+✅ 1. Early validation (fail fast)
+{:ok, value} = result
+
+
+If result is not {:ok, value}, the process crashes immediately.
+
+OTP philosophy:
+
+Crash early, recover via supervision.
+
+Rails philosophy:
+
+Rescue errors and continue.
+
+✅ 2. No defensive programming
+
+Ruby:
+
+if obj && obj[:user] && obj[:user][:id]
+
+
+Elixir:
+
+%{user: %{id: id}} = params
+
+
+If shape is wrong → crash.
+
+🔥 Interview line:
+
+Pattern matching removes defensive code and makes failures explicit.
+
+✅ 3. Self-documenting code
+def create_user(%{email: email, name: name}) do
+
+
+This tells you exactly what input is required.
+
+Ruby:
+
+def create_user(params)
+
+
+You have no idea what’s inside without reading code.
+
+✅ 4. Better concurrency safety
+
+Processes don’t share state
+
+Pattern matching ensures messages are expected
+
+receive do
+  {:order_created, order_id} -> ...
+end
+
+
+Unexpected messages are ignored.
+
+🔥 Interview line:
+
+Pattern matching ensures processes only react to valid messages.
+
+5️⃣ Pattern matching in function params vs Ruby kwargs
+Ruby keyword args:
+def create_user(email:, name:)
+end
+
+
+Looks similar, but:
+
+Still mutable
+
+Still runtime validation
+
+No crash semantics
+
+Elixir:
+
+def create_user(%{email: email, name: name}) do
+
+
+Immutable
+
+Structural match
+
+Crash on mismatch
+
+6️⃣ Pattern matching in control flow
+
+Ruby:
+
+if status == :ok
+
+
+Elixir:
+
+case result do
+  {:ok, data} -> data
+  {:error, reason} -> reason
+end
+
+
+Cleaner and exhaustive.
+
+7️⃣ Why Elixir prefers pattern matching over if
+
+Because:
+
+if is implicit
+
+Pattern matching is explicit
+
+Eliminates hidden branches
+
+🔥 Interview line:
+
+Pattern matching makes control flow explicit and predictable.
+
+8️⃣ Real-world Rails → Elixir mapping (USE THIS)
+Rails controller:
+result = Service.call(params)
+if result.success?
+
+Elixir controller:
+{:ok, data} = Service.call(params)
+
+
+If it fails → crash → supervisor → restart.
+
+9️⃣ When NOT to use pattern matching (senior insight)
+
+For business-level errors, handle explicitly
+
+For unexpected errors, let it crash
+
+Example:
+
+case validate_input(input) do
+  {:ok, data} -> data
+  {:error, reason} -> {:error, reason}
+end
+
+🔑 1-minute summary (MEMORIZE)
+
+Ruby accepts parameters and validates inside methods, while Elixir uses pattern matching to validate data at the function boundary. This leads to fail-fast behavior, cleaner code, and safer concurrent systems.
+
+Final confidence boost 💪
+
+If you explain:
+
+Boundary validation
+
+Fail-fast
+
+Cleaner concurrency
+
+👉 You will sound strong and intentional, not “new to Elixir”.

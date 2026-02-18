@@ -1,0 +1,90 @@
+✅ Correct Rails.cache version (atomic + TTL)
+def perform(user_id)
+  key = "welcome_email_rate"
+
+  count = Rails.cache.increment(key, 1, expires_in: 60)
+
+  return if count > 10
+
+  UserMailer.welcome_email(user_id).deliver_now
+end
+
+
+NOTE:  
+
+1️⃣ Hard rate limit (DROP excess)
+
+“Allow only 10 per minute, drop the rest”
+
+➡ Your code is correct
+
+
+Why this works
+
+increment is atomic (when cache store is Redis or Memcached)
+
+expires_in ensures a 60-second window
+
+No race conditions
+
+Much cleaner than raw Redis code
+
+⚠️ VERY IMPORTANT (interview trap 🚨)
+This ONLY works if your cache store is:
+
+✅ :redis_cache_store
+✅ :mem_cache_store
+
+❌ NOT :memory_store
+❌ NOT :file_store
+
+Because:
+
+increment is NOT atomic in memory/file stores
+
+Multiple Sidekiq processes = broken rate limiting
+
+✅ Correct cache config (production-safe)
+# config/environments/production.rb
+config.cache_store = :redis_cache_store, {
+  url: ENV['REDIS_URL'],
+  expires_in: 1.hour
+}
+
+🎯 Per-user rate limiting (real-world)
+
+Your example limits globally.
+Usually you want per user 👇
+
+def perform(user_id)
+  key = "welcome_email_rate:user:#{user_id}"
+
+  count = Rails.cache.increment(key, 1, expires_in: 60)
+
+  return if count > 10
+
+  UserMailer.welcome_email(user_id).deliver_now
+end
+
+⚠️ One more improvement (mail safety)
+
+If Sidekiq retries, email may send twice.
+To prevent that, combine with uniqueness:
+
+sidekiq_options unique: :until_executed
+
+
+(Requires sidekiq-unique-jobs)
+
+🧠 Interview-ready explanation (short & crisp)
+
+We use Rails.cache.increment with Redis cache store to enforce atomic per-user rate limiting.
+TTL defines the sliding window and avoids race conditions across Sidekiq workers.
+
+❓When NOT to use Rails.cache
+
+❌ You need strict ordering / fairness
+❌ You need distributed throttling across services
+❌ You need exact rate windows
+
+Then → Redis Lua / Sidekiq Enterprise.

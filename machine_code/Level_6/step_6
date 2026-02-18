@@ -1,0 +1,45 @@
+Next
+
+Implement:
+
+POST /rides/:id/complete
+
+
+Rules:
+
+Only assigned driver can complete
+
+Ride must be started
+
+Status → completed
+
+Write it clean.
+
+######
+
+def complete
+  ride = Ride.find_by(id: params[:id])
+  return render json: { errors: "Ride not found" }, status: :not_found unless ride
+
+  driver = User.find_by(id: params[:driver_id], role: "driver")
+  return render json: { errors: "Driver not found" }, status: :not_found unless driver
+
+  ActiveRecord::Base.transaction do
+    ride.lock!
+
+    unless ride.started?
+      raise StandardError, "Ride is not in started state"
+    end
+
+    unless ride.driver_id == driver.id
+      raise StandardError, "Driver not assigned to this ride"
+    end
+
+    ride.update!(status: :completed)
+  end
+
+  render json: { message: "Ride completed" }, status: :ok
+
+rescue StandardError => e
+  render json: { errors: e.message }, status: :unprocessable_entity
+end

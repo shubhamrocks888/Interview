@@ -1,0 +1,172 @@
+1️⃣ Create Order API (Razorpay::Order.create)
+
+When backend calls:
+
+order = Razorpay::Order.create(
+  amount: 50000,
+  currency: 'INR'
+)
+
+
+Response from Razorpay:
+
+{
+  "id": "order_Lk8XwP9abc123",
+  "entity": "order",
+  "amount": 50000,
+  "amount_paid": 0,
+  "amount_due": 50000,
+  "currency": "INR",
+  "receipt": "receipt#1",       // optional string you send
+  "status": "created",
+  "attempts": 0,
+  "created_at": 1700000000
+}
+
+
+Key info you get:
+
+Field	Purpose
+id	Razorpay order ID → store in DB
+amount	Amount in paise
+currency	Currency, usually INR
+status	Always created initially
+attempts	Number of payment attempts for this order
+receipt	Optional, you can track your internal receipt
+created_at	Timestamp
+2️⃣ Payment Success Response (Frontend Checkout)
+
+After user pays, Razorpay returns to frontend:
+
+{
+  "razorpay_payment_id": "pay_ABC123",
+  "razorpay_order_id": "order_Lk8XwP9abc123",
+  "razorpay_signature": "abcdef1234567890"
+}
+
+
+Key info:
+
+Field	Purpose
+razorpay_payment_id	Unique ID for the payment → save in DB
+razorpay_order_id	Which order this payment belongs to
+razorpay_signature	HMAC SHA256 hash → verify authenticity
+
+This is used by backend /verify API
+
+3️⃣ Webhook Payloads
+a) Payment Captured
+{
+  "entity": "payment",
+  "event": "payment.captured",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_ABC123",
+        "order_id": "order_Lk8XwP9abc123",
+        "status": "captured",
+        "amount": 50000,
+        "currency": "INR",
+        "method": "card",
+        "email": "user@example.com",
+        "contact": "9999999999",
+        "created_at": 1700000000
+      }
+    }
+  }
+}
+
+
+Key info you usually use:
+
+id → payment_id
+
+order_id → link to your DB
+
+status → captured
+
+amount / currency → payment details
+
+method → payment method (card, UPI, etc.)
+
+email / contact → optional user info for records
+
+b) Payment Failed
+{
+  "entity": "payment",
+  "event": "payment.failed",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_FAIL123",
+        "order_id": "order_Lk8XwP9abc123",
+        "status": "failed",
+        "amount": 50000,
+        "currency": "INR",
+        "error_code": "INSUFFICIENT_BALANCE",
+        "error_description": "Payment declined by bank",
+        "method": "card"
+      }
+    }
+  }
+}
+
+
+Key info you usually use:
+
+id → payment_id
+
+order_id → link to your DB
+
+status → failed
+
+error_code / error_description → for logging & user notifications
+
+c) Refund Processed
+{
+  "entity": "refund",
+  "event": "refund.processed",
+  "payload": {
+    "refund": {
+      "entity": {
+        "id": "rfnd_ABC123",
+        "payment_id": "pay_XYZ123",
+        "status": "processed",
+        "amount": 50000,
+        "currency": "INR",
+        "created_at": 1700000000
+      }
+    }
+  }
+}
+
+
+Key info:
+
+id → refund_id
+
+payment_id → original payment
+
+status → processed / failed
+
+amount → refunded amount
+
+4️⃣ Key Interview Points
+
+From Razorpay docs, you mainly get:
+
+Order info: order_id, amount, status
+
+Payment info: payment_id, order_id, status, method, amount
+
+Refund info: refund_id, payment_id, amount, status
+
+Signature for verification → verify authenticity
+
+Optional metadata: user email, contact, receipt, attempts
+
+Backend stores the IDs and status in your DB, so you can track payments, handle retries, and issue refunds.
+
+💡 Interview-ready line:
+
+From Razorpay, we get order_id when creating an order, payment_id and signature on successful payment, payment details in webhooks (captured or failed), and refund_id in refund webhooks. We use this information to update our database, verify authenticity, and track refunds.

@@ -1,0 +1,144 @@
+🚀 Next Step — Apply Coupon API Design
+
+Before writing controller, think request format.
+
+Example request:
+
+{
+  "user_id": 1,
+  "coupon_code": "WELCOME10"
+}
+
+
+Controller must:
+
+Find user
+
+Find coupon
+
+Check usable?
+
+Check already redeemed?
+
+Create CouponRedemption
+
+Increment usage_count
+
+#####
+
+
+
+
+###
+
+🚀 Now Let’s Build Apply Coupon API
+
+We’ll create:
+
+POST /apply_coupon
+
+
+Before writing controller, think flow.
+
+🧠 Apply Coupon Flow
+
+Find user
+
+Find coupon by code
+
+Return error if coupon not found
+
+Return error if not usable
+
+Return error if already redeemed
+
+Create CouponRedemption
+
+Return success response
+
+
+{
+  "user_id": 1,
+  "coupon_code": "WELCOME10"
+}
+
+###
+
+class CouponRedemption < ApplicationRecord
+
+   after_create :increment_coupon_usage
+
+   def increment_coupon_usage
+      coupon.increment!(:usage_count)
+   end
+
+end
+
+class CouponRedemptionsController < ApplicationController
+  def create
+    user = User.find_by(id: params[:user_id])
+    return render json: { error: "User not found" }, status: :not_found unless user
+
+    coupon = Coupon.find_by(code: params[:coupon_code])
+    return render json: { error: "Coupon not found" }, status: :not_found unless coupon
+
+    return render json: { error: "Coupon not usable" }, status: :unprocessable_entity unless coupon.usable?
+
+    already_redeemed = CouponRedemption.exists?(user: user, coupon: coupon)
+    return render json: { error: "Coupon already redeemed" }, status: :unprocessable_entity if already_redeemed
+
+    redemption = CouponRedemption.new(
+      user: user,
+      coupon: coupon,
+      redeemed_at: Time.current
+    )
+
+    if redemption.save
+      render json: { message: "Coupon redeemed successfully" }, status: :created
+    else
+      render json: { errors: redemption.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+end
+
+
+#### 
+
+coupon.with_lock do
+  return error unless coupon.usable?
+  
+  # create redemption
+  # increment usage_count
+end
+
+
+
+###
+class CouponRedemptionService
+  def initialize(user:, coupon_code:)
+    @user = user
+    @coupon_code = coupon_code
+  end
+
+  def call
+    coupon = Coupon.find_by(code: @coupon_code)
+    raise "Coupon not found" unless coupon
+    raise "Coupon not usable" unless coupon.usable?
+    raise "Coupon already redeemed" if CouponRedemption.exists?(user: @user, coupon: coupon)
+
+    coupon.with_lock do
+      redemption = CouponRedemption.create!(user: @user, coupon: coupon, redeemed_at: Time.current)
+      # usage_count increment handled in CouponRedemption after_create callback
+      redemption
+    end
+  end
+end
+
+
+def create
+  user = User.find(params[:user_id])
+  redemption = CouponRedemptionService.new(user: user, coupon_code: params[:coupon_code]).call
+  render json: { message: "Coupon redeemed" }, status: :created
+rescue => e
+  render json: { error: e.message }, status: :unprocessable_entity
+end

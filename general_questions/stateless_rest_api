@@ -1,0 +1,398 @@
+1️⃣ What does stateless mean?
+
+Stateless = the server does NOT remember client state between requests
+
+Every request must contain all the information needed to process it.
+
+❌ Server does NOT remember:
+
+Who you are
+
+What you did before
+
+Your session history
+
+✔️ Server ONLY processes:
+
+The current request
+
+Based on data sent in that request
+
+2️⃣ Example: Stateless vs Stateful
+🟥 Stateful (Traditional session-based app)
+
+Login → server creates session
+
+Server stores:
+
+session_id → user_id
+
+
+Browser sends cookie with session_id
+
+Server looks up session every time
+
+➡️ Server remembers you
+
+🟩 Stateless (REST API)
+
+Every request contains:
+
+Authorization: Bearer <JWT>
+
+
+Server:
+
+Verifies token
+
+Extracts user info
+
+Processes request
+
+Forgets everything after response
+
+➡️ Server remembers NOTHING
+
+3️⃣ Why REST APIs are stateless? (Core reasons)
+✅ 1. Scalability (MOST IMPORTANT)
+
+Stateless servers:
+
+Don’t store user session data
+
+Any server can handle any request
+
+Client → Load Balancer → Server 1 / Server 2 / Server 3
+
+
+✔️ No session syncing
+✔️ Horizontal scaling is easy
+
+👉 This is critical for microservices
+
+✅ 2. Simplicity
+
+Each request:
+
+Is independent
+
+Easy to understand
+
+Easy to debug
+
+GET /orders
+Authorization: Bearer token
+
+
+No hidden server memory
+No surprise behavior
+
+✅ 3. Reliability & Fault Tolerance
+
+If a server crashes:
+
+No session data lost
+
+Client can retry on another server
+
+✔️ System keeps working
+
+✅ 4. Better Caching
+
+Stateless requests:
+
+Same request → same response
+
+Easy to cache with HTTP caching
+
+GET /products
+
+
+Caching becomes predictable and efficient.
+
+✅ 5. Loose Coupling (REST principle)
+
+Client and server:
+
+Evolve independently
+
+Don’t depend on server-side memory
+
+This is one of the REST constraints defined by Roy Fielding.
+
+4️⃣ REST Constraint (Interview Gold)
+
+REST has 6 constraints, one of them is:
+
+Statelessness
+
+Meaning:
+
+Each request from client to server must contain all the information necessary to understand and process the request.
+
+5️⃣ How authentication works without state?
+🔹 JWT (common interview topic)
+
+JWT contains:
+
+{
+  "user_id": 1,
+  "exp": 1700000000
+}
+
+
+Flow:
+
+Client logs in
+
+Server issues JWT
+
+Client sends JWT on every request
+
+Server verifies signature
+
+No session stored
+
+✔️ Stateless
+✔️ Scalable
+
+6️⃣ Rails Context (Very Important)
+Traditional Rails App
+session[:user_id] = user.id
+
+
+❌ Stateful
+
+Rails API + JWT
+Authorization: Bearer <token>
+
+
+✔️ Stateless
+
+7️⃣ Is REST always stateless?
+
+⚠️ The API must be stateless
+But backend services can still use databases, caches, Redis
+
+👉 Stateless means:
+
+No client session state on server
+
+NOT “no data stored at all”
+
+8️⃣ Statelessness: Pros & Cons
+✅ Pros
+
+Easy scaling
+
+High availability
+
+Simple architecture
+
+Perfect for microservices
+
+❌ Cons
+
+Larger request size (token sent every time)
+
+Token revocation is harder
+
+Client handles more responsibility
+
+9️⃣ One-Line Interview Answer
+
+REST APIs are stateless to improve scalability, reliability, and simplicity, ensuring each request is independent and can be handled by any server without shared session state.
+
+
+
+########################
+
+Yes. REST APIs are stateless mainly for server-side advantages like scalability, simplicity, and reliability.
+The state still exists, but it is managed by the client, not the server.
+
+What “no state” really means (important correction)
+
+❌ Wrong understanding:
+
+“There is no state at all”
+
+✅ Correct understanding:
+
+Server does not store client session state
+Client sends state with every request
+
+So:
+
+State is not removed
+
+State is shifted from server → client
+
+Why this is a BIG advantage on the server side
+1️⃣ Scalability (biggest benefit)
+
+Because server stores no session:
+
+Client → Load Balancer → Any Server
+
+
+No session sharing
+
+No sticky sessions
+
+Easy horizontal scaling
+
+👉 This is why REST + microservices work so well together.
+
+2️⃣ Simpler servers
+
+Server doesn’t need:
+
+Session store
+
+Session cleanup
+
+Session synchronization
+
+Each request:
+
+Comes in
+
+Is validated
+
+Is processed
+
+Is forgotten
+
+✔️ Clean and predictable server logic
+
+3️⃣ Fault tolerance & reliability
+
+If Server A crashes:
+
+Client retries request
+
+Server B handles it
+
+No user data lost
+
+This is very hard with stateful systems.
+
+4️⃣ Easier deployment & rolling updates
+
+Restart servers freely
+
+Deploy new versions without kicking users out
+
+Auto-scaling works smoothly
+
+But… does the client suffer?
+
+Yes — some responsibility moves to the client
+
+Client must:
+
+Store token (JWT)
+
+Send it on every request
+
+Handle expiry / refresh
+
+This is a conscious trade-off.
+
+Real-world analogy (interview-friendly)
+🏨 Hotel example
+
+Stateful
+
+Reception remembers you personally
+
+If receptionist changes → problem
+
+Stateless
+
+You show ID every time
+
+Any receptionist can help you
+
+✔️ Server efficiency increases
+❌ Client must carry ID
+
+Important Rails note (bonus point)
+
+Rails web apps → stateful (sessions)
+
+Rails API-only apps → stateless (JWT)
+
+That’s why Rails has:
+
+ActionController::API
+
+One-line refined answer
+
+Yes, REST APIs being stateless mainly benefit the server side by enabling scalability, fault tolerance, and simpler architecture, while the client carries the request state.
+
+
+
+
+
+
+######################
+
+Your statement (slightly polished)
+
+Because the current request depends on a previous login request, the requests are not independent.
+
+✔️ This is 100% correct
+
+Why this breaks REST statelessness (final clarity)
+
+In a stateless REST API:
+
+Every request must be self-contained
+
+Server should NOT need to know:
+
+What you did before
+
+Whether you logged in earlier
+
+But with Devise sessions:
+
+You make a login request
+
+Server creates session data
+
+Next request:
+
+Server assumes login already happened
+
+Reads session cookie
+
+Infers identity
+
+➡️ Current request depends on previous request
+
+❌ Requests are NOT independent
+❌ Hence, NOT stateless
+
+One-line interview answer (perfect)
+
+Yes, Devise session-based authentication makes requests dependent on a prior login request, which violates REST statelessness.
+
+Ultra-short version (if interviewer interrupts)
+
+“Because authentication depends on a prior login, requests are not independent.”
+
+Mental model (lock it in)
+
+Stateful → “Who are you depends on yesterday”
+
+Stateless → “Who are you depends only on this request”
+
+Bonus clarity (to avoid confusion later)
+
+DB state ≠ session state
+
+Cookie storage ≠ stateless
+
+Stateless ≠ no data on server

@@ -1,0 +1,110 @@
+What index_by does
+
+index_by converts a collection into a Hash, where:
+
+key → result of the block
+
+value → the element itself
+
+Syntax
+collection.index_by { |element| key }
+
+Simple example
+users = [
+  { id: 1, name: "Alice" },
+  { id: 2, name: "Bob" }
+]
+
+indexed = users.index_by { |u| u[:id] }
+
+Result
+{
+  1 => { id: 1, name: "Alice" },
+  2 => { id: 2, name: "Bob" }
+}
+
+
+Now you can do:
+
+indexed[2]   # O(1) lookup → { id: 2, name: "Bob" }
+
+Why index_by is powerful (performance angle)
+
+Without index_by:
+
+users.find { |u| u[:id] == 2 }  # O(n)
+
+
+With index_by (one-time cost):
+
+indexed = users.index_by { |u| u[:id] }  # O(n)
+indexed[2]                              # O(1)
+
+
+🔑 Trade-off:
+
+Build once: O(n)
+
+Lookup many times: O(1)
+
+Perfect when you need repeated lookups.
+
+Rails / ActiveSupport version
+
+index_by comes from ActiveSupport (not core Ruby).
+
+So this works in Rails:
+
+User.all.index_by(&:email)
+
+
+Result:
+
+{
+  "a@example.com" => #<User ...>,
+  "b@example.com" => #<User ...>
+}
+
+Duplicate keys? ⚠️ Important
+
+If multiple elements produce the same key:
+
+users = [
+  { id: 1, name: "A" },
+  { id: 1, name: "B" }
+]
+
+users.index_by { |u| u[:id] }
+
+
+Result:
+
+{ 1 => { id: 1, name: "B" } }
+
+
+🚨 Last one wins (overwrites previous value).
+
+If you want all values per key, use group_by.
+
+index_by vs group_by
+
+| Method     | Value type       |
+| ---------- | ---------------- |
+| `index_by` | single object    |
+| `group_by` | array of objects |
+
+
+users.group_by { |u| u[:role] }
+# { "admin" => [u1, u2], "user" => [u3] }
+
+Interview one-liner 🎯
+
+index_by builds a hash from a collection using a computed key, allowing O(1) lookup instead of repeatedly scanning the array.
+
+When NOT to use index_by
+
+Very large collections where you only need one lookup
+
+When keys are not unique
+
+When memory usage matters more than speedss

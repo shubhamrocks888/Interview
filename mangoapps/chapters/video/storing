@@ -1,0 +1,119 @@
+🧠 Key principle (say this first)
+
+Rails DB never stores video files or chunks.
+It stores only metadata and references.
+
+Everything heavy lives in S3 + CDN.
+
+1️⃣ What is stored where (big picture)
+Layer	Stores what
+Browser	Temporary chunks during upload
+S3	Raw video + processed streaming files
+CDN	Cached copies of streaming files
+Rails DB	Metadata + pointers + state
+2️⃣ Exactly what Rails DB stores for videos
+📄 videos table (example)
+videos
+------
+id
+chapter_id
+status                 # uploaded, processing, ready, failed
+raw_storage_key        # s3 path of original upload
+streaming_base_path    # s3 folder containing HLS files
+playback_manifest      # index.m3u8 path
+duration_seconds
+created_at
+updated_at
+
+
+What it does NOT store:
+
+❌ .mp4
+
+❌ .ts
+
+❌ .m3u8 file content
+
+Only paths and metadata.
+
+3️⃣ How 360p / 720p / 1080p are handled
+
+Example S3 structure:
+
+s3://lms-videos/
+  raw/
+    uuid.mp4
+  processed/
+    video_55/
+      360p/
+        index.m3u8
+        segment_001.ts
+      720p/
+        index.m3u8
+        segment_001.ts
+      1080p/
+        index.m3u8
+
+
+Rails DB stores only:
+
+streaming_base_path = "processed/video_55/"
+playback_manifest   = "processed/video_55/master.m3u8"
+
+
+The player reads the manifest and switches quality automatically.
+
+4️⃣ Why Rails DB does NOT store per-quality info
+
+Architect-level reason:
+
+Player reads quality ladder from master.m3u8
+
+Rails doesn’t need to know 360p vs 720p
+
+Keeps DB clean and future-proof
+
+Interview line:
+
+“Quality variants are a playback concern, not an application concern.”
+
+5️⃣ Progress tracking is separate
+
+Rails DB does track:
+
+📄 video_progresses
+video_progresses
+----------------
+user_id
+video_id
+last_watched_second
+percentage
+completed_at
+
+
+This is business logic, so it belongs in DB.
+
+6️⃣ Why this design scales
+
+DB stays small
+
+CDN handles traffic
+
+S3 handles durability
+
+Rails handles rules
+
+Architect phrasing:
+
+“We keep the database lean by storing only metadata and using storage + CDN for heavy assets.”
+
+7️⃣ One-sentence answer (VERY IMPORTANT)
+
+If architect asks:
+
+“360p and 720p are stored where? And what does DB store?”
+
+You answer:
+
+“All video files and variants are stored in object storage and served via CDN.
+The Rails database stores only video metadata, processing state, playback references, and user progress.”

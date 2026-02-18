@@ -1,0 +1,235 @@
+1️⃣ “Explain the system” (they almost always start here)
+
+Expected questions
+
+Can you walk us through the LMS architecture?
+
+What were the core entities and how did they relate?
+
+What was the scale? (users, courses, enrollments)
+
+What was your role specifically?
+
+What they’re really checking
+
+Can you explain a system clearly and logically
+
+Do you understand domain modeling
+
+Are you owning your work or just part of a team
+
+Be ready to talk about
+
+Users, Courses, Programs, Enrollments
+
+Role-based access (admin / instructor / coordinator / learner)
+
+High-level architecture (monolith vs services)
+
+Where business logic lived
+
+2️⃣ Data modeling & relationships (VERY likely)
+
+Since you mention enrollments 👀
+
+Expected questions
+
+Why did you use an enrollment table?
+
+Difference between course enrollment and program enrollment?
+
+How did you handle many-to-many relationships?
+
+How did you track progress or completion?
+
+Follow-ups
+
+What indexes did you add and why?
+
+How did you avoid duplicate enrollments?
+
+How did you handle soft deletes or historical data?
+
+What they’re testing
+
+Database design maturity
+
+Tradeoffs, not textbook answers
+
+3️⃣ Roles, permissions & authorization
+
+Architects love this.
+
+Expected questions
+
+How did you manage roles and permissions?
+
+Was it RBAC or something custom?
+
+How did you ensure instructors could only see their courses?
+
+How did coordinators differ from admins?
+
+Good follow-ups
+
+Did you use policy objects?
+
+How did you avoid permission logic scattered across code?
+
+What they’re testing
+
+Security mindset
+
+Clean separation of concerns
+
+4️⃣ Scalability & performance questions
+
+Director of Eng will almost certainly go here.
+
+Expected questions
+
+What happens if enrollments grow 10x?
+
+How did you handle heavy read vs write traffic?
+
+Any performance issues you faced?
+
+How did you optimize course listing or dashboards?
+
+Follow-ups
+
+Pagination strategies?
+
+Caching (Redis / fragment caching)?
+
+Background jobs for heavy tasks?
+
+What they’re testing
+
+Can you think beyond “it works”
+
+Awareness of real production problems
+
+5️⃣ Consistency, concurrency & edge cases
+
+Since LMS has state changes.
+
+Expected questions
+
+What if two admins enroll the same user at the same time?
+
+How did you handle concurrent updates?
+
+What happens if a job fails mid-way?
+
+They may push
+
+Did you use DB constraints?
+
+Transactions?
+
+Idempotent jobs?
+
+6️⃣ Business rules & workflows
+
+Very common at Director level.
+
+Expected questions
+
+Who defines completion criteria?
+
+Can a course belong to multiple programs?
+
+What happens if a course is removed from a program?
+
+Can users be unenrolled? What about progress?
+
+What they’re testing
+
+Ability to convert business rules → code
+
+Not just “Rails knowledge”
+
+7️⃣ Observability & reliability
+
+Often overlooked by candidates.
+
+Expected questions
+
+How did you monitor failures?
+
+How did you debug production issues?
+
+Any alerting or logging setup?
+
+Bonus points
+
+Error tracking tools
+
+Audit logs for enrollment changes
+
+8️⃣ Trade-offs & “why” questions (MOST IMPORTANT)
+
+They’ll probe your decisions.
+
+Expected questions
+
+Why this design and not another?
+
+What would you change if you rebuilt it?
+
+Biggest technical debt?
+
+Any decision you disagreed with?
+
+This is where seniors shine
+
+Admit imperfections
+
+Explain constraints (time, team, business)
+
+9️⃣ Your ownership & impact
+
+Director of Eng will ask this explicitly or implicitly.
+
+Expected questions
+
+What part did you own end-to-end?
+
+Did you mentor anyone?
+
+Did you influence design decisions?
+
+How did you handle disagreements?
+
+🔟 Architecture-level hypothetical
+
+Especially from Software Architect.
+
+Examples
+
+If we add certifications on top of courses, how would you model it?
+
+If we want multi-tenant LMS, what changes?
+
+How would you expose this via APIs for mobile apps?
+
+How to prepare (practical advice)
+
+Instead of memorizing:
+
+Draw ER diagram in your head
+
+Prepare 1 scaling story
+
+Prepare 1 production issue you solved
+
+Prepare 1 decision you’d redo differently
+
+Golden tip for introduction 💡
+
+End your intro with:
+
+“I worked closely on data modeling, enrollment workflows, and role-based access, and also handled performance and scaling challenges as usage grew.”
+
+That invites the right questions and makes you look senior.

@@ -1,0 +1,194 @@
+class ReportGenerationJob
+  include Sidekiq::Worker
+
+  MAX_CONCURRENT_PER_USER = 1
+  TTL = 10.minutes
+
+  def perform(user_id)
+    cache_key = running_key(user_id)
+
+    current = Rails.cache.increment(
+      cache_key,
+      1,
+      expires_in: TTL,
+      initial: 0
+    )
+
+    if current > MAX_CONCURRENT_PER_USER
+      Rails.cache.decrement(cache_key)
+      raise Sidekiq::RetryableError, "User concurrency limit exceeded"
+    end
+
+    begin
+      generate_report(user_id)
+    ensure
+      Rails.cache.decrement(cache_key)
+    end
+  end
+
+  private
+
+  def running_key(user_id)
+    "reports:user:#{user_id}:running"
+  end
+end
+
+
+######
+
+1️⃣ What this code is TRYING to do
+
+“Allow only 1 report job per user to run at a time”
+
+You’re implementing:
+
+Per-user concurrency control
+
+Using Rails.cache as a counter
+
+With a TTL safety net
+
+That’s the right idea conceptually ✅
+
+2️⃣ Step-by-step: what happens at runtime
+Job starts
+current = Rails.cache.increment(cache_key, 1, ...)
+
+
+Increments running counter
+
+Returns new value
+
+Example:
+
+First job → current = 1
+
+Second job → current = 2
+
+Concurrency check
+if current > MAX_CONCURRENT_PER_USER
+  Rails.cache.decrement(cache_key)
+  raise Sidekiq::RetryableError
+end
+
+
+If more than 1 job → reject
+
+Job goes to retry
+
+Job execution
+generate_report(user_id)
+
+Cleanup (ensure)
+Rails.cache.decrement(cache_key)
+
+
+Always decrement counter when job finishes
+
+3️⃣ The BIG PROBLEM (very important)
+❌ Race condition
+
+This logic is not atomic.
+
+Two workers can do this at the same time:
+
+Worker A → increment → 1
+
+Worker B → increment → 2
+
+Worker B fails & decrements → back to 1
+
+Worker A still running
+
+Now state is inconsistent.
+
+4️⃣ Another serious issue
+❌ Using retries for concurrency control
+raise Sidekiq::RetryableError
+
+
+This causes:
+
+Retry storm
+
+Retry queue pollution
+
+Exponential backoff
+
+Wasted Redis + CPU
+
+Concurrency limit ≠ error
+
+This is expected contention, not a failure.
+
+5️⃣ TTL problem (subtle but dangerous)
+TTL = 10.minutes
+
+
+If:
+
+Job takes longer than TTL
+
+Cache key expires
+
+New job starts
+
+Now two jobs run concurrently ❌
+
+TTL is only a safety net — not a guarantee
+
+6️⃣ How this SHOULD be done (production-safe)
+✅ Best solution: Sidekiq concurrency limiter
+def perform(user_id)
+  limiter = Sidekiq::Limiter.concurrent(
+    "reports:user:#{user_id}",
+    1
+  )
+
+  limiter.within_limit do
+    generate_report(user_id)
+  end
+end
+
+Why this is better
+
+✔ Atomic
+✔ No retries
+✔ No race conditions
+✔ Redis-native
+✔ Auto-release on crash
+
+7️⃣ If interviewer asks: “What’s wrong with your approach?”
+
+You say this 👇
+
+Using Rails.cache increment/decrement for concurrency control is error-prone due to race conditions, TTL expiry issues, and retry misuse. Sidekiq provides native concurrency limiters that are atomic, Redis-backed, and safer for per-user locking.
+
+That answer is 🔥
+
+8️⃣ When is your approach acceptable?
+
+Only if:
+
+Sidekiq Pro/Enterprise is not available
+
+You add Lua-based atomic locking
+
+You handle crashes carefully
+
+Even then, it’s fragile.
+
+9️⃣ Final verdict
+
+| Aspect          | Your code | Sidekiq Limiter |
+| --------------- | --------- | --------------- |
+| Atomic          | ❌         | ✅               |
+| Crash-safe      | ⚠️        | ✅               |
+| Retry misuse    | ❌         | ✅               |
+| Race-free       | ❌         | ✅               |
+| Interview-grade | ❌         | ✅               |
+
+
+Interview-ready summary (memorize)
+
+Per-user concurrency should be enforced using Sidekiq’s concurrency limiters rather than manual cache counters. Limiters are atomic, crash-safe, and avoid retry storms and race conditions.

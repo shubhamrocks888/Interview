@@ -1,0 +1,42 @@
+#### 
+
+Database: ecommerce
+collection: orders
+Document: { order_id: 1, user_id: 2, amount: 50, status: 'pending'}
+
+##
+
+db.orders.insertone( {...})
+
+db.orders.insertmany( {..,})
+
+## read_queries
+
+db.orders.find()
+
+db.orders.find( {status: 'pending'} )
+
+db.orders.findOne ( {order_id: 1})|
+
+db.orders.find( {status: 'pending'}, { order_id:1, amount: 20, _id; 0} )
+
+#######Update
+
+db.orders.updateOne ( {order_id: 1}, { $set: {status: 'processing'}})
+
+db.orders.updateMany ( {status: 'shipped', {$set: {status: 'blocked'}}})
+
+#
+
+db.orders.deleteOne( {..})
+
+db.orders.deleteMany ( {})
+
+db.orders.countDocuments ( {} )
+
+db.orders.find().sort ( {} )
+
+db.orders.find().limit(5)
+
+
+

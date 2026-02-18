@@ -1,0 +1,108 @@
+🚀 INTERVIEW PRACTICE TASK (Level 1 – Realistic)
+
+Build a Rails API-only application for a Blog system.
+
+🎯 Requirements
+Models
+User
+
+email (must be unique, present)
+
+full_name (present)
+
+Post
+
+title (present)
+
+status (must be draft or published)
+
+user_id
+
+Relationship:
+
+A User has many Posts
+
+A Post belongs to a User
+
+🎯 Endpoints To Implement
+1️⃣ Create User with Posts (Nested Create)
+
+POST /users
+
+Should create user along with multiple posts
+
+If any post invalid → nothing should save
+
+Return created user with posts
+
+2️⃣ List Posts with User Details
+
+GET /posts
+
+Return all posts
+
+Each post should include:
+
+id
+
+title
+
+status
+
+user: { id, full_name, email }
+
+⚠️ Avoid N+1 query problem.
+
+3️⃣ Update Only Specific Post
+
+PATCH /posts/:id
+
+Allow updating:
+
+title
+
+status
+
+Do NOT allow updating user_id
+
+🎯 Bonus (If You Finish Early)
+
+Add:
+
+GET /posts?status=published
+
+→ Should return only published posts
+
+🧠 Rules (Important)
+
+API-only app
+
+Proper strong params
+
+Proper validations
+
+Proper HTTP status codes
+
+Proper JSON responses
+
+Handle error cases
+
+🔥 What You Should Do Now
+
+Start implementing:
+
+Step 1:
+
+Generate models
+
+Write associations
+
+Add validations
+
+Paste your model code here first.
+
+We’ll review like a real interviewer.
+
+Once models are correct, we move to controllers.
+
+Let’s begin 👇

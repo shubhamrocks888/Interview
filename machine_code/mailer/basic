@@ -1,0 +1,156 @@
+rails generate mailer UserMailer
+
+This creates:
+
+app/mailers/user_mailer.rb
+app/views/user_mailer/
+
+
+📌 3️⃣ Basic Mailer Structure
+app/mailers/user_mailer.rb
+
+class UserMailer < ApplicationMailer
+  default from: "no-reply@ridesapp.com"
+
+  def welcome_email(user)
+    @user = user
+
+    mail(
+      to: @user.email,
+      subject: "Welcome to Rides App"
+    )
+  end
+end
+
+📌 4️⃣ Email Template
+
+Create:
+app/views/user_mailer/welcome_email.html.erb
+
+<h1> Welcome <%= @user.name %> </h1>
+<p>
+	thank you for signing up ride app.
+</p>
+
+📌 5️⃣ How to Send Email
+
+From controller or anywhere:
+UserMailer.welcome_email(@user).deliver_now
+
+OR async:
+ UserMailer.welcome_email(@user).deliver_later
+
+
+📌 deliver_now vs deliver_later
+
+| Method        | Behavior                        |
+| ------------- | ------------------------------- |
+| deliver_now   | Sends immediately (blocking)    |
+| deliver_later | Sends in background (ActiveJob) |
+
+
+
+📌 6️⃣ Configure SMTP (Development Example)
+config/environments/development.rb
+config.action_mailer.delivery_method = :smtp
+config.action_mailer.smtp_settings = {
+  address: "smtp.gmail.com",
+  port: 587,
+  user_name: ENV["EMAIL_USERNAME"],
+  password: ENV["EMAIL_PASSWORD"],
+  authentication: "plain",
+  enable_starttls_auto: true
+}
+
+📌 7️⃣ For Local Testing (Easier Option)
+
+Instead of real SMTP, use:
+
+config.action_mailer.delivery_method = :letter_opener
+
+
+Add to Gemfile:
+
+gem "letter_opener"
+
+
+Emails open in browser instead of sending.
+
+📌 8️⃣ Example for Your Ride App
+
+Let’s say:
+
+When ride is accepted → notify rider.
+
+Mailer:
+class RideMailer < ApplicationMailer
+  default from: "no-reply@ridesapp.com"
+
+  def ride_accepted(ride)
+    @ride = ride
+    @rider = ride.rider
+    @driver = ride.driver
+
+    mail(
+      to: @rider.email,
+      subject: "Your Ride Has Been Accepted"
+    )
+  end
+end
+
+Call from controller after accept:
+RideMailer.ride_accepted(ride).deliver_later
+
+📌 9️⃣ Plain Text + HTML
+
+You can create:
+
+ride_accepted.html.erb
+ride_accepted.text.erb
+
+
+Rails automatically sends multipart email.
+
+🎯 What Interviewer Might Ask
+
+If interviewer asks:
+
+How does deliver_later work?
+
+Answer:
+
+It uses ActiveJob
+
+Enqueues job
+
+Background worker (Sidekiq / DelayedJob) sends email
+
+🧠 Important Production Notes
+
+✔ Never send emails inside transaction before commit
+✔ Use deliver_later
+✔ Use background job processor (Sidekiq)
+
+🚀 Quick Recap
+
+Mailer =
+
+Class inheriting from ApplicationMailer
+
+Method defines email
+
+Template renders body
+
+Call with deliver_now or deliver_later
+
+Now tell me:
+
+Do you want to:
+
+Implement background jobs with Sidekiq?
+
+Send mail after transaction commit properly?
+
+Add attachments?
+
+Add email testing in RSpec?

@@ -1,0 +1,28 @@
+The sliding window technique is a common algorithmic approach used to solve problems involving contiguous sequences in arrays or strings, often for sums, averages, maximum/minimum, or substrings. Instead of recalculating results for every possible subarray or substring (which is inefficient), it maintains a “window” of elements and slides it across the data, updating the result incrementally.
+
+Here’s a breakdown:
+
+🔹 How it works
+
+Define a window:
+
+Usually represented by two pointers: start (left) and end (right) that mark the current window in an array or string.
+
+Compute something within the window:
+
+For example: sum, count of unique characters, max value, etc.
+
+Slide the window:
+
+Move the end pointer forward to expand the window.
+
+Move the start pointer forward to shrink the window (when conditions are no longer met).
+
+Update your result:
+
+Instead of recomputing from scratch for every window, update using previous computations.
+
+
+#######
+
+

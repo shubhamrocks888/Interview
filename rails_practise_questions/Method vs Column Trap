@@ -1,0 +1,18 @@
+Method vs Column Trap
+class User < ApplicationRecord
+  def status
+    "active"
+  end
+end
+
+❌ Bugs
+
+Overrides ActiveRecord attribute reader
+
+DB column becomes useless
+
+Queries use DB value, app uses method
+
+🎯 Interview expects you to say:
+
+“This hides the actual DB value.”

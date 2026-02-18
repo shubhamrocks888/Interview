@@ -1,0 +1,48 @@
+❌ Cons of Rails
+1. Performance Issues
+
+Rails apps can be slower than Node.js, Go, or Java.
+
+Large apps may face CPU and memory bottlenecks.
+
+Con: Not ideal for CPU-intensive or real-time apps.
+
+2. Learning Curve
+
+Beginners must understand: MVC, CoC, REST, ActiveRecord, gems, routing.
+
+Lots of “magic” can be confusing.
+
+Con: Can overwhelm new developers.
+
+3. Monolithic Framework
+
+Rails apps tend to become large and monolithic if not carefully structured.
+
+Harder to adopt microservices unless explicitly designed that way.
+
+4. Memory Consumption
+
+Rails apps are memory-heavy, especially when scaling horizontally.
+
+Con: More server resources needed for larger apps.
+
+5. Boot Time & Startup Delay
+
+Rails apps (especially with many gems) can take longer to boot.
+
+Not ideal for serverless or instant command-line scripts.
+
+6. Too Much “Magic”
+
+Rails abstracts many things (ActiveRecord, helpers, callbacks).
+
+If something goes wrong, debugging can be difficult.
+
+Con: Can hide complex operations and cause unexpected behavior.
+
+7. Scaling Complexity
+
+Horizontal scaling requires extra care (caching, background jobs, DB optimization).
+
+Vertical scaling alone is often not sufficient.

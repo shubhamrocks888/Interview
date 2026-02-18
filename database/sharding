@@ -1,0 +1,131 @@
+What is sharding in databases?
+
+Sharding means splitting one large database into multiple smaller databases (shards) so that:
+
+data is distributed
+
+load is shared
+
+system scales horizontally
+
+Each shard holds only a portion of the data, not the whole dataset.
+
+Why sharding is needed
+
+Single database problems at scale:
+
+CPU bottleneck
+
+Disk I/O bottleneck
+
+Huge indexes → slow queries
+
+Hard limits on vertical scaling
+
+👉 Sharding fixes this by adding more databases instead of bigger ones.
+
+Simple mental model 🧠
+
+Instead of:
+
+1 huge database
+  └── users table (1–100M rows)
+
+
+You do:
+
+Shard 1 → users 1–25M
+Shard 2 → users 26–50M
+Shard 3 → users 51–75M
+Shard 4 → users 76–100M
+
+How data is split (shard key)
+
+You must choose a shard key.
+
+Common shard keys:
+
+user_id
+
+account_id
+
+tenant_id
+
+region
+
+Example:
+
+user_id % 4
+
+user_id	shard
+1	shard 1
+2	shard 2
+3	shard 3
+4	shard 4
+Types of sharding
+1️⃣ Horizontal sharding (most common)
+
+Split rows across databases.
+
+users(id=1..100) → shard A
+users(id=101..200) → shard B
+
+
+✅ This is what people usually mean by “sharding”.
+
+2️⃣ Vertical sharding
+
+Split columns or tables.
+
+users_core → shard A
+users_profile → shard B
+
+
+Less common, harder to manage.
+
+What sharding solves
+
+✅ Handles massive data
+✅ Increases write throughput
+✅ Reduces index size
+✅ Allows parallel queries
+
+What sharding does NOT solve
+
+❌ Cross-shard joins are hard
+❌ Transactions across shards are painful
+❌ Rebalancing shards is complex
+❌ Application logic becomes more complex
+
+Example in a Rails app
+def shard_for(user_id)
+  SHARDS[user_id % SHARDS.size]
+end
+
+shard = shard_for(user.id)
+shard.connection.execute(...)
+
+
+Rails itself doesn’t shard automatically — the app decides.
+
+Sharding vs Replication (important)
+Replication	Sharding
+Same data on many DBs	Different data on many DBs
+Read scaling	Read + write scaling
+Failover	Capacity scaling
+
+👉 Big systems usually use both.
+
+Real-world examples
+
+Instagram → sharded by user_id
+
+Twitter → sharded by user_id
+
+Shopify → sharded by shop_id
+
+Stripe → sharded by account_id
+
+Interview one-liner 🔥
+
+Sharding is a horizontal scaling technique where a large dataset is split across multiple databases using a shard key so that load and storage scale linearly.

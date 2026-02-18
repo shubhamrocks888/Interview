@@ -1,0 +1,88 @@
+STEP 3️⃣: Frontend sends payment info to backend for verification
+3.1 Frontend POSTs payment info
+
+Example JS call:
+
+fetch("/payments/verify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    razorpay_payment_id: response.razorpay_payment_id,
+    razorpay_order_id: response.razorpay_order_id,
+    razorpay_signature: response.razorpay_signature
+  })
+});
+
+What happens internally
+
+Backend receives:
+
+razorpay_order_id
+
+razorpay_payment_id
+
+razorpay_signature
+
+Backend does NOT trust frontend
+
+Frontend could be tampered
+
+Payment could be faked
+
+Always verify signature server-side — this is mandatory for interview answers
+
+3.2 Backend verifies signature
+def verify
+  payment_response = {
+    razorpay_order_id: params[:razorpay_order_id],
+    razorpay_payment_id: params[:razorpay_payment_id],
+    razorpay_signature: params[:razorpay_signature]
+  }
+
+  Razorpay::Utility.verify_payment_signature(payment_response)
+
+  # If verification passes
+  order = Order.find_by(razorpay_order_id: params[:razorpay_order_id])
+  order.update(
+    razorpay_payment_id: params[:razorpay_payment_id],
+    status: 'paid'
+  )
+
+  render json: { success: true }
+rescue Razorpay::SignatureVerificationError
+  render json: { success: false }, status: 400
+end
+
+What happens internally in verify_payment_signature
+
+Razorpay signature formula:
+
+expected_signature = HMAC_SHA256(order_id + "|" + payment_id, secret_key)
+
+
+Backend calculates expected_signature using your secret key
+
+Compares with razorpay_signature sent from frontend
+
+If match ✅ → payment is real
+
+If mismatch ❌ → reject payment
+
+3.3 Database after verification
+id	razorpay_order_id	razorpay_payment_id	amount	status
+1	order_Lk8XwP9abc123	pay_ABC123	50000	paid
+
+razorpay_payment_id is now saved
+
+status is updated to paid
+
+💡 Important: This is the first time your backend knows payment succeeded.
+
+3.4 Interview-ready explanation for STEP 3
+
+Step 3 is server-side verification.
+Frontend sends razorpay_payment_id, order_id, and signature to backend.
+Backend uses the secret key to verify the signature and ensure the payment is genuine.
+Only after verification do we update the database with payment_id and mark status paid.
+
+✅ STEP 3 complete — Payment is now verified and saved in DB.

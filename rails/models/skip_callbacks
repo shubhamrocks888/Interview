@@ -1,0 +1,133 @@
+1️⃣ update_column / update_columns (most common)
+✅ Skips:
+
+Validations
+
+Callbacks
+
+updated_at
+
+user.update_column(:status, "active")
+
+user.update_columns(status: "active", role: "admin")
+
+
+📌 Use case:
+
+Backfills
+
+Admin scripts
+
+Data fixes
+
+🚨 Danger:
+
+Business logic in callbacks is bypassed
+
+2️⃣ update_all / delete_all (relation-level)
+✅ Skips:
+
+Callbacks
+
+Validations
+
+Touch
+
+updated_at
+
+User.where(active: false).update_all(active: true)
+
+User.where(banned: true).delete_all
+
+
+🔥 Fast, but very dangerous.
+
+Use only when:
+
+You fully understand side effects
+
+3️⃣ save(validate: false) ❌ (misunderstood)
+user.save(validate: false)
+
+❗ Important
+
+❌ Skips validations
+
+✅ Callbacks still run
+
+So this does NOT skip callbacks.
+
+4️⃣ Temporarily skipping callbacks (surgical approach)
+Using skip_callback
+User.skip_callback(:save, :before, :normalize_email)
+
+user.save
+
+User.set_callback(:save, :before, :normalize_email)
+
+
+⚠️ This is global, affects all threads → avoid in production.
+
+5️⃣ Using without_callback (ActiveSupport hacky)
+
+Not officially supported, avoid.
+
+6️⃣ Custom flag to bypass callback (BEST PRACTICE)
+Model
+class User < ApplicationRecord
+  attr_accessor :skip_callbacks
+
+  before_save :normalize_email, unless: :skip_callbacks
+
+  def normalize_email
+    self.email = email.downcase
+  end
+end
+
+Usage
+user.skip_callbacks = true
+user.save
+
+
+✅ Safe
+✅ Explicit
+✅ Thread-safe
+
+7️⃣ Why skipping callbacks is dangerous 🚨
+
+Callbacks often:
+
+Send emails
+
+Update counters
+
+Sync external services
+
+Enforce business rules
+
+Skipping them can:
+
+Corrupt data
+
+Break invariants
+
+Cause silent bugs
+
+Interview-ready summary 🎯
+
+Yes, Rails allows skipping callbacks using methods like update_column, update_all, or by explicitly guarding callbacks with flags. However, skipping callbacks should be done carefully because callbacks often contain critical business logic.
+
+Quick cheat sheet 🧠
+| Method                  | Callbacks | Validations |
+| ----------------------- | --------- | ----------- |
+| `save`                  | ✅         | ✅           |
+| `save(validate: false)` | ✅         | ❌           |
+| `update`                | ✅         | ✅           |
+| `update_column(s)`      | ❌         | ❌           |
+| `update_all`            | ❌         | ❌           |
+| `delete`                | ✅         | —           |
+| `delete_all`            | ❌         | —           |
+
+Senior-level advice 💡
+
+If skipping callbacks feels necessary often, your business logic probably belongs in a service object, not a callback.

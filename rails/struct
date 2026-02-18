@@ -1,0 +1,93 @@
+The line
+Address = Struct.new(:street, :city)
+
+
+means:
+
+Create a lightweight Ruby class called Address with two attributes: street and city.
+
+Under the hood, Ruby is doing something very close to this:
+
+class Address
+  attr_accessor :street, :city
+
+  def initialize(street, city)
+    @street = street
+    @city = city
+  end
+end
+
+
+But in one line.
+
+How you use it
+address = Address.new("MG Road", "Bangalore")
+
+address.street  # => "MG Road"
+address.city    # => "Bangalore"
+
+address.street = "Brigade Road"
+
+Why people use Struct (especially in Rails)
+
+Structs are used when you need:
+
+✅ A simple data object
+✅ No database table
+✅ No ActiveRecord overhead
+✅ Clean, readable code
+
+Common Rails use cases:
+
+Service objects
+
+API response mapping
+
+Value objects
+
+Temporary objects in controllers/jobs
+
+Form objects (sometimes)
+
+Example in Rails service:
+
+Result = Struct.new(:success?, :data, :error)
+
+def call
+  Result.new(true, user, nil)
+end
+
+Struct vs ActiveRecord (important for interviews)
+Struct	ActiveRecord
+In-memory object	DB-backed
+No validations by default	Validations
+Very fast	Slower (DB)
+No callbacks	Callbacks
+Lightweight	Heavy
+
+👉 Struct ≠ Model
+
+Rails-y improvement (keyword arguments)
+
+Ruby allows keyword initialization:
+
+Address = Struct.new(:street, :city, keyword_init: true)
+
+Address.new(street: "MG Road", city: "Bangalore")
+
+
+This is very common in modern Rails apps.
+
+When NOT to use Struct
+
+❌ If you need:
+
+DB persistence
+
+Validations
+
+Callbacks
+
+Associations
+
+Then use ActiveRecord instead.

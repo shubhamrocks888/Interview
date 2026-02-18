@@ -1,0 +1,93 @@
+Does Rails.cache “sit outside your app process”?
+	❌ Not always
+	✅ Depends on the cache store you use
+
+	Rails supports multiple cache stores, and only some of them are outside the app process.
+
+
+Cache stores explained (this is the key part)
+
+1️⃣ MemoryStore (❌ NOT outside the app)
+	
+	config.cache_store = :memory_store
+
+	Stored inside the Rails process (RAM)
+	Each Puma/Unicorn worker has its own cache
+	Cache is lost on restart
+	Not shared across servers
+
+	here cache is  lost on restart server
+	different ec2 instances or apps servers dont share this cache
+	each process has its own memory , so cannot share
+
+	Cache is stored in the RAM of the Rails process
+
+		Each process has its own separate memory
+
+		Example:
+
+		Puma with 4 workers:
+
+		Worker 1 → own cache
+
+		Worker 2 → own cache
+
+		Worker 3 → own cache
+
+		Worker 4 → own cache
+
+		They do not share cache with each other
+
+		Each worker recomputes or stores its own copy of cached data
+
+	📌 This does NOT sit outside your app process
+
+2️⃣ FileStore (⚠️ technically outside, but still local)
+	
+	config.cache_store = :file_store, Rails.root.join("tmp/cache")
+
+	Stored on disk
+	Shared between processes on the same machine
+	Slow compared to Redis/Memcached
+	Cleared on deploy in many setups
+
+	here cache is not lost on restart server
+	if you have 2 EC2 instances, each has its own tmp/cache folder
+	Server A cannot access Server B’s cache
+
+	📌 Outside the process, but still tied to the same server
+
+3️⃣ RedisCacheStore (✅ outside the app process)
+	
+	config.cache_store = :redis_cache_store, { url: ENV["REDIS_URL"] }
+
+
+	Redis runs as a separate service
+	Shared across:
+	Multiple Rails processes
+	Multiple servers
+	Survives app restarts
+	Most common in production
+
+	📌 This truly sits outside your app process
+
+4️⃣ MemCacheStore (✅ outside the app process)
+	
+	config.cache_store = :mem_cache_store
+
+	Uses Memcached
+	Separate daemon
+	Distributed, fast
+	Data is volatile
+
+	📌 Also outside your app process
+
+
+	| Aspect                | Inside (MemoryStore) | Outside (Redis/Memcached) |
+	| --------------------- | -------------------- | ------------------------- |
+	| Shared across workers | ❌                    | ✅                         |
+	| Shared across servers | ❌                    | ✅                         |
+	| Survives restart      | ❌                    | memcached not                        |
+	| Production ready      | ❌                    | ✅                         |
+
+

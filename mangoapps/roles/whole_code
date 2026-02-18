@@ -1,0 +1,144 @@
+I’ll walk you end-to-end: DB → Rails models → policy → controller flow, using Instructor as the example.
+
+I’ll keep it simple, realistic, and interview-ready.
+
+🔐 RBAC Example: Instructor in Rails
+🧱 1️⃣ Database layer (source of truth)
+roles
+id	name
+1	admin
+2	coordinator
+3	instructor
+4	learner
+permissions
+id	name
+1	update_course_content
+2	view_course_progress
+role_permissions
+role_id	permission_id
+3	1
+3	2
+
+➡ Instructor does NOT have manage_users, manage_programs, etc.
+
+users
+id	name	role_id
+10	Alice	3
+
+Alice is an Instructor.
+
+course_assignments (scope control)
+id	user_id	course_id
+1	10	101
+
+Instructor is assigned to Course 101 only.
+
+🧠 Key concept (say this)
+
+“RBAC decides what an instructor can do; assignments decide where they can do it.”
+
+🔥 Architect-level sentence.
+
+🧱 2️⃣ Rails models
+class User < ApplicationRecord
+  belongs_to :role
+  has_many :permissions, through: :role
+  has_many :course_assignments
+end
+
+class Role < ApplicationRecord
+  has_many :role_permissions
+  has_many :permissions, through: :role_permissions
+end
+
+class Permission < ApplicationRecord
+end
+
+class CourseAssignment < ApplicationRecord
+  belongs_to :user
+  belongs_to :course
+end
+
+🧱 3️⃣ Authorization Policy (Pundit-style)
+CoursePolicy
+class CoursePolicy
+  attr_reader :user, :course
+
+  def initialize(user, course)
+    @user = user
+    @course = course
+  end
+
+  def update?
+    has_permission?("update_course_content") &&
+      assigned_to_course?
+  end
+
+  def view_progress?
+    has_permission?("view_course_progress") &&
+      assigned_to_course?
+  end
+
+  private
+
+  def has_permission?(permission)
+    user.permissions.exists?(name: permission)
+  end
+
+  def assigned_to_course?
+    user.course_assignments.exists?(course_id: course.id)
+  end
+end
+
+🧠 What’s happening here
+
+Role gives permission → RBAC
+
+Assignment limits scope → ownership
+
+Policy centralizes logic → secure & maintainable
+
+🧱 4️⃣ Controller usage
+class CoursesController < ApplicationController
+  def update
+    course = Course.find(params[:id])
+    authorize course, :update?
+
+    course.update!(course_params)
+  end
+end
+
+What happens at runtime:
+
+Instructor hits update API
+
+Policy checks:
+
+Does role have permission? ✅
+
+Is instructor assigned to course? ✅
+
+Action allowed
+
+If either fails → 403 Forbidden
+
+🔍 Architect follow-ups & answers
+“How does admin access everything?”
+
+Answer:
+
+“Admin role has all permissions, and assignment checks are bypassed or always true for admins inside policies.”
+
+(Important: admin still goes through policies)
+
+“How do you add a new permission?”
+
+Answer:
+
+“Create permission record, attach it to roles — no code change required.”
+
+🧠 30-second interview summary
+
+“RBAC is implemented by mapping permissions to roles and roles to users.
+Instructors inherit permissions like updating course content, but policies also enforce scope by checking course assignments.
+Authorization is centralized, role-agnostic, and data-driven.”

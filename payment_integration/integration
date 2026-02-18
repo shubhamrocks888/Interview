@@ -1,0 +1,155 @@
+4️⃣ Rails Side: Complete Integration (Line by Line)
+
+Now let’s code mentally like an interviewer expects.
+
+4.1 Add Razorpay Gem
+# Gemfile
+gem 'razorpay'
+
+bundle install
+
+4.2 Configure Razorpay
+# config/initializers/razorpay.rb
+Razorpay.setup(
+  ENV['RAZORPAY_KEY_ID'],
+  ENV['RAZORPAY_SECRET']
+)
+
+
+🔹 Why ENV?
+
+Never expose secret key in code (security question)
+
+4.3 Create Order (Rails Backend)
+# payments_controller.rb
+def create_order
+  order = Razorpay::Order.create(
+    amount: 50000,     # paise
+    currency: 'INR'
+  )
+
+  render json: {
+    order_id: order.id,
+    key: ENV['RAZORPAY_KEY_ID']
+  }
+end
+
+Interview explanation
+
+We create order on server
+
+Client only gets order_id
+
+Prevents amount tampering
+
+4.4 Frontend Razorpay Checkout
+var options = {
+  key: "rzp_test_xxxxx",
+  order_id: order_id,
+  amount: 50000,
+  currency: "INR",
+  handler: function (response) {
+    // send response to backend
+  }
+};
+
+var rzp = new Razorpay(options);
+rzp.open();
+
+
+Razorpay returns:
+
+{
+  "razorpay_order_id": "order_123",
+  "razorpay_payment_id": "pay_456",
+  "razorpay_signature": "abcxyz"
+}
+
+4.5 Verify Payment (MOST IMPORTANT)
+def verify
+  payment_response = {
+    razorpay_order_id: params[:order_id],
+    razorpay_payment_id: params[:payment_id],
+    razorpay_signature: params[:signature]
+  }
+
+  Razorpay::Utility.verify_payment_signature(payment_response)
+
+  # If no exception → payment is valid
+  Order.find_by(order_id: params[:order_id])
+       .update(status: 'paid')
+end
+
+What happens internally?
+expected_signature =
+  HMAC_SHA256(order_id|payment_id, secret_key)
+
+
+If mismatch → ❌ payment rejected
+
+📌 Interview killer line
+
+Frontend success is NOT trusted. Server verification is mandatory.
+
+5️⃣ Database Design (Interview Favorite)
+orders
+---------
+id
+razorpay_order_id
+razorpay_payment_id
+amount
+status   # created, paid, failed
+
+6️⃣ Webhooks (Advanced but IMPRESSIVE)
+Why webhooks?
+
+User may close browser
+
+Network issues
+
+Need reliable confirmation
+
+Razorpay → POST → /webhooks/razorpay
+
+def webhook
+  payload = request.body.read
+  signature = request.headers['X-Razorpay-Signature']
+
+  Razorpay::Utility.verify_webhook_signature(
+    payload,
+    signature,
+    ENV['RAZORPAY_WEBHOOK_SECRET']
+  )
+
+  # Update payment status
+end
+
+
+💡 Interview line:
+
+Webhooks are source of truth for payment status.
+
+7️⃣ Common Interview Questions & Answers
+❓ Why create order on backend?
+
+👉 To prevent amount manipulation
+
+❓ Why signature verification?
+
+👉 To prevent fake success response
+
+❓ Can payment be marked success on frontend?
+
+👉 ❌ Never
+
+❓ What if server crashes after payment?
+
+👉 Webhooks handle it
+
+❓ Is payment synchronous?
+
+👉 No, it's asynchronous
+
+8️⃣ One-Line Summary (MEMORIZE THIS)
+
+“In Razorpay, we create an order on backend, take payment on frontend, and confirm it on backend using signature verification or webhooks.”

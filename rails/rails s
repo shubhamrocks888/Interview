@@ -1,0 +1,254 @@
+🔁 Complete rails s boot flow (file-by-file)
+Terminal
+  ↓
+bin/rails
+  ↓
+railties/lib/rails/cli.rb
+  ↓
+railties/lib/rails/commands/server/server_command.rb
+  ↓
+Rails::Server
+  ↓
+config/application.rb
+  ↓
+config/boot.rb
+  ↓
+Bundler.setup
+  ↓
+Rails::Application.initialize!
+  ↓
+config/environment.rb
+  ↓
+config/environments/development.rb
+  ↓
+Initializers (config/initializers/*)
+  ↓
+Puma (web server)
+  ↓
+config.ru
+  ↓
+Rails.application
+  ↓
+Rack Middleware Stack
+  ↓
+config/routes.rb
+  ↓
+Controller#action
+  ↓
+Model / DB
+  ↓
+Response
+
+🧩 Now line-by-line explanation (what each file does)
+1️⃣ bin/rails
+
+📍 Entry point
+
+What it does:
+
+Sets Ruby version
+
+Loads Bundler
+
+Hands control to Rails CLI
+
+require_relative "../config/boot"
+require "rails/commands"
+
+2️⃣ rails/cli.rb
+
+📍 Command dispatcher
+
+What it does:
+
+Parses rails s
+
+Decides to run server command
+
+3️⃣ server_command.rb
+
+📍 Server command handler
+
+What it does:
+
+Creates Rails::Server
+
+Determines server (Puma)
+
+Prepares Rack app
+
+4️⃣ Rails::Server
+
+📍 Rails server bootstrapper
+
+What it does:
+
+Boots Rails application
+
+Starts web server
+
+5️⃣ config/boot.rb
+
+📍 Bundler setup
+
+What it does:
+
+require "bundler/setup"
+
+
+Loads gems from Gemfile
+
+Ensures correct gem versions
+
+6️⃣ config/application.rb
+
+📍 Rails app definition
+
+What it does:
+
+Defines class Application < Rails::Application
+
+Configures:
+
+Autoload paths
+
+Middleware
+
+Time zone, etc.
+
+7️⃣ Rails.application.initialize!
+
+📍 Core boot step
+
+What it does:
+
+Runs all initializers
+
+Builds middleware stack
+
+Prepares app for requests
+
+8️⃣ config/environment.rb
+
+📍 Environment loader
+
+What it does:
+
+require_relative "application"
+Rails.application.initialize!
+
+9️⃣ config/environments/development.rb
+
+📍 Environment-specific config
+
+What it does:
+
+Caching
+
+Logging
+
+Code reloading
+
+Error pages
+
+🔟 config/initializers/*
+
+📍 One-time app setup
+
+What it does:
+
+Devise
+
+Sidekiq
+
+Redis
+
+Custom configs
+
+1️⃣1️⃣ Puma starts
+
+📍 Web server
+
+What it does:
+
+Opens port (3000)
+
+Prepares worker/thread pool
+
+1️⃣2️⃣ config.ru
+
+📍 Rack entry point
+
+What it does:
+
+run Rails.application
+
+
+Tells Puma what app to run
+
+1️⃣3️⃣ Rails.application
+
+📍 Rack app
+
+Implements:
+
+call(env)
+
+
+Receives HTTP requests
+
+1️⃣4️⃣ Rack Middleware Stack
+
+📍 Cross-cutting concerns
+
+Examples:
+
+Logging
+
+Sessions
+
+Cookies
+
+Authentication
+
+1️⃣5️⃣ config/routes.rb
+
+📍 URL dispatcher
+
+What it does:
+
+Maps URL → controller#action
+
+1️⃣6️⃣ Controller
+
+📍 Request handler
+
+What it does:
+
+Validations
+
+Business logic
+
+Calls models
+
+1️⃣7️⃣ Model / DB
+
+📍 Persistence layer
+
+What it does:
+
+ActiveRecord queries
+
+Transactions
+
+1️⃣8️⃣ Response
+
+📍 Back to client
+
+Returns:
+
+[status, headers, body]
+
+🎯 Ultra-short interview answer
+
+When we run rails s, execution starts from bin/rails, which boots Rails, initializes the application, starts Puma, loads config.ru to mount the Rack app, and then routes incoming requests to controllers via middleware and routes.

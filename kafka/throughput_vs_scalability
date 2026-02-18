@@ -1,0 +1,70 @@
+1️⃣ Throughput
+
+Throughput = how many events/messages Kafka can handle per second.
+
+In your orders example:
+
+Thousands of users place orders at the same time
+
+Kafka needs to handle all these order events quickly without slowing down
+
+Partitions + parallel processing help increase throughput:
+
+Each partition can be read/written independently
+
+Multiple consumers process in parallel → more events processed per second
+
+Simple analogy:
+
+Throughput = how many letters the post office can handle per minute.
+
+More mailboxes (partitions) → more letters delivered at the same time
+
+2️⃣ Scalability
+
+Scalability = how well the system can handle increased load by adding more resources.
+
+In Kafka:
+
+More partitions → more consumers → can process more events simultaneously
+
+Can handle growth in traffic without slowing down the system
+
+Example:
+
+Today: 2 partitions, 2 consumers → 1000 orders/sec
+
+Tomorrow: 10 partitions, 10 consumers → 5000 orders/sec
+
+Same code, just add partitions & consumers
+
+Simple analogy:
+
+Scalability = hiring more postmen when the number of letters increases
+
+3️⃣ How they relate to your example
+Order Service → Kafka (orders topic) → Email / Analytics
+
+
+High throughput:
+
+Many users placing orders simultaneously
+
+Kafka handles thousands of events per second
+
+Scalability:
+
+If traffic increases, add more partitions & consumers
+
+Email Service and Analytics Service can scale independently
+
+4️⃣ Interview-Perfect Answer
+
+“Throughput is how many events Kafka can handle per second. Scalability is how Kafka can handle increasing load by adding more partitions and consumers. In our orders example, Kafka achieves high throughput by processing multiple partitions in parallel, and it is scalable because we can add more consumers or partitions as traffic grows.”
+
+✅ Key takeaway:
+
+Throughput = speed of processing events
+
+Scalability = ability to handle growth efficiently
+

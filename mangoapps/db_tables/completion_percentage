@@ -1,0 +1,124 @@
+✅ Recommended (most common in real systems)
+Store progress on program_enrollments
+
+and derive it from course progress
+
+🧱 Data involved
+program_enrollments
+id
+user_id
+program_id
+progress_percentage
+status
+completed_at
+
+course_enrollments
+user_id
+course_id
+progress_percentage
+status
+
+program_courses
+program_id
+course_id
+mandatory
+weight
+
+🧠 How percentage is calculated
+Step-by-step logic
+
+Fetch all courses in the program
+
+Fetch user’s course enrollments for those courses
+
+Calculate progress based on rules:
+
+Mandatory courses only OR
+
+Weighted average OR
+
+Simple average
+
+📐 Example (simple average)
+
+Program P1 → C1, C2, C3
+
+Course	Progress
+C1	100%
+C2	50%
+C3	0%
+(100 + 50 + 0) / 3 = 50%
+
+🏗️ Where is this calculated?
+Option A: On-the-fly (no storage)
+
+Always compute dynamically
+
+Accurate but slow at scale
+
+Option B: Derived + stored (recommended) ✅
+
+Recalculate when course progress changes
+
+Store in program_enrollments.progress_percentage
+
+“Program progress is a derived value, but we persist it for fast reads.”
+
+This sentence = senior-level.
+
+🔁 When is it updated?
+
+When a course is completed
+
+When progress changes
+
+Via:
+
+Background job or
+
+After-commit hook
+
+🧠 Architect follow-up questions
+“What if a course is optional?”
+
+Answer:
+
+“Optional courses are excluded from the denominator unless explicitly configured.”
+
+“What if a course is added to the program later?”
+
+Answer:
+
+“Existing enrollments recalculate progress based on updated program structure, or we version the program to preserve historical correctness.”
+
+🔥 That’s a director-level answer.
+
+“Why not just infer completion when all courses are done?”
+
+Answer:
+
+“Because progress percentage enables dashboards, analytics, and partial completion tracking without expensive queries.”
+
+⚠️ Common mistakes to avoid
+
+❌ storing progress only in UI
+
+❌ no recalculation strategy
+
+❌ tight coupling between course and program logic
+
+🧠 20-second interview summary
+
+“Program completion is derived from the user’s course progress.
+We compute it based on program rules and persist it on program_enrollments for fast reads, updating it whenever course progress changes.”
+
+🚀 Next step
+
+Say “next: enrollment workflow”
+We’ll walk through:
+
+enrolling user into program
+
+auto-enrolling into courses
+
+transactions, idempotency, and race conditions

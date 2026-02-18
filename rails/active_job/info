@@ -1,0 +1,278 @@
+1️⃣ First: What is a “background job”? (Plain English)
+Imagine this Rails request:
+User clicks "Sign up"
+→ create user
+→ send welcome email
+→ resize avatar image
+→ notify admin on Slack
+→ return response
+
+
+If Rails does everything immediately, the user waits ⏳
+This is bad UX and wastes web server time.
+
+✅ Solution
+
+Do only the important fast work now
+Do slow / non-critical work later → background job
+
+Examples of background work:
+
+Sending emails
+
+Image processing
+
+Reports generation
+
+API calls
+
+Data cleanup
+
+Notifications
+
+👉 Background job = work done outside the request-response cycle
+
+2️⃣ Core idea (one picture in words)
+Rails app
+   |
+   |  "Hey, do this later"
+   ↓
+Job Queue (Redis)
+   |
+   |  "I have work!"
+   ↓
+Worker (Sidekiq)
+   |
+   |  executes Ruby code
+   ↓
+Email / API / DB / File
+
+
+Keep this flow in mind — everything else fits here.
+
+3️⃣ What is Active Job?
+🔹 Problem before Active Job
+
+Rails apps used different background libraries:
+
+Sidekiq
+
+Resque
+
+Delayed Job
+
+Each had different APIs → painful to switch.
+
+🔹 Solution: Active Job (Rails abstraction)
+
+Active Job is just an interface (wrapper)
+It does NOT do jobs itself.
+
+Think of it like:
+
+“Active Record for background jobs”
+
+What Active Job does:
+
+Defines job classes
+
+Standardizes syntax
+
+Lets you switch backend easily
+
+Example:
+class WelcomeEmailJob < ApplicationJob
+  queue_as :default
+
+  def perform(user_id)
+    UserMailer.welcome(User.find(user_id)).deliver_now
+  end
+end
+
+
+Calling it:
+
+WelcomeEmailJob.perform_later(user.id)
+
+
+⚠️ Important:
+
+perform_later does NOT run the job
+It enqueues the job
+
+4️⃣ What is Sidekiq?
+🔹 Sidekiq = the engine that actually runs jobs
+
+Sidekiq is:
+
+A background job processor
+
+Uses threads
+
+Very fast
+
+Production-grade
+
+Sidekiq responsibilities:
+
+Pull jobs from Redis
+
+Execute perform
+
+Retry failed jobs
+
+Handle concurrency
+
+Provide Web UI
+
+Without Sidekiq:
+❌ Jobs just sit in queue forever
+
+5️⃣ What is Redis?
+🔹 Redis = fast in-memory data store
+
+In background jobs:
+
+Redis acts as the job queue
+
+Stores:
+
+Job data
+
+Retry info
+
+Schedules
+
+Failures
+
+Why Redis?
+
+Extremely fast
+
+Simple data structures (lists, hashes)
+
+Persistent (can survive restarts if configured)
+
+6️⃣ How they are coupled together
+
+Let’s connect the dots clearly 👇
+
+Step-by-step flow
+1️⃣ User triggers action
+WelcomeEmailJob.perform_later(user.id)
+
+2️⃣ Active Job
+
+Converts job into JSON
+
+Pushes it to queue adapter
+
+3️⃣ Queue adapter = Sidekiq
+
+Rails config:
+
+config.active_job.queue_adapter = :sidekiq
+
+4️⃣   
+
+Redis stores:
+
+{
+  "class": "WelcomeEmailJob",
+  "args": [1],
+  "queue": "default"
+}
+
+5️⃣ Sidekiq worker process
+
+Running in background
+
+Polls Redis
+
+Fetches job
+
+Executes:
+
+perform(user_id)
+
+7️⃣ Visual coupling summary
+Component	Role
+Active Job	Interface / abstraction
+Sidekiq	Job processor (worker)
+Redis	Job storage / queue
+Dependency chain:
+Active Job
+   ↓
+Sidekiq
+   ↓
+Redis
+
+8️⃣ What happens if something fails?
+Example: Email service down
+
+Sidekiq:
+
+Catches exception
+
+Retries job automatically
+
+Uses exponential backoff
+
+Stores retry info in Redis
+
+You get:
+
+Automatic retries
+
+Failure tracking
+
+Dead jobs queue
+
+9️⃣ Why Active Job if Sidekiq already exists?
+
+Interview-grade answer 👇
+
+Active Job provides a consistent API across background job backends, while Sidekiq provides high-performance execution using Redis.
+
+You can swap Sidekiq later:
+
+:sidekiq → :resque → :delayed_job
+
+
+without changing job code.
+
+🔟 Minimal real-world setup
+Gemfile
+gem "sidekiq"
+
+config/application.rb
+config.active_job.queue_adapter = :sidekiq
+
+Run Redis
+redis-server
+
+Run Sidekiq
+bundle exec sidekiq
+
+1️⃣1️⃣ Common interview traps (important)
+❌ “Active Job runs jobs”
+
+➡️ False
+
+❌ “Sidekiq stores jobs”
+
+➡️ False (Redis does)
+
+❌ “Redis is optional”
+
+➡️ False for Sidekiq
+
+1️⃣2️⃣ One-line mental model
+
+Active Job defines jobs, Sidekiq runs jobs, Redis stores jobs
+
+
+
+######
+
+

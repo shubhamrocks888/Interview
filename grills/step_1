@@ -1,0 +1,168 @@
+Let’s do this properly from basics, the same way an architect would, and I’ll also show you what they are really checking at each step.
+
+I’ll structure this as:
+
+What to answer
+
+What the interviewer is thinking
+
+How they grill further
+
+How you level-up your answer
+
+LEVEL 0 — Warm-up
+❓ Interviewer:
+
+What are background jobs?
+
+✅ Your answer:
+
+“Background jobs are tasks executed asynchronously outside the request–response cycle, typically used for long-running or non-critical work like emails, reports, or 3rd-party calls.”
+
+🎯 They’re checking: Do you understand async basics?
+
+LEVEL 1 — Why background jobs?
+❓ Interviewer:
+
+Why do we need background jobs?
+
+✅ Good answer:
+
+“To reduce request latency, improve user experience, and isolate failures from user-facing APIs.”
+
+🎯 They’re checking: User experience + failure isolation.
+
+LEVEL 2 — When NOT to use background jobs (trap)
+❓ Interviewer:
+
+Can we push everything to background jobs?
+
+❌ Bad answer:
+
+“Yes, async scales better.”
+
+✅ Architect answer:
+
+“No. Background jobs hide latency but do not remove bottlenecks. Critical or user-blocking operations may still need synchronous guarantees.”
+
+🎯 They’re checking: Do you understand async ≠ infinite capacity?
+
+LEVEL 3 — Reliability
+❓ Interviewer:
+
+What if a background job fails?
+
+✅ Answer:
+
+“We retry with exponential backoff, make jobs idempotent, and monitor failures.”
+
+🎯 They’re checking: Failure handling.
+
+Keywords to say:
+
+retries
+
+idempotency
+
+backoff
+
+dead-letter queue
+
+LEVEL 4 — Ordering & duplicates
+❓ Interviewer:
+
+What if the same job runs twice?
+
+✅ Answer:
+
+“Jobs must be idempotent so duplicate execution doesn’t cause incorrect state.”
+
+🎯 They’re checking: Real-world pain awareness.
+
+LEVEL 5 — Scale problem (this is where your interview went)
+❓ Interviewer:
+
+A 3rd-party API allows 50 requests/hour. Traffic is 100/hour. How do you handle it?
+
+✅ Entry answer:
+
+“Decouple requests using background jobs and process them asynchronously.”
+
+🎯 They’re checking: Async thinking.
+
+LEVEL 6 — GRILL BEGINS 🔥
+❓ Interviewer:
+
+Queue will grow. What happens to new requests?
+
+❌ Common mistake:
+
+“Delay jobs.”
+
+✅ Correct escalation:
+
+“At sustained overload, we must apply backpressure and bound the queue.”
+
+🎯 They’re checking: Capacity thinking.
+
+LEVEL 7 — Theory check (leaky bucket moment)
+❓ Interviewer:
+
+Delayed jobs may never run. How do you prevent that?
+
+✅ Architect answer:
+
+“This becomes a rate-limiting problem. We need a bounded algorithm like leaky bucket or token bucket.”
+
+🎯 They’re checking: Fundamentals over tools.
+
+LEVEL 8 — Fairness & starvation
+❓ Interviewer:
+
+Why leaky bucket?
+
+✅ Answer:
+
+“Leaky bucket ensures constant outflow, FIFO processing, and prevents starvation under sustained load.”
+
+🎯 They’re checking: Fairness guarantees.
+
+LEVEL 9 — Production readiness
+❓ Interviewer:
+
+What would you monitor?
+
+✅ Answer:
+
+“Queue depth, job latency, error rate, retry count, and downstream API usage.”
+
+🎯 They’re checking: Operability.
+
+LEVEL 10 — Business constraint (final boss)
+❓ Interviewer:
+
+Business says you cannot reject requests.
+
+✅ Mature answer:
+
+“Then latency becomes unbounded. We must make the workflow explicitly asynchronous and set SLA expectations or increase downstream capacity.”
+
+🎯 They’re checking: Can you say “no” with logic?
+
+🧠 The mental model you MUST keep
+
+Async is for latency.
+Rate limiting is for stability.
+Backpressure is non-negotiable.
+
+If you say this once in interview → instant respect.
+
+🧪 Practice drill (your turn)
+
+Let’s simulate next grill question 👇
+
+Interviewer:
+
+What if Sidekiq itself becomes slow or Redis is down?
+
+Reply with 2–3 sentences, and I’ll correct you like an architect would.

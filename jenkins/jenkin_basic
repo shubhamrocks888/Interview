@@ -1,0 +1,94 @@
+1️⃣ What is Jenkins?
+
+Jenkins is a CI/CD tool used to automate build, test, and deployment pipelines.
+
+CI = Continuous Integration
+CD = Continuous Delivery / Deployment
+
+
+2️⃣ Why Jenkins is used
+
+Without Jenkins:
+
+Manual builds
+
+Manual testing
+
+Manual deployments
+
+Human errors
+
+With Jenkins:
+
+Automated pipeline
+
+Faster feedback
+
+Safer releases
+
+3️⃣ What Jenkins actually does (Simple Flow)
+	Developer pushes code →
+	Jenkins triggers →
+	Build →
+	Run tests →
+	Create artifact / Docker image →
+	Deploy
+
+
+4️⃣ Jenkins in YOUR JD Context (Docker + AWS)
+	Typical setup:
+	GitHub →
+	Jenkins →
+	Docker →
+	ECR →
+	EC2 / ECS
+
+Step-by-step:
+
+	1️⃣ Code pushed to GitHub
+	2️⃣ Jenkins job triggered (webhook)
+	3️⃣ Jenkins:
+
+	Runs tests (RSpec / ExUnit)
+
+	Builds Docker image
+	4️⃣ Pushes image to AWS ECR
+	5️⃣ Deploys container to EC2 or ECS
+
+
+
+5️⃣ What is a Jenkins Pipeline?
+
+	A pipeline is a set of steps defined as code.
+
+	Usually written in Jenkinsfile.
+
+	Example (conceptual):
+
+	Build → Test → Docker Build → Deploy
+
+
+6️⃣ Key Jenkins Concepts (Very Important)
+
+		| Term     | Meaning                        |
+		| -------- | ------------------------------ |
+		| Job      | A task Jenkins runs            |
+		| Pipeline | CI/CD steps as code            |
+		| Agent    | Machine that runs the job      |
+		| Plugin   | Extends Jenkins features       |
+		| Webhook  | Triggers Jenkins automatically |
+
+7️⃣ Jenkins vs Manual Deployment (Interview Angle)
+
+		Manual	Jenkins
+		Error-prone	Automated
+		Slow	Fast
+		Not repeatable	Consistent
+		No rollback	Easy rollback
+
+
+8️⃣ Interview-Perfect Answer (Memorize)
+
+	“Jenkins is a CI/CD automation tool that helps us build, test, and deploy applications automatically. In our setup, Jenkins builds Docker images, runs tests, pushes images to ECR, and deploys them to EC2 or ECS.”
+
+	

@@ -1,0 +1,134 @@
+What is a pre-signed URL?
+
+A pre-signed URL is a temporary, secure URL that allows a client to upload (or download) a file directly to S3, without having AWS credentials.
+
+Think of it as:
+
+“A one-time permission slip for a specific file, valid for a short time.”
+
+Why do we need it?
+❌ Without pre-signed URL
+Frontend → Rails → S3
+
+
+Problems:
+
+Rails handles large files ❌
+
+Memory & timeout issues ❌
+
+Poor scalability ❌
+
+✅ With pre-signed URL
+Frontend → S3 (direct upload)
+       ↘
+        Rails (control plane only)
+
+
+Rails:
+
+authorizes
+
+generates permission
+
+never touches the file
+
+What exactly is inside a pre-signed URL?
+
+It contains:
+
+S3 bucket
+
+object key (file path)
+
+HTTP method (PUT / POST)
+
+expiration time
+
+cryptographic signature (AWS)
+
+Example (simplified):
+
+https://my-bucket.s3.amazonaws.com/videos/raw/abc.mp4
+?X-Amz-Algorithm=AWS4-HMAC-SHA256
+&X-Amz-Credential=...
+&X-Amz-Expires=900
+&X-Amz-Signature=...
+
+
+⏳ Valid only for (say) 15 minutes.
+
+Step-by-step flow (very important)
+1️⃣ Admin clicks “Upload Video”
+
+Frontend:
+
+POST /videos/upload_url
+
+2️⃣ Backend validates
+
+Backend checks:
+
+user is admin/instructor
+
+chapter exists
+
+file type allowed
+
+3️⃣ Backend generates pre-signed URL
+
+Rails:
+
+s3 = Aws::S3::Resource.new
+obj = s3.bucket("lms-videos").object("raw/video_123.mp4")
+
+upload_url = obj.presigned_url(
+  :put,
+  expires_in: 15.minutes
+)
+
+4️⃣ Backend returns URL
+{
+  "upload_url": "https://s3....",
+  "video_id": 123
+}
+
+5️⃣ Frontend uploads directly to S3
+PUT upload_url
+Content-Type: video/mp4
+
+<binary data>
+
+
+✔ No Rails involvement
+✔ Scales infinitely
+
+Security guarantees (architects love this)
+
+URL works only:
+
+for one object
+
+for one HTTP method
+
+for limited time
+
+No AWS keys exposed
+
+Even if leaked, damage is minimal
+
+Why architects insist on this design
+
+Because it:
+
+separates control plane vs data plane
+
+avoids backend bottlenecks
+
+follows cloud-native patterns
+
+One-line interview answer
+
+“A pre-signed URL is a time-limited, signed S3 URL that allows the frontend to upload a specific file directly to S3 without exposing AWS credentials.”
+
+That’s a perfect answer.

@@ -1,0 +1,59 @@
+🔹 Step 4 — Full Flow Conceptually
+
+Inside perform:
+
+Compute key → email_rate_limit_key
+
+Increment counter → Rails.cache.increment(...)
+
+Raise error if limit exceeded → raise StandardError, "Limit exceeded"
+
+Check ride completed + idempotency
+
+Lock ride → send email → mark completion_email_sent = true
+
+Next step (optional senior-level):
+
+Smooth retries: if limit exceeded, use wait: 1.minute for retry instead of immediate retry
+
+Or move job to separate queue for throttled execution
+
+Do you want to implement that next?
+
+
+
+####
+
+class RideCompletionJob < ApplicationJob
+	
+	queue_as :mailers
+
+	retry_on StandardError, attempts: 5
+
+	LIMIT = 100
+
+	def perform(ride_id)
+		ride = Ride.find_by(id: ride_id)
+		return unless ride&.completed?
+
+		current_count = Rails.cache.increment(
+			email_rate_limit_key,
+			1,
+			initial: 1,
+			expires_in: 1.minute)
+
+		raise StandardError, "Limit Exceeded" if count > LIMIT
+		
+		ride.with_lock do
+			return if ride.completion_email_sent
+			RideMailer.ride_completed(ride).deliver_now
+			ride.update!(completion_email_sent: true)
+		end
+	end
+
+	private
+
+	def email_rate_limit_key
+		"email_rate_limit:#{(Time.current.to_i)/60}"
+	end
+end

@@ -1,0 +1,50 @@
+If the chain is:
+
+User
+  has_many :bookings
+Booking
+  belongs_to :show
+Show
+  belongs_to :movie
+Movie
+  has_one :demo
+Demo
+  has_one :penguin
+
+
+Then your nested includes would look like this:
+
+User.includes(
+  bookings: {
+    show: {
+      movie: {
+        demo: :penguin
+      }
+    }
+  }
+)
+
+🔎 What this loads
+
+This eagerly loads:
+
+User
+  → bookings
+    → show
+      → movie
+        → demo
+          → penguin
+
+
+So accessing:
+
+user.bookings.first.show.movie.demo.penguin
+
+
+won’t cause N+1 queries.
+
+💡 General Rule
+
+Just keep nesting hashes following the association chain:
+
+parent.includes(child: { grandchild: { great_grandchild: :next } })

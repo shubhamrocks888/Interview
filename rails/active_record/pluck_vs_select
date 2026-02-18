@@ -1,0 +1,100 @@
+Core difference
+
+pluck:
+
+	Runs direct SQL.
+	Returns raw Ruby values (Array).
+	Does NOT instantiate ActiveRecord objects
+
+	Lowest memory usage
+
+		User.pluck(:id, :email)
+		# => [[1, "a@test.com"], [2, "b@test.com"]]
+
+select:
+
+
+	Builds ActiveRecord objects.
+	Still hits DB, but instantiates models.
+	Heavier in memory & slower
+
+	User.select(:id, :email)
+	# => [#<User id: 1, email: "...">, ...]
+
+######
+Performance comparison (important)
+
+| Case                  | Faster     | Reason                     |
+| --------------------- | ---------- | -------------------------- |
+| Fetch only values     | ✅ `pluck`  | No object creation         |
+| Large datasets        | ✅ `pluck`  | Low memory                 |
+| Need model methods    | ❌ `select` | `pluck` can’t call methods |
+| Chaining scopes later | ❌ `pluck`  | `pluck` ends the relation  |
+
+
+#####
+Under the hood (interview gold ⭐)
+	pluck
+	SELECT id, email FROM users;
+
+
+	➡ Ruby receives Array, done.
+
+	select
+	SELECT id, email FROM users;
+
+
+	➡ Rails wraps each row into a User object
+
+	Object creation = slower + more memory.
+
+
+####
+Benchmarked intuition:
+
+	For 100k records:
+
+	User.pluck(:id)
+	# ~ 0.2s
+
+	User.select(:id).map(&:id)
+	# ~ 1.2s (object creation cost)
+
+
+######
+	Very common trap ⚠️
+	User.select(:email).pluck(:email)
+
+
+	❌ WRONG assumption
+	pluck ignores select and fires new SQL
+
+	SELECT email FROM users;
+
+Rule of thumb ✅
+
+	Need raw data? → pluck
+
+	Need AR objects or methods? → select
+
+	Huge dataset? → pluck
+
+	Rendering views? → select
+
+	One-line interview answer 🎯
+
+	"pluck is faster than select because it avoids ActiveRecord object instantiation and returns raw values directly from SQL."
+
+
+
+	##############
+
+	Interview one-liner ⭐
+
+An ActiveRecord::Relation is a lazy collection that contains fully-fledged model objects, but only with the columns explicitly selected.
+
+#####
+
+FINAL ONE-LINER (memorize this)
+
+"pluck is SQL-level data fetching, select is ORM-level object creation."

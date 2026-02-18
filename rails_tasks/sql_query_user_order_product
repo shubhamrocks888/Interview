@@ -1,0 +1,16 @@
+ Task 2  — SQL query (10 min)
+Given Tables: 
+products: id, name, category, price, created_at 
+orders: id, order_date, customer_id, status, total_amount 
+order_items: id, order_id, product_id, quantity, price
+
+
+Question: Write an SQL query to find the top 5 best-selling products based on the total quantity sold across all orders.
+
+select products.*, orders.* , sum(orders.total_amount)
+from order_items
+inner join order_items on order_items.order_id = orders.id
+inner join products on order_items.product_id = products.id
+group by (orders.total_amount)
+order by (orders.total_amount) as desc)
+limit 5;

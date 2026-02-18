@@ -1,0 +1,110 @@
+🔥 Excellent question — this means you’re thinking about correctness under retries & concurrency, which interviewers love.
+
+Short answer first 👇
+There is NO decrement — and that’s intentional.
+
+Now the real explanation.
+
+🧠 Why there is no decrement
+
+This rate limiter is time-window based, not concurrency-based.
+
+What you’ve built is:
+
+“Allow max 10 executions per user per 60 seconds”
+
+So:
+
+Each job increments
+
+Key expires automatically
+
+Counter resets after 60s
+
+No concept of “job finished → give slot back”
+
+That’s why decrement is wrong here.
+
+📊 Mental model (important)
+
+Think of the key as:
+
+user_42 → number of attempts in last 60s
+
+
+Not:
+
+user_42 → number of running jobs
+
+
+Once a request happens, it counts, even if:
+
+the job fails
+
+the job retries
+
+the job is fast or slow
+
+That’s correct behavior for rate limiting.
+
+❌ When decrement would be WRONG
+# ❌ DON'T DO THIS
+ensure
+  Rails.cache.decrement(key)
+end
+
+
+Why?
+
+Retry = double decrement bugs
+
+Process crash = decrement never happens
+
+Negative counts
+
+Broken limits under concurrency
+
+✅ When decrement IS needed (different problem!)
+
+If the requirement is:
+
+“Only N jobs per user can run at the same time”
+
+That is concurrency limiting, not rate limiting.
+
+Correct concurrency limiter (with decrement)
+def perform(user_id)
+  key = "welcome_email_concurrency:user:#{user_id}"
+
+  current = Rails.cache.increment(key, 1, expires_in: 5.minutes)
+
+  return if current > 2  # max 2 concurrent jobs
+
+  begin
+    UserMailer.welcome_email(user_id).deliver_now
+  ensure
+    Rails.cache.decrement(key)
+  end
+end
+
+
+🧠 Here:
+
+Increment = acquire slot
+
+Decrement = release slot
+
+TTL = crash safety
+
+🧠 Interview-ready comparison (gold ⭐)
+
+| Problem              | Increment | Decrement | TTL   |
+| -------------------- | --------- | --------- | ----- |
+| Rate limiting        | ✅ Yes     | ❌ No      | ✅ Yes |
+| Concurrency limiting | ✅ Yes     | ✅ Yes     | ✅ Yes |
+
+
+🎯 One-liner you can say confidently
+
+Rate limiting counts events per time window, so counters only increment and expire.
+Concurrency limiting tracks active executions, so it requires decrement.

@@ -1,0 +1,258 @@
+Perfect — below is a complete, production-ready Rails design for:
+
+Users
+
+Follow
+
+Follow Requests (private accounts)
+
+Validations
+
+DB constraints
+
+Associations
+➡️ You can literally explain this line-by-line in an interview.
+
+1️⃣ Database Schema (Conceptual)
+Tables
+users
+follows
+follow_requests
+
+2️⃣ Migrations
+✅ Users table
+# db/migrate/001_create_users.rb
+class CreateUsers < ActiveRecord::Migration[7.0]
+  def change
+    create_table :users do |t|
+      t.string  :name, null: false
+      t.string  :email, null: false
+      t.boolean :private_account, default: false
+
+      t.timestamps
+    end
+
+    add_index :users, :email, unique: true
+  end
+end
+
+Interview explanation:
+
+private_account → controls whether follow request is required
+
+Unique email → identity constraint
+
+✅ Follows table
+# db/migrate/002_create_follows.rb
+class CreateFollows < ActiveRecord::Migration[7.0]
+  def change
+    create_table :follows do |t|
+      t.bigint :follower_id,  null: false
+      t.bigint :following_id, null: false
+
+      t.timestamps
+    end
+
+    add_index :follows, [:follower_id, :following_id], unique: true
+    add_index :follows, :following_id
+
+    add_foreign_key :follows, :users, column: :follower_id
+    add_foreign_key :follows, :users, column: :following_id
+  end
+end
+
+Interview explanation:
+
+Join table for self-referential many-to-many
+
+Unique index prevents duplicate follows
+
+FK ensures data integrity
+
+✅ Follow Requests table (private accounts)
+# db/migrate/003_create_follow_requests.rb
+class CreateFollowRequests < ActiveRecord::Migration[7.0]
+  def change
+    create_table :follow_requests do |t|
+      t.bigint :requester_id, null: false
+      t.bigint :target_id,    null: false
+      t.string :status, default: "pending" # pending, approved, rejected
+
+      t.timestamps
+    end
+
+    add_index :follow_requests, [:requester_id, :target_id], unique: true
+
+    add_foreign_key :follow_requests, :users, column: :requester_id
+    add_foreign_key :follow_requests, :users, column: :target_id
+  end
+end
+
+Interview explanation:
+
+Only for private accounts
+
+Status-based workflow
+
+Prevents duplicate requests
+
+#######
+
+| follower_id | following_id |
+| ----------- | ------------ |
+| 1           | 2            |
+| 3           | 2            |
+| 4           | 2            |
+
+    User 1, 3, 4 are following user 2
+
+3️⃣ Models & Associations
+✅ User model
+# app/models/user.rb
+class User < ApplicationRecord
+  # Followers (who follow me)
+  has_many :passive_follows,
+           class_name: "Follow",
+           foreign_key: :following_id,
+           dependent: :destroy
+
+  has_many :followers,
+           through: :passive_follows,
+           source: :follower
+
+  # Following (who I follow)
+  has_many :active_follows,
+           class_name: "Follow",
+           foreign_key: :follower_id,
+           dependent: :destroy
+
+  has_many :following,
+           through: :active_follows,
+           source: :following
+
+  # Follow requests
+  has_many :sent_follow_requests,
+           class_name: "FollowRequest",
+           foreign_key: :requester_id,
+           dependent: :destroy
+
+  has_many :requested_users,
+         through: :sent_follow_requests,
+         source: :target
+
+
+  has_many :received_follow_requests,
+           class_name: "FollowRequest",
+           foreign_key: :target_id,
+           dependent: :destroy
+
+  has_many :requesting_users,
+         through: :received_follow_requests,
+         source: :requester
+
+  validates :name, :email, presence: true
+end
+
+Interview explanation:
+
+active_follows → I follow others
+
+passive_follows → others follow me
+
+Clean separation avoids confusion
+
+✅ Follow model
+# app/models/follow.rb
+class Follow < ApplicationRecord
+  belongs_to :follower,  class_name: "User"
+  belongs_to :following, class_name: "User"
+
+  validates :follower_id, presence: true
+  validates :following_id, presence: true
+
+  validates :follower_id,
+            uniqueness: { scope: :following_id }
+
+  validate :cannot_follow_self
+
+  private
+
+  def cannot_follow_self
+    if follower_id == following_id
+      errors.add(:base, "User cannot follow themselves")
+    end
+  end
+end
+
+Interview explanation:
+
+Custom validation prevents self-follow
+
+DB + model validations = defense in depth
+
+✅ FollowRequest model
+# app/models/follow_request.rb
+class FollowRequest < ApplicationRecord
+  STATUSES = %w[pending approved rejected]
+
+  belongs_to :requester, class_name: "User"
+  belongs_to :target,    class_name: "User"
+
+  validates :status, inclusion: { in: STATUSES }
+  validates :requester_id,
+            uniqueness: { scope: :target_id }
+
+  validate :cannot_request_self
+
+  after_update :create_follow, if: :approved?
+
+  private
+
+  def cannot_request_self
+    if requester_id == target_id
+      errors.add(:base, "Cannot follow yourself")
+    end
+  end
+
+  def approved?
+    saved_change_to_status? && status == "approved"
+  end
+
+  def create_follow
+    Follow.create!(
+      follower_id: requester_id,
+      following_id: target_id
+    )
+  end
+end
+
+Interview explanation:
+
+Workflow-based model
+
+Auto-creates follow on approval
+
+Status machine simplified
+
+4️⃣ Example Flow (Explain to Interviewer)
+🔹 Public account
+User A → Follow.create(follower_id, following_id)
+
+🔹 Private account
+User A → FollowRequest (pending)
+User B → approves
+System → Follow created
+
+5️⃣ Example Queries
+Who follows me?
+user.followers
+
+Who am I following?
+user.following
+
+Check if following
+Follow.exists?(follower_id: a, following_id: b)
+
+6️⃣ Interview Power Line 🔥
+
+“This design uses a self-referential many-to-many relationship via a follows join table, with a separate follow_requests workflow for private accounts, enforcing constraints at both database and application layers.”

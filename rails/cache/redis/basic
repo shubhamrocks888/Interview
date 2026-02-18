@@ -1,0 +1,225 @@
+1️⃣ What is Redis (in very simple terms)
+
+	Redis is an in-memory data store
+	It stores data as key → value
+	Super fast (RAM-based)
+
+	Common uses:
+		Caching
+		Session storage
+		Rate limiting
+		Queues
+		Counters
+
+	Think of Redis like a huge Hash in memory, but with special value types.
+
+		key => value
+
+2️⃣ Starting Redis (local)
+	Install & start
+		redis-server
+
+	Open Redis CLI
+		redis-cli
+
+
+	You’ll now see:
+
+		127.0.0.1:6379>
+
+3️⃣ Redis basics (common to all data types)
+	Set a key
+	SET mykey "hello"
+
+	Get a key
+	GET mykey
+
+	Delete a key
+	DEL mykey
+
+	Check if key exists
+	EXISTS mykey
+
+	Set expiry (TTL)
+	EXPIRE mykey 60     # seconds
+	TTL mykey
+
+4️⃣ Redis Data Types (MOST IMPORTANT PART)
+
+	Redis does NOT store arbitrary objects.
+	It stores specific data types.
+
+	🔹 1. STRING (most basic)
+	What it is
+
+	Can store:
+	text
+	numbers
+	JSON
+	binary data
+
+	Commands
+	SET name "Shubham"
+	GET name
+
+	Numbers (counter)
+	SET views 10
+	INCR views
+	INCRBY views 5
+
+	Store JSON (very common)
+	SET user:1 '{"id":1,"name":"Alice"}'
+	GET user:1
+
+
+	💡 Redis does not understand JSON — it’s just a string.
+
+2. HASH (like Ruby Hash)
+	What it is
+
+	Key → multiple fields
+
+	Perfect for objects
+
+	Example: user object
+	HSET user:1 id 1 name Alice email alice@test.com
+
+	Read fields
+	HGET user:1 name
+	HGETALL user:1
+
+	Update field
+	HSET user:1 name Bob
+
+	Delete field
+	HDEL user:1 email
+
+
+	📌 Use HASH instead of JSON string when you need partial updates
+
+3. LIST (ordered, allows duplicates)
+	What it is
+
+	Like an array / queue
+
+	Order matters
+
+	Push items
+	LPUSH tasks "email"
+	LPUSH tasks "backup"
+
+	Read items
+	LRANGE tasks 0 -1
+
+	Pop items (queue)
+	RPOP tasks
+
+	Blocking queue (important)
+	BRPOP tasks 0
+
+
+	📌 Used for job queues, background workers
+
+
+4. SET (unique values, unordered)
+	What it is
+
+	Like Ruby Set
+
+	No duplicates
+
+	Commands
+	SADD tags ruby rails redis
+	SADD tags ruby
+	SMEMBERS tags
+
+	Check membership
+	SISMEMBER tags rails
+
+	Set operations
+	SINTER set1 set2   # intersection
+	SUNION set1 set2   # union
+
+
+	📌 Used for permissions, tags, feature flags
+
+5. SORTED SET (Set + score)
+	What it is
+
+	Like Set, but each value has a score
+
+	Sorted by score
+
+	Example: leaderboard
+	ZADD leaderboard 100 alice
+	ZADD leaderboard 200 bob
+	ZADD leaderboard 150 carol
+
+	Read leaderboard
+	ZRANGE leaderboard 0 -1 WITHSCORES
+	ZREVRANGE leaderboard 0 -1 WITHSCORES
+
+
+	📌 Used for ranking, rate limiting, analytics
+
+5️⃣ TTL & Expiry (very important)
+
+	Works for all types
+
+	SET session:123 "logged_in"
+	EXPIRE session:123 3600
+	TTL session:123
+
+
+	📌 Redis auto-deletes expired keys.
+
+
+6️⃣ Redis vs DB vs Cache
+
+	| Feature       | Redis        | Database  |
+	| ------------- | ------------ | --------- |
+	| Stored in RAM | ✅            | ❌         |
+	| Persistent    | ⚠️ optional  | ✅         |
+	| Query support | ❌            | ✅         |
+	| Speed         | 🚀 very fast | 🐢 slower |
+
+
+7️⃣ Redis from Rails (simple example)
+	redis = Redis.new
+
+	redis.set("name", "Shubham")
+	redis.get("name")
+
+	redis.hset("user:1", "name", "Alice")
+	redis.hgetall("user:1")
+
+8️⃣ How Rails.cache uses Redis
+	Rails.cache.write("user_1", user)
+	Rails.cache.read("user_1")
+
+
+	Internally:
+
+	Object → Marshal.dump
+
+	Stored as Redis STRING
+
+	Read → Marshal.load
+
+9️⃣ Which data type should I use?
+
+	| Use case                | Redis type |
+	| ----------------------- | ---------- |
+	| Cache whole object      | STRING     |
+	| Partial object update   | HASH       |
+	| Queue / background jobs | LIST       |
+	| Unique items            | SET        |
+	| Ranking / scoring       | SORTED SET |
+
+
+10️⃣ Mental model (IMPORTANT)
+
+	Redis is not a database
+	Redis is a data-structure server
+
+	Each key has one data type.

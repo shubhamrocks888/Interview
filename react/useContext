@@ -1,0 +1,147 @@
+Next hook in the natural learning order is useContext — this solves prop drilling and introduces shared/global state.
+
+🧩 useContext — FROM SCRATCH
+1️⃣ Problem first: Prop drilling
+
+Imagine this tree:
+
+App
+ └─ Dashboard
+     └─ Profile
+
+
+You want to send user from App to Profile.
+
+<App user={user}>
+  <Dashboard user={user}>
+    <Profile user={user} />
+  </Dashboard>
+</App>
+
+
+❌ Dashboard doesn’t need user, but still receives it.
+
+This is called prop drilling.
+
+2️⃣ What is Context?
+
+Context allows you to share data globally without passing props manually at every level.
+
+3️⃣ Basic steps of useContext
+
+There are 3 steps (remember this for interviews):
+
+Create context
+
+Provide value
+
+Consume value
+
+4️⃣ Step 1: Create context
+import { createContext } from "react";
+
+const UserContext = createContext(null);
+
+5️⃣ Step 2: Provide context value
+function App() {
+  const user = { name: "Shubham" };
+
+  return (
+    <UserContext.Provider value={user}>
+      <Dashboard />
+    </UserContext.Provider>
+  );
+}
+
+6️⃣ Step 3: Consume context using useContext
+import { useContext } from "react";
+
+function Profile() {
+  const user = useContext(UserContext);
+
+  return <h1>Hello {user.name}</h1>;
+}
+
+7️⃣ What’s happening internally?
+
+React stores user at Provider level
+
+Any child can read it
+
+If value changes → all consumers re-render
+
+8️⃣ Very important rules ⚠️
+❌ Cannot use context outside Provider
+useContext(UserContext); // undefined or default value
+
+❌ Context is NOT a state manager
+
+It does not replace:
+
+Redux
+
+Zustand
+
+useReducer (sometimes)
+
+Context is for read-heavy, write-light data.
+
+9️⃣ Common use cases
+
+Auth (currentUser)
+
+Theme (dark/light)
+
+Locale
+
+Permissions
+
+🔟 Context + state (real-world)
+const AuthContext = createContext();
+
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+
+Consume:
+
+const { user, setUser } = useContext(AuthContext);
+
+🧠 Mental model
+
+Think of context as:
+
+A global variable scoped to a component tree
+
+🎯 Interview questions
+
+Q: When should you NOT use context?
+A: For frequently changing data → causes re-renders.
+
+Q: Does context replace Redux?
+A: No, context handles sharing, Redux handles complex state logic.
+
+Rails analogy 🧠
+
+| React    | Rails               |
+| -------- | ------------------- |
+| Context  | `CurrentAttributes` |
+| Provider | Controller setup    |
+| Consumer | View / helper       |
+
+🔑 Summary
+
+useContext avoids prop drilling
+
+Needs Provider
+
+Triggers re-render on value change
+
+Best for global config/auth data

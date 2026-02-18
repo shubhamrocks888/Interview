@@ -1,0 +1,115 @@
+EC2 stands for:
+
+Elastic Compute Cloud
+
+How to say it in an interview (best way):
+
+“EC2 stands for Elastic Compute Cloud, which provides scalable virtual servers in AWS.”
+
+	Why Elastic matters (bonus point):
+
+	You can scale up or down
+	On-demand capacity
+	Pay only for what you use
+
+
+#########
+Why do we use EC2?
+
+To run applications without managing physical hardware, with the ability to scale on demand.
+
+
+#######
+What is an EC2 instance?
+
+A virtual machine running on AWS infrastructure.
+
+####
+What is an AMI?
+
+AMI = Amazon Machine Image
+
+A template used to launch EC2 instances, containing the OS, runtime, and application setup.
+
+####
+
+What are instance types?
+
+Predefined combinations of CPU, memory, and networking (e.g., t3, m5).
+
+Example:
+
+t3 → general purpose
+
+c → compute optimized
+
+r → memory optimized
+
+########
+
+What is an Availability Zone?
+
+An isolated data center within an AWS region.
+
+Why important?
+
+For high availability and fault tolerance.
+
+
+########
+
+
+How do you secure an EC2 instance?
+
+Using Security Groups and IAM roles.
+
+Security Group → network-level firewall
+
+IAM Role → permission to access AWS services
+
+######
+
+What is a Security Group?
+
+A virtual firewall that controls inbound and outbound traffic for EC2 instances.
+
+####
+
+What is Auto Scaling?
+
+Automatically adds or removes EC2 instances based on traffic or CPU usage.
+
+#####
+
+What is a Load Balancer used for?
+
+To distribute incoming traffic across multiple EC2 instances.
+
+######
+
+What is EBS?
+
+EBS = Elastic Block Store
+
+Persistent block storage attached to EC2 instances.
+
+########
+
+What happens if an EC2 instance stops?
+
+Instance stops
+
+EBS data remains
+
+Public IP may change
+
+####
+
+Difference between EC2 stop vs terminate?
+Stop	Terminate
+Instance stops	Instance deleted
+Data persists	Data lost
+
+###
+
+EC2 provides scalable virtual machines that can be secured with IAM and Security Groups, scaled using Auto Scaling, and made highly available using Load Balancers across multiple Availability Zones.”

@@ -1,0 +1,158 @@
+What are Microservices? (Simple definition)
+
+Microservices architecture is a way of building an application as a collection of small, independent services,
+where each service does one business task, runs independently, and communicates via APIs.
+
+👉 Each service:
+
+Has its own codebase
+
+Often has its own database
+
+Can be deployed independently
+
+One-line interview definition ⭐
+
+Microservices is an architecture where an application is divided into small, loosely coupled services, each responsible for a specific business capability and communicating through APIs.
+
+Example (Very Important for Interviews)
+Monolith (Traditional App)
+E-commerce App
+ ├── User Management
+ ├── Product Catalog
+ ├── Orders
+ ├── Payments
+
+
+Single codebase
+
+Single deployment
+
+One bug can bring down everything
+
+Microservices Version
+User Service      → users DB
+Product Service   → products DB
+Order Service     → orders DB
+Payment Service   → payments DB
+
+
+Each service:
+
+Runs separately
+
+Can be scaled separately
+
+Can be written in different languages (optional)
+
+How services communicate
+
+Mostly via:
+
+HTTP/REST APIs
+
+gRPC
+
+Message queues (Kafka, RabbitMQ)
+
+Example:
+
+Order Service → calls → Payment Service API
+
+Key Characteristics (Interviewer loves this list)
+
+Independent deployment
+
+Loosely coupled
+
+Single responsibility
+
+Own database per service
+
+Technology agnostic
+
+Scalable independently
+
+Advantages of Microservices
+
+✔ Scalability
+
+Scale only the service that needs it (e.g., Payments on sale day)
+
+✔ Faster development
+
+Multiple teams can work independently
+
+✔ Fault isolation
+
+If Payment Service fails, Product Service still works
+
+✔ Easier CI/CD
+
+Deploy small changes without full redeploy
+
+Disadvantages (Always mention this)
+
+❌ Complexity
+
+Many services = harder to manage
+
+❌ Network latency
+
+API calls are slower than method calls
+
+❌ Data consistency
+
+No easy joins across databases
+
+❌ DevOps overhead
+
+Needs Docker, Kubernetes, monitoring, logging
+
+⚠️ Interview tip: Say “Microservices are not always better than monoliths”
+
+Monolith vs Microservices (Quick Comparison)
+Monolith	Microservices
+Single codebase	Multiple services
+Simple to start	Complex to manage
+Hard to scale	Easy to scale
+One deployment	Independent deployments
+When should we use Microservices?
+
+Use when:
+
+Large application
+
+Multiple teams
+
+High scalability required
+
+Frequent deployments
+
+Avoid when:
+
+Small app
+
+Small team
+
+Simple requirements
+
+Common Interview Follow-up Questions
+
+Be ready for these 👇
+
+Why microservices instead of monolith?
+
+How do services communicate?
+
+How is data managed?
+
+What challenges did you face?
+
+How do you deploy microservices? (Docker/Kubernetes)
+
+How do you handle failures? (Circuit breaker, retries)
+
+30-second Interview Answer (Memorize This)
+
+Microservices is an architectural style where an application is built as a set of small, independent services. Each service handles a specific business function, has its own database, and communicates with other services via APIs. This allows independent scaling, deployment, and better fault isolation, but increases operational complexity.-

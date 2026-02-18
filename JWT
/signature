@@ -1,0 +1,146 @@
+First: The core problem JWT signature solves
+Question:
+
+If anyone can read the JWT payload, what stops a hacker from changing it?
+
+Example token payload:
+
+{
+  "user_id": 1,
+  "role": "user"
+}
+
+
+Attacker changes it to:
+
+{
+  "user_id": 1,
+  "role": "admin"
+}
+
+
+⚠️ This is where signature comes in
+
+What is JWT Signature (Plain English)
+
+Signature is a tamper-proof seal created by the server
+that proves “this token was created by me and not changed.”
+
+Think of it like:
+
+Wax seal on an envelope
+
+Bank stamp on a cheque
+
+You can read the content,
+but you cannot alter it without breaking the seal.
+
+How signature is created (NO MATH, just logic)
+Server has a secret key
+SECRET = "my_super_secret"
+
+Step 1: Server creates header + payload
+base64(header) + "." + base64(payload)
+
+Step 2: Server signs it using secret
+signature = hash(data + SECRET)
+
+
+⚠️ The secret is never shared
+
+Why attacker cannot fake it
+
+Attacker can:
+✔ Read header
+✔ Read payload
+
+Attacker cannot:
+❌ Create a valid signature (no secret)
+
+So if attacker changes payload:
+
+header.payload.signature ❌
+
+
+Signature verification fails → request rejected
+
+How server verifies signature (Very Important)
+
+When request comes in:
+
+1️⃣ Server takes (header + payload) from token
+2️⃣ Uses same secret
+3️⃣ Recreates signature
+4️⃣ Compares with token’s signature
+
+✔ Same → token trusted
+❌ Different → token rejected
+
+Tiny Real Example
+Original payload
+{
+  "user_id": 1
+}
+
+
+Signature created with secret:
+
+abc123 ✔
+
+Attacker changes payload
+{
+  "user_id": 2
+}
+
+
+But signature still:
+
+abc123 ❌
+
+
+Mismatch → 401 Unauthorized
+
+What signature DOES and DOES NOT do
+Signature DOES:
+
+✔ Prevent tampering
+✔ Prove token authenticity
+✔ Enable stateless verification
+
+Signature DOES NOT:
+
+❌ Encrypt data
+❌ Hide user info
+❌ Protect against token theft
+
+Interview one-liner (IMPORTANT)
+
+JWT signature ensures the token’s integrity. If the payload is modified, the signature verification fails, so the server rejects the token.
+
+Common confusion cleared
+❓ Is signature encryption?
+
+❌ No — hashing + signing
+
+❓ Can someone generate JWT without secret?
+
+❌ They can generate, but server won’t trust it
+
+❓ Why not encrypt instead?
+
+Encryption hides data;
+signature protects trust.
+
+JWT focuses on trust, not secrecy.
+
+Very simple mental model (remember this)
+Payload = letter
+Signature = wax seal
+Secret key = unique stamp
+
+
+Broken seal → throw letter away.
+
+10-second answer for interviewer
+
+The JWT signature prevents tampering. It is generated using the token data and a server-side secret. When the token is received, the server re-creates the signature and rejects the token if it doesn’t match.

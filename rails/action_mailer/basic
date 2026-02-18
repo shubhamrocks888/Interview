@@ -1,0 +1,102 @@
+1️⃣ What is Action Mailer? (1-line definition)
+
+	Action Mailer is the Rails framework used to send emails (welcome email, password reset, order confirmation, etc.).
+
+	Think of it like:
+
+	Controller → handles HTTP requests
+
+	Mailer → handles email requests
+
+
+2️⃣ Basic flow (VERY IMPORTANT for MCQs & coding)
+
+	Controller / Model
+	      ↓
+	Mailer class
+	      ↓
+	Email view (HTML / text)
+	      ↓
+	SMTP / Mail server
+
+
+3️⃣ Generate a mailer (from scratch)
+	rails generate mailer UserMailer
+
+
+	This creates 👇
+
+	app/mailers/user_mailer.rb
+	app/views/user_mailer/
+
+
+4️⃣ Mailer class (core coding part)
+
+	# app/mailers/user_mailer.rb
+	class UserMailer < ApplicationMailer
+	  default from: "no-reply@example.com"
+
+	  def welcome_email(user)
+	    @user = user
+	    mail(
+	      to: @user.email,
+	      subject: "Welcome to Our App"
+	    )
+	  end
+	end
+
+5️⃣ ApplicationMailer (base class)
+
+	# app/mailers/application_mailer.rb
+	class ApplicationMailer < ActionMailer::Base
+	  default from: "no-reply@example.com"
+	  layout "mailer"
+	end
+
+
+6️⃣ Email views (HTML + text)
+	HTML version
+	<!-- app/views/user_mailer/welcome_email.html.erb -->
+	<h1>Welcome <%= @user.name %></h1>
+	<p>Thanks for joining our platform.</p>
+
+	Text version (fallback)
+	# app/views/user_mailer/welcome_email.text.erb
+	Welcome <%= @user.name %>
+	Thanks for joining our platform.
+
+
+	📌 If HTML fails → text version is used
+
+
+7️⃣ Calling the mailer (VERY COMMON INTERVIEW TASK)
+	From controller
+	UserMailer.welcome_email(@user).deliver_now
+
+	Background / async
+	UserMailer.welcome_email(@user).deliver_later
+
+
+	💡 MCQ favorite
+
+	Method	Meaning
+	deliver_now	Sends immediately
+	deliver_later	Uses ActiveJob / background queue
+
+
+8️⃣ Environment configuration (basic idea)
+
+	In config/environments/development.rb:
+
+	config.action_mailer.delivery_method = :smtp
+	config.action_mailer.smtp_settings = {
+	  address: "smtp.gmail.com",
+	  port: 587,
+	  user_name: "your_email@gmail.com",
+	  password: "password",
+	  authentication: "plain",
+	  enable_starttls_auto: true
+	}
+
+
+	📌 Interviewers usually don’t expect full SMTP config, just awareness.

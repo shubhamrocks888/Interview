@@ -1,0 +1,172 @@
+### Gemfile
+gem 'bcrypt', '~> 3.1.7'     ## for password hashing
+gem 'jwt'					  ##  JWT generation/verification
+
+bundle install
+
+
+### app/models/user.rb
+
+class User < ApplicationRecord
+	has_secure_password  # requires password_digest column
+end
+
+#### Migration:
+
+rails g model User email:string password_digest:string
+rails db:migrate
+
+## app/controllers/auth_controller.rb
+
+class AuthController < ApplicationController
+
+	SECRET_KEY = Rails.application.secrets.secret_key_base.to_s
+
+	def login
+		user = User.find_by(email: params[:email])
+
+		if user&.authenticate(params[:password])
+			payload = { user_id: user.id, exp: 24.hours.from_now.to_i }
+			token = JWT.encode(payload, SECRET_KEY, 'HS256')
+
+			render json: { token: token}
+		else
+			render json: { error: ""Invalid email/password}, status: :unauthorized
+		end
+	end
+end
+
+### app/controllers/orders_controller.rb
+
+class OrdersController < ApplicationController
+	before_action :authorize_request
+
+	SECRET_KEY = Rails.application.secrets.secret_key.to_s
+
+	def index
+		render json: { message: "Welcome, User" } 
+	end
+
+	private
+
+	def authorize_request
+		header = request.headers['Authorization']
+
+		token = header.split(' ').last if header
+
+		begin
+			decoded = JWT.decode(token, SECRET_KEY, true, algorithm: 'HS256')[0]
+			@current_user_id = decoded['user_id']
+		rescue JWT::ExpiredSignature
+			render json: { error: "Token Expired"}, status: :unauthorized
+		rescue
+			render json: { error: "Invalid token"}, status: :unauthorized
+		end
+	end
+end
+
+### config/routes.rb
+
+Rails.application.routes.draw do
+	post 'login', to: 'auth#login'
+	get '/orders', to: 'orders#index'
+
+end
+
+
+
+
+#######
+
+6️⃣ How It Works (Explain to Interviewer)
+
+User logs in → /login
+
+Rails validates email/password using has_secure_password
+
+Rails creates JWT with user_id + expiry
+
+Client stores token → localStorage or mobile secure storage
+
+Client sends token on every request
+
+Authorization: Bearer <jwt_token>
+
+
+OrdersController checks token → authorize_request
+
+Decodes token
+
+Validates signature + expiry
+
+Retrieves user_id
+
+Grants access
+
+7️⃣ Key Points to Mention in Interview
+
+JWT is stateless → server does not store session
+
+SECRET_KEY ensures signature cannot be faked
+
+Token includes expiry (exp)
+
+Other services (microservices) can verify JWT without hitting DB
+
+8️⃣ Optional: Adding Roles (Authorization)
+payload = { user_id: user.id, role: user.role, exp: 24.hours.from_now.to_i }
+
+
+Microservices or controllers can check role from JWT
+
+Example:
+
+render json: { error: 'Forbidden' }, status: 403 unless decoded['role'] == 'admin'
+
+
+✅ This example is clean and minimal, and you can draw the flow in interviews:
+
+Client
+  ↓ POST /login
+Rails AuthController
+  ↓ JWT issued
+Client stores token
+  ↓ GET /orders + Authorization header
+Rails OrdersController
+  ↓ verify token
+  ↓ allow access
+
+
+If you want, I can make a diagram-ready
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

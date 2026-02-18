@@ -1,0 +1,113 @@
+📦 Rails API Base Controller Template
+class Api::V1::BaseController < ActionController::API
+  # ✅ Handle expected exceptions
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable
+  rescue_from Payment::Failed, with: :render_payment_failed
+
+  private
+
+  # Expected errors
+  def render_not_found(exception)
+    # Optionally log
+    Rails.logger.warn(exception.message)
+    render json: { error: "Resource not found" }, status: :not_found
+  end
+
+  def render_unprocessable(exception)
+    Rails.logger.warn(exception.message)
+    render json: { error: exception.record.errors.full_messages }, status: :unprocessable_entity
+  end
+
+  def render_payment_failed(exception)
+    # Log + report
+    Rails.logger.error(exception.message)
+    Sentry.capture_exception(exception)
+    render json: { error: "Payment could not be processed" }, status: :payment_required
+  end
+
+  # ⚠️ Never rescue StandardError blindly
+  # Unexpected errors will bubble up → Rails 500 response
+  # Sentry / monitoring tools will automatically capture them
+end
+
+🔹 Controller Example Using This Base
+class Api::V1::OrdersController < Api::V1::BaseController
+  def create
+    order = Orders::CreateOrder.new(order_params).call
+    render json: order, status: :created
+  end
+
+  private
+
+  def order_params
+    params.require(:order).permit(:product_id, :quantity)
+  end
+end
+
+🔹 Service Object Example
+class Orders::CreateOrder
+  def initialize(order_params)
+    @order_params = order_params
+  end
+
+  def call
+    order = nil
+
+    Order.transaction do
+      order = Order.create!(@order_params)
+      Inventory.decrease!(order.product_id)
+    end
+
+    # Trigger payment asynchronously after DB commit
+    PaymentJob.perform_later(order.id)
+
+    order
+  rescue ActiveRecord::RecordInvalid => e
+    # Log but re-raise to be handled by controller
+    Rails.logger.error(e.message)
+    raise
+  end
+end
+
+🔹 Payment Job Example (Background Job)
+class PaymentJob < ApplicationJob
+  retry_on Payment::Timeout, wait: 5.seconds, attempts: 3
+  discard_on ActiveRecord::RecordNotFound
+
+  def perform(order_id)
+    order = Order.find(order_id)
+    Payment.charge!(order)
+    Notification.send(order)
+  rescue Payment::Failed => e
+    Rails.logger.error(e.message)
+    Sentry.capture_exception(e)
+    raise
+  end
+end
+
+✅ Why This is Interview-Ready
+
+Only expected exceptions are rescued
+
+Unexpected errors bubble up → fail-fast principle
+
+Logging and monitoring handled properly
+
+Controllers stay thin
+
+Background jobs handle retries safely
+
+User-friendly error messages returned in API
+
+🏁 Interview Talking Points
+
+“I use rescue_from for expected errors in controllers.”
+
+“Service objects rescue only expected exceptions and re-raise for consistent handling.”
+
+“Background jobs use retry_on for transient failures.”
+
+“Unexpected exceptions are allowed to bubble up so they can be logged and monitored.”
+
+“Never rescue StandardError blindly because it includes programmer mistakes.”

@@ -1,0 +1,113 @@
+STEP 4️⃣: Webhooks — Server gets notified from Razorpay
+4.1 Why we need webhooks
+
+Even after Step 3, there’s a problem:
+
+User closes browser immediately after paying
+
+Frontend never sends payment_id to backend
+
+Payment succeeds, but your DB still shows status: created
+
+Webhooks solve this: Razorpay calls your server directly, asynchronously, whenever payment succeeds or fails.
+
+4.2 How webhook works
+
+You register a webhook URL in Razorpay dashboard:
+
+https://yourapp.com/webhooks/razorpay
+
+
+You select events to listen to, e.g.:
+
+payment.captured → payment successful
+
+payment.failed → payment failed
+
+refund.processed → refund succeeded
+
+Razorpay sends a POST request with JSON payload when any event occurs
+
+4.3 Sample webhook payload (payment.captured)
+{
+  "entity": "payment",
+  "event": "payment.captured",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_ABC123",
+        "order_id": "order_Lk8XwP9abc123",
+        "status": "captured",
+        "amount": 50000,
+        "currency": "INR",
+        "method": "card"
+      }
+    }
+  }
+}
+
+
+id → payment_id
+
+order_id → Razorpay order id
+
+status → captured means payment success
+
+amount → amount paid
+
+4.4 Backend webhook controller
+class WebhooksController < ApplicationController
+  skip_before_action :verify_authenticity_token
+
+  def razorpay
+    payload = request.body.read
+    signature = request.headers['X-Razorpay-Signature']
+
+    # Verify webhook authenticity
+    Razorpay::Utility.verify_webhook_signature(
+      payload,
+      signature,
+      ENV['RAZORPAY_WEBHOOK_SECRET']
+    )
+
+    data = JSON.parse(payload)
+    payment = data['payload']['payment']['entity']
+
+    order = Order.find_by(razorpay_order_id: payment['order_id'])
+    order.update(
+      razorpay_payment_id: payment['id'],
+      status: payment['status'] == 'captured' ? 'paid' : 'failed'
+    )
+
+    render plain: 'ok'
+  rescue Razorpay::SignatureVerificationError
+    render plain: 'invalid', status: 400
+  end
+end
+
+4.5 What happens here
+
+Razorpay calls your webhook URL
+
+Backend verifies webhook signature using RAZORPAY_WEBHOOK_SECRET
+
+Database updated with payment_id and status (paid / failed)
+
+Backend responds with ok — Razorpay stops retrying
+
+4.6 Database after webhook
+
+If webhook arrives after frontend fails to send payment info:
+
+id	razorpay_order_id	razorpay_payment_id	amount	status
+1	order_Lk8XwP9abc123	pay_ABC123	50000	paid
+
+💡 Now your DB is always in sync with Razorpay, even if the user abandoned the page.
+
+4.7 Interview-ready explanation
+
+Webhooks are asynchronous notifications from Razorpay that ensure your backend knows about payment success or failure, even if the frontend never sends the payment response.
+Signature verification ensures the webhook is genuinely from Razorpay.
+Webhooks make your payment system reliable and tamper-proof.
+
+✅ STEP 4 complete — This ensures full reliability of payment integration.

@@ -1,0 +1,58 @@
+class BankAccount
+  attr_reader :balance, :transactions
+
+  def initialize(initial_balance = 0)
+    raise ArgumentError, "Initial balance cannot be negative" if initial_balance < 0
+
+    @balance = initial_balance
+    @transactions = []
+  end
+
+  def deposit(amount)
+    validate_amount(amount)
+
+    @balance += amount
+    record_transaction(:deposit, amount)
+  end
+
+  def withdraw(amount)
+    validate_amount(amount)
+    raise "Insufficient funds" if amount > @balance
+
+    @balance -= amount
+    record_transaction(:withdraw, amount)
+  end
+
+  private
+
+  def validate_amount(amount)
+    raise ArgumentError, "Amount must be positive" unless amount.is_a?(Numeric) && amount > 0
+  end
+
+  def record_transaction(type, amount)
+    @transactions << {
+      type: type,
+      amount: amount,
+      time: Time.now
+    }
+  end
+end
+
+
+###
+
+🧨 Now Let’s Increase Difficulty
+
+They might extend:
+
+Add transfer between two accounts.
+
+Now we test your thinking.
+
+Strong Implementation:
+def transfer_to(other_account, amount)
+  raise ArgumentError, "Invalid account" unless other_account.is_a?(BankAccount)
+
+  withdraw(amount)
+  other_account.deposit(amount)
+end

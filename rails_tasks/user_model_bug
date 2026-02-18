@@ -1,0 +1,232 @@
+##### find out the bugs
+
+class User < ApplicationRecord
+
+  belongs_to :profile                
+ 
+  validates :email, uniqueness: true, presence: true, format: :email
+ 
+  before_save :set_default_role     
+ 
+  after_create :send_welcome_email  
+ 
+  def set_default_role
+
+    self.role ||= "admin"          
+
+  end
+ 
+  def send_welcome_email
+
+    WelcomeMailer.welcome(self).deliver_now 
+
+  end
+ 
+  def full_name
+
+    first_name + " " + last_name 
+
+  end
+
+end
+
+
+######  Solution
+
+Nice 👍 — this is a classic Rails interview trap.
+There are multiple hidden bugs + bad practices here. I’ll go line-by-line like an interviewer expects.
+
+1️⃣ belongs_to :profile ❌ (Potential Bug)
+belongs_to :profile
+
+❌ Problem
+
+From Rails 5+, belongs_to is required by default.
+
+If:
+
+a user can exist without a profile
+
+or profile is created later
+
+👉 User.create(...) will fail validation
+
+✅ Fix (if optional)
+belongs_to :profile, optional: true
+
+
+🎯 Interview line:
+
+“In Rails 5+, belongs_to is required by default, so this can break user creation.”
+
+2️⃣ validates :email, format: :email ❌ (Bug)
+validates :email, uniqueness: true, presence: true, format: :email
+
+❌ Problem
+
+Rails does NOT have a built-in :email format validator
+
+This will raise:
+
+ArgumentError: Unknown validator: 'EmailValidator'
+
+✅ Fix
+validates :email,
+  presence: true,
+  uniqueness: true,
+  format: { with: URI::MailTo::EMAIL_REGEXP }
+
+
+🎯 Interview gold line:
+
+“Rails doesn’t ship with a default email validator.”
+
+3️⃣ before_save :set_default_role ❌ (Logical Bug)
+before_save :set_default_role
+
+❌ Problem
+
+This runs:
+
+on create
+
+AND every update
+
+If someone updates user later:
+
+user.update(role: nil)
+
+
+👉 It silently resets role to "admin" 😱
+
+✅ Fix
+
+Use before_create
+
+before_create :set_default_role
+
+
+🎯 Interview line:
+
+“Default values should be set only once, not on every save.”
+
+4️⃣ Default role = "admin" ❌❌ (Security Bug)
+self.role ||= "admin"
+
+❌ Problem
+
+Every new user becomes admin by default.
+
+That’s a security disaster.
+
+✅ Fix
+self.role ||= "user"
+
+
+🎯 Interview line:
+
+“Defaulting users to admin is a serious security issue.”
+
+5️⃣ after_create :send_welcome_email ❌ (Performance Bug)
+after_create :send_welcome_email
+
+❌ Problems
+
+Runs inside request lifecycle
+
+If mail server is slow → user signup is slow
+
+If mail fails → user creation may rollback (depending)
+
+✅ Fix (Best Practice)
+
+Use background job
+
+after_create_commit :send_welcome_email
+
+def send_welcome_email
+  WelcomeMailer.welcome(self).deliver_later
+end
+
+
+🎯 Interview line:
+
+“Emails should always be async and after commit.”
+
+6️⃣ deliver_now ❌ (Scalability Bug)
+WelcomeMailer.welcome(self).deliver_now
+
+❌ Problem
+
+Blocks request
+
+Not scalable
+
+✅ Fix
+deliver_later
+
+
+(Uses ActiveJob + Sidekiq)
+
+7️⃣ full_name method ❌ (Nil Bug)
+def full_name
+  first_name + " " + last_name
+end
+
+❌ Problem
+
+If either is nil:
+
+NoMethodError: undefined method `+` for nil:NilClass
+
+✅ Fix (safe)
+def full_name
+  [first_name, last_name].compact.join(" ")
+end
+
+
+🎯 Interview line:
+
+“This method breaks if first_name or last_name is nil.”
+
+8️⃣ Missing DB-level uniqueness constraint ❌
+validates :email, uniqueness: true
+
+❌ Problem
+
+Race condition:
+
+Two parallel requests can create same email
+
+✅ Fix (DB index)
+add_index :users, :email, unique: true
+
+
+🎯 Interview line:
+
+“Uniqueness validation must always be backed by DB index.”
+
+✅ Final “Corrected” Version (Interview-Ready)
+class User < ApplicationRecord
+  belongs_to :profile, optional: true
+
+  validates :email,
+            presence: true,
+            uniqueness: true,
+            format: { with: URI::MailTo::EMAIL_REGEXP }
+
+  before_create :set_default_role
+  after_create_commit :send_welcome_email
+
+  def set_default_role
+    self.role ||= "user"
+  end
+
+  def send_welcome_email
+    WelcomeMailer.welcome(self).deliver_later
+  end
+
+  def full_name
+    [first_name, last_name].compact.join(" ")
+  end
+end

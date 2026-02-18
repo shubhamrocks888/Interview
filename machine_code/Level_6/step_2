@@ -1,0 +1,119 @@
+🚗 Task 2 — Implement POST /rides
+Requirement
+
+Create a ride.
+
+Rules:
+
+Must create ride with:
+
+rider_id
+
+pickup_lat
+
+pickup_lng
+
+drop_lat
+
+drop_lng
+
+Status should default to requested (from DB)
+
+Return created ride JSON
+
+Handle validation errors properly
+
+✅ Step 1 — Route
+
+Add:
+
+POST /rides
+
+✅ Step 2 — Controller
+
+Create RidesController
+
+Responsibilities:
+
+Permit required params
+
+Create ride
+
+Render JSON
+
+Handle failure with 422
+
+Keep it thin. No extra logic.
+
+✅ Step 3 — Strong Params
+
+Permit only:
+
+rider_id
+
+pickup_lat
+
+pickup_lng
+
+drop_lat
+
+drop_lng
+
+Do NOT permit status (DB default handles it).
+
+✅ Expected Success Response
+
+Status: 201 Created
+
+{
+  id: 1,
+  rider_id: 2,
+  status: "requested",
+  pickup_lat: 12.9716,
+  pickup_lng: 77.5946,
+  drop_lat: 12.2958,
+  drop_lng: 76.6394
+}
+
+✅ Expected Failure Response
+
+Status: 422 Unprocessable Entity
+
+{
+  errors: ["Pickup lat can't be blank"]
+}
+
+⚠️ Important Interview Detail
+
+Do NOT:
+
+Manually set status
+
+Rescue generic exceptions
+
+Skip strong params
+
+Return 200 on failure
+
+
+
+#######
+
+ class RidesController < ApplicationController
+
+  def create
+    ride = Ride.new(ride_params)
+
+    if ride.save
+      render json: ride, status: :created
+    else
+      render json: {errors: ride.errors.full_messages}, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def ride_params
+    params.permit(:rider_id,:pickup_lat,:pickup_lng,:drop_lat,:drop_lng)
+  end
+ end

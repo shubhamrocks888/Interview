@@ -1,0 +1,45 @@
+Next Coding Task
+
+Now we move to the real backend challenge:
+
+POST /rides/:id/accept
+
+Where:
+
+Driver accepts ride
+
+Must prevent two drivers from accepting same ride
+
+This is where concurrency matters.
+
+
+####
+
+class RidesController < ApplicationController
+	
+
+	def accept
+		  ride = Ride.find_by(id: params[:id])
+		  return render json: { errors: "Ride not found" }, status: :not_found unless ride
+
+		  driver = User.find_by(id: params[:driver_id], role: "driver")
+		  return render json: { errors: "Driver not found" }, status: :not_found unless driver
+
+		  ActiveRecord::Base.transaction do
+		    ride.lock!
+
+		    unless ride.requested?
+		      raise StandardError, "Ride is not in requested state"
+		    end
+
+		    ride.update!(driver: driver, status: :accepted)
+		  end
+
+		  render json: { message: "Ride accepted" }, status: :ok
+
+		rescue StandardError => e
+		  render json: { errors: e.message }, status: :unprocessable_entity
+		end
+	end
+
+end

@@ -1,0 +1,59 @@
+Now Final Round (Important)
+
+Implement:
+
+PATCH /posts/:id
+
+Rules:
+
+Can update only title and status
+
+Cannot update user_id
+
+Return proper error if not found
+
+Return proper error if validation fails
+
+Write your update method.
+Let’s see how you handle edge cases.
+
+
+#### self
+
+
+class PostsController < ApplicationController
+  
+  def update
+
+  	post = Post.find_by(id: params[:id])
+
+  	return render json: { errors: "Post not found"}, status: :not_found unless post
+
+  	if post.update(title: params[:title], status: params[:status])
+  		render json: { errors: "Post updated"}
+  	else
+  		render json: { errors: post.errors.full_messages}, status: :unprocessable_entity
+  	end
+  end
+end
+
+### prod
+
+def update
+	post = Post.find_by(id: params[:id])
+
+	return render json: { errors: "Post not found"}, status: :not_found unless post
+
+	if post.update(post_params)
+		render json: post,only: [:id, :title]
+	else
+
+	end
+
+	private
+
+	def post_params
+		params.require(:post).permit(:title, :status)
+	end
+
+end

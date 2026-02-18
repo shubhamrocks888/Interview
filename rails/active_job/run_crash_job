@@ -1,0 +1,186 @@
+I’ll explain exactly how Sidekiq knows and exactly where Redis is involved.
+
+Step-by-step: Sidekiq crash → restart → job recovery
+STEP 0 — Before anything runs
+
+A job is sitting in Redis:
+
+queue:default   (Redis LIST)
+
+
+Nothing special yet.
+
+STEP 1 — Worker fetches the job (IMPORTANT)
+
+A Sidekiq worker fetches a job using a reliable fetch:
+
+👉 Job is NOT deleted
+👉 It is atomically moved
+
+From:
+
+queue:default
+
+
+To:
+
+queue:default:inprogress   (internal / reliable fetch structure)
+
+
+This happens in one Redis operation
+So Redis now knows:
+
+“This job was taken, but not finished yet”
+
+STEP 2 — Sidekiq records who is running the job
+
+Sidekiq now writes metadata to Redis:
+
+1️⃣ Process heartbeat
+processes
+
+
+Contains Sidekiq process IDs
+
+Updated every ~5 seconds
+
+2️⃣ Worker state
+workers
+
+
+Example entry:
+
+{
+  "pid": 1234,
+  "thread_id": "xyz",
+  "queue": "default",
+  "jid": "abc123",
+  "run_at": 1700000000
+}
+
+
+Redis now knows:
+✔ which process
+✔ which worker
+✔ which job
+✔ start time
+
+STEP 3 — 💥 Sidekiq process crashes
+
+Example causes:
+
+Server restart
+
+kill -9
+
+OOM kill
+
+Deploy gone wrong
+
+What does NOT happen:
+❌ Job is NOT marked complete
+❌ Job is NOT deleted
+❌ Retry logic is NOT triggered
+
+What does happen:
+
+Heartbeat stops
+
+Worker entry becomes stale
+
+Job remains in inprogress
+
+STEP 4 — Sidekiq restarts
+
+This is the key moment.
+
+4.1 Sidekiq scans Redis
+
+On boot, Sidekiq checks:
+
+processes
+workers
+
+
+It finds:
+
+“These processes were running jobs, but they are no longer alive.”
+
+STEP 5 — Sidekiq identifies crashed jobs
+
+Sidekiq compares:
+
+Redis data	Meaning
+Worker entry exists	Job was running
+Process heartbeat missing	Process crashed
+
+✅ This combination = crashed job
+
+STEP 6 — Sidekiq recovers the job
+
+Now Sidekiq does recovery:
+
+Removes stale worker entries
+
+Moves job payload from:
+
+queue:default:inprogress
+
+
+back to:
+
+queue:default
+
+
+At this moment:
+👉 Job is ready to run again
+
+STEP 7 — Job runs again
+
+Any worker can pick it up
+
+Job starts from the beginning
+
+Retry count is unchanged (no exception happened)
+
+Why Sidekiq can do this safely
+
+Because of three guarantees:
+
+✅ Redis operations are atomic
+
+No job can “half disappear”.
+
+✅ Job acknowledgement happens LAST
+
+Job is removed from Redis only after success.
+
+✅ Heartbeats detect dead processes
+
+No heartbeat = assume crash.
+
+VERY IMPORTANT INTERVIEW LINE 🔥
+
+Sidekiq does not need to “remember” crashed jobs — they were never removed from Redis in the first place.
+
+Visual flow (easy to remember)
+queue → inprogress → (success) delete
+                  → (crash) requeue
+
+What Sidekiq does NOT do
+
+❌ No job locking
+❌ No exactly-once guarantee
+❌ No rollback of DB changes
+
+That’s your job via:
+
+idempotency
+
+unique DB constraints
+
+transactions
+
+Final one-paragraph answer (perfect interview answer)
+
+Sidekiq uses reliable fetch and Redis heartbeats. When a worker takes a job, it atomically moves it to an in-progress state and records the worker and process in Redis. If Sidekiq crashes, the heartbeat stops but the job remains unacknowledged. On restart, Sidekiq detects stale worker entries and re-queues those in-progress jobs back to their original queues, allowing them to run again.

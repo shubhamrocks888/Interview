@@ -1,0 +1,50 @@
+4️⃣ Booking Model
+Requirements:
+
+Fields: user_id, show_id, seats_booked
+
+Associations:
+
+belongs_to :user
+
+belongs_to :show
+
+Validations:
+
+seats_booked presence, numericality, ≥ 1
+
+Cannot book more seats than available_seats
+
+Important: prevent race conditions when multiple users book same show simultaneously
+
+🧠 Think Before Writing
+
+Use DB transaction + row lock when creating booking
+
+Optional: after_create callback to decrement available_seats
+
+✍️ Task:
+
+
+####
+
+class Booking < ApplicationRecord
+  belongs_to :user
+  belongs_to :show
+
+  validates :seats_booked, presence: true, numericality: { greater_than: 0 }
+
+  def self.book_seats(user_id, show_id, seats)
+    ActiveRecord::Base.transaction do
+      user = User.find(user_id)
+      show = Show.lock.find(show_id)
+
+      raise StandardError, "Not enough seats available" if seats > show.available_seats
+
+      booking = Booking.create!(user: user, show: show, seats_booked: seats)
+      show.update!(available_seats: show.available_seats - seats)
+
+      booking
+    end
+  end
+end

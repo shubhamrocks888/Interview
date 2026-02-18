@@ -1,0 +1,97 @@
+2️⃣ List Shows of a Movie
+
+GET /movies/:id/shows
+
+Internal Flow
+
+Receive movie id
+
+Check if movie exists
+
+Fetch all shows for that movie
+
+Return:
+
+Show time
+
+Total seats
+
+Available seats
+
+Why Available Seats?
+
+Frontend needs to:
+
+Display whether show is almost full
+
+Disable booking if available_seats = 0
+
+3️⃣ Interview-Level Enhancements
+
+If interviewer pushes deeper, you can mention:
+
+🔹 Pagination
+
+If movie has 1000 shows:
+
+Use pagination
+
+Limit + offset
+
+🔹 Sorting
+
+Sort shows by:
+
+Earliest show_time first
+
+🔹 Caching
+
+For high traffic:
+
+Cache movie + show listing in Redis
+
+Invalidate cache when booking updates available seats
+
+🔹 Authorization
+
+User should only see their own bookings
+
+Not someone else’s
+
+4️⃣ Full System Flow Recap (Book My Show Lite)
+
+Admin creates movie
+
+Admin creates shows for movie
+
+User views movies
+
+User views shows
+
+User books seats
+
+Transaction
+
+Row lock
+
+Decrement available seats
+
+User views bookings
+
+At this point, your system covers:
+
+Models & relationships
+
+Validations
+
+Transactions
+
+Row-level locking
+
+N+1 prevention
+
+Strong params
+
+Error handling
+
+This is already strong mid-level backend design.

@@ -1,0 +1,159 @@
+1️⃣ What interviewers actually mean
+
+When they ask:
+
+“How do you handle exceptions in Rails?”
+
+They’re checking if you understand:
+
+Where exceptions should be handled
+
+Which ones should be rescued
+
+How to avoid hiding bugs
+
+How to report errors (Sentry, logs)
+
+User-friendly error responses
+
+2️⃣ Ways to handle exceptions in Rails (from BEST → WORST)
+✅ 1. Global exception handling (Recommended)
+ApplicationController
+class ApplicationController < ActionController::Base
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :record_invalid
+
+  def record_not_found
+    render json: { error: "Record not found" }, status: :not_found
+  end
+
+  def record_invalid(exception)
+    render json: { error: exception.record.errors.full_messages },
+           status: :unprocessable_entity
+  end
+end
+
+
+🎯 Interview line:
+
+“I use rescue_from for expected application-level exceptions.”
+
+✅ 2. Service Object level handling
+class Orders::CreateOrder
+  def call
+    Order.transaction do
+      # logic
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error(e.message)
+    raise
+  end
+end
+
+
+🎯 Key point:
+
+Log
+
+Re-raise
+
+Don’t silently swallow errors
+
+✅ 3. Controller-level rescue (sparingly)
+def create
+  service.call
+rescue Payment::Failed => e
+  render json: { error: e.message }, status: :payment_required
+end
+
+
+🎯 Use only for request-specific handling.
+
+⚠️ 4. Background job exception handling
+class PaymentJob < ApplicationJob
+  retry_on Payment::Timeout, wait: 5.seconds, attempts: 3
+  discard_on ActiveRecord::RecordNotFound
+
+  def perform(order_id)
+    Payment.charge!(order_id)
+  end
+end
+
+
+🎯 Interview bonus points:
+
+“I use retry_on and discard_on in ActiveJob.”
+
+❌ 5. Bad practice (interview red flag)
+begin
+  do_something
+rescue
+end
+
+Why it’s bad
+
+Swallows bugs
+
+Makes debugging impossible
+
+🎯 Interview line:
+
+“I never rescue StandardError blindly.”
+
+3️⃣ How Rails handles exceptions internally
+
+Unhandled exceptions → bubble up
+
+In development → full stack trace
+
+In production → 500 error page
+
+Can be overridden using:
+
+config.exceptions_app
+
+4️⃣ Custom error pages (advanced)
+# config/application.rb
+config.exceptions_app = self.routes
+
+get "/404", to: "errors#not_found"
+get "/500", to: "errors#internal_error"
+
+
+🎯 Senior-level answer.
+
+5️⃣ Logging & Monitoring (VERY IMPORTANT)
+Interviewers expect this mention:
+Rails.logger.error(e.message)
+Sentry.capture_exception(e)
+
+
+Tools:
+
+Sentry
+
+Bugsnag
+
+Honeybadger
+
+🎯 Interview line:
+
+“I log and report exceptions instead of silently rescuing.”
+
+6️⃣ When NOT to handle exceptions
+
+❌ Don’t rescue:
+
+NoMethodError
+
+NameError
+
+Programmer bugs
+
+🎯 Interview line:
+
+“Unexpected exceptions should crash loudly.”
+
+7️⃣ PERFECT INTERVIEW ANSWER (Say this)
+
+“In Rails, I handle expected exceptions using rescue_from at the controller level, use service objects to encapsulate business logic, and avoid rescuing generic exceptions. I log and report errors using tools like Sentry, and for background jobs I rely on retry mechanisms. Unexpected errors are allowed to bubble up.”

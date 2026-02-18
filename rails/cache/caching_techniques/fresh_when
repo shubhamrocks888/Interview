@@ -1,0 +1,104 @@
+❌ No — fresh_when does NOT “update the cache” when there is new data
+
+This is a very common misunderstanding, so you’re asking exactly the right thing 👍
+
+🔹 What fresh_when ACTUALLY does
+
+fresh_when does not store or update any cache.
+
+Instead, it:
+
+Sets HTTP cache validation headers
+
+ETag
+
+Last-Modified
+
+Helps the client (browser / CDN) decide:
+
+“Do I need to download this response again?”
+
+🔄 How it really works (step-by-step)
+First request
+def show
+  @post = Post.find(params[:id])
+  fresh_when @post
+end
+
+
+Rails sends:
+
+ETag: "posts/1-20260120100000"
+Last-Modified: Mon, 20 Jan 2026 10:00:00 GMT
+
+
+Client stores the response.
+
+Second request (no DB change)
+
+Client sends:
+
+If-None-Match: "posts/1-20260120100000"
+If-Modified-Since: Mon, 20 Jan 2026 10:00:00 GMT
+
+
+Rails compares with @post.updated_at.
+
+👉 Same → 304 Not Modified
+👉 NO response body sent
+
+Third request (data updated)
+
+@post.updated_at changes.
+
+Rails sends:
+
+New ETag
+
+New response body
+
+👉 Client replaces its cached copy
+
+🧠 Key Insight (Very Important)
+
+fresh_when does not update cache
+It only tells the client when to invalidate and re-fetch
+
+Caching happens:
+
+In the browser
+
+In the CDN
+
+In reverse proxies
+
+🔥 Comparison (Clear)
+Feature	fresh_when
+Stores data	❌ No
+Updates cache	❌ No
+Generates headers	✅ Yes
+Returns 304	✅ Yes
+Client controls caching	✅ Yes
+❗ What ACTUALLY updates the cache?
+
+Browser replaces cached response
+
+CDN refreshes its copy
+
+Proxy updates stored response
+
+Rails just signals freshness.
+
+🎯 Interview One-Liner (Perfect)
+
+“fresh_when doesn’t cache data itself; it enables conditional HTTP caching by generating ETags and timestamps so clients know when to re-fetch updated content.”
+
+🧠 Mental Model (Remember this)
+
+expires_in → “Cache this for X time”
+
+fresh_when → “Tell me if this changed”
+
+Rails.cache → “Store this on the server”
+
+Different layers. Different jobs.

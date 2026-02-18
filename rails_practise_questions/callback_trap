@@ -1,0 +1,23 @@
+🔹 1. Model + Callback Trap
+class Order < ApplicationRecord
+  belongs_to :user
+
+  before_save :set_status
+
+  def set_status
+    self.status = "pending"
+  end
+end
+
+❌ Bugs / Issues
+
+before_save runs on every update
+
+Overwrites status even after it changes
+
+Should be before_create
+
+DB default is better
+
+✅ Expected Fix
+before_create :set_status

@@ -1,0 +1,120 @@
+❌ What’s WRONG with this code
+class OrdersController < ApplicationController
+  def create
+    order = Order.new(order_params)
+    if order.save
+      Inventory.decrease(order.product_id)
+      Payment.charge(order)
+      Notification.send(order)
+    end
+  end
+end
+
+1️⃣ No transaction
+
+If Inventory.decrease succeeds
+
+Payment.charge fails
+
+Order is saved but system is inconsistent ❌
+
+2️⃣ Business logic in controller
+
+Controller doing inventory, payment, notification
+
+Hard to test
+
+Not reusable
+
+3️⃣ External API inside DB flow
+
+Payment is external
+
+DB rollback won’t undo payment
+
+4️⃣ No error handling
+
+If any step fails → silent failure
+
+No response handling
+
+✅ INTERVIEW-EXPECTED FIX (BEST PRACTICE)
+🎯 Move logic to a Service Object
+🎯 Use DB transaction
+🎯 Keep controller thin
+✅ FIXED VERSION (Interview-Ready)
+📦 app/services/orders/create_order.rb
+class Orders::CreateOrder
+  def initialize(order_params)
+    @order_params = order_params
+  end
+
+  def call
+    Order.transaction do
+      order = Order.create!(@order_params)
+
+      Inventory.decrease!(order.product_id)
+
+      Payment.charge!(order)
+
+      Notification.send(order)
+
+      order
+    end
+  rescue => e
+    Rails.logger.error(e.message)
+    raise
+  end
+end
+
+🎮 Controller (Clean & Thin)
+class OrdersController < ApplicationController
+  def create
+    Orders::CreateOrder.new(order_params).call
+    render json: { success: true }, status: :created
+  rescue
+    render json: { error: "Order failed" }, status: :unprocessable_entity
+  end
+end
+
+⚠️ VERY IMPORTANT INTERVIEW POINT
+❌ This is STILL NOT PERFECT
+
+Why?
+
+Payment.charge!
+
+
+👉 External API calls should NOT be inside DB transaction
+
+🎯 Interviewer expects you to say this!
+✅ EVEN BETTER (Senior-Level Answer)
+Step 1️⃣ Transaction for DB-only work
+Step 2️⃣ Trigger async job after commit
+class Orders::CreateOrder
+  def call
+    order = nil
+
+    Order.transaction do
+      order = Order.create!(@order_params)
+      Inventory.decrease!(order.product_id)
+    end
+
+    PaymentJob.perform_later(order.id)
+
+    order
+  end
+end
+
+🎯 Payment Job
+class PaymentJob < ApplicationJob
+  def perform(order_id)
+    order = Order.find(order_id)
+    Payment.charge!(order)
+    Notification.send(order)
+  end
+end
+
+🧠 PERFECT INTERVIEW ANSWER (30 seconds)
+
+“This code mixes business logic into the controller and lacks transaction safety. I’d move the logic into a service object, wrap DB operations in a transaction, and trigger external calls like payments asynchronously after commit.”

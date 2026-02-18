@@ -1,0 +1,169 @@
+1. Proc
+
+x = Proc.new { |name| puts "hello #{name}!"}
+x.call("Subh")
+
+2. lambda
+
+y = lambda { |name| puts "bye #{name}!"}  or y = ->(name) { puts "bye#{name}"}
+y.call("jain")
+
+3.  loop in decreasing order
+
+10.step(1,-1) do |i|
+    puts i
+end
+
+4. for loop
+
+for i in 10.step(1,-1) do
+    puts i
+end
+
+5. string iteration
+
+str = "he123llo"
+
+str.each_char do |char|
+    unless char >= 'a' and char <='z'
+        puts char
+    end
+end
+
+6. str match
+
+   str = "hell123o"
+   if char >= 'a' and char<= 'z'
+   if char !~ /[a-z]/
+   if char !~ /[a-zA-Z]/  (str = "helloABC")
+   if char !~ /[a-z]/i
+
+7. scope in rails
+
+	scope :active , -> { where(active: true)}
+	scope :by_author, ->(user_id) { where(user_id: user_id) }
+
+8. validates in models
+
+	validates :email, format: { with: URI::MailTo::Email_REGEXP }, uniqueness: true
+
+	validates :password, length: { minimum: 6}, presence: true, on: :create
+	validates :age, numericality: { greater_than: 0}
+
+9. enum
+
+	enum status: {pending: 0, shipped: 1, cancelled: 2}
+
+10. gem 'rails', ~> '6.0.0'
+
+11.  alllow(user).to receive(status).and_return(true)
+
+12   CSV
+
+file_path = '/tmp/enrollments_report.csv'
+
+CSV.open(file_path,'w',write_headers: true, headers: HEADERS ) do |csv|
+
+    csv << [
+  row[:user_id],
+  row[:user_name],
+  row[:email],
+  row[:course_name],
+  row[:program_name],
+  row[:enrolled_at],
+  row[:status]
+]
+
+
+13.  class User < ApplicationRecord
+    ### followers who follow me
+    has_many :passive_follows, 
+    foreign_key :following_id,
+        class_name: "Follow",
+        dependent: :destroy
+        
+    has_many :followers, through: :passive_follows, source: :follower
+    
+    end
+
+    class Follow < ApplicationRecord
+        belongs_to :following, class_name: "User"
+        belongs_to :follower,  class_name: "User"
+        
+        validates :follower_id, presence: true
+        validates :following_id, presence: true
+        
+        validates :follower_id, uniqueness: { scope: following_id}
+        
+        validate :cannot_follow_self
+        
+        def cannot_follow_self
+            errors.add(:base, "Users cannot follow self") if follower_id == following_id 
+        end
+    end
+
+    add_index :follows, [:follower_id, :following_id], unique: true
+
+    add_foreign_key :follows, :users, column: :following_id
+
+
+14.
+
+class RateLimiter
+  def initialize(limit:, period:)
+    @limit = limit
+    @period = period
+  end
+
+  def allow?(key)
+    current = Rails.cache.increment(
+      cache_key(key),
+      1,
+      initial: 0,
+      expires_in: @period
+    )
+
+    current <= @limit
+  end
+
+  private
+
+  def cache_key(key)
+    "throttler:#{key}"
+  end
+end
+
+15.
+
+class TokenBucket
+    
+    def initialize(capacity:, refill_rate:)
+        @capacity = capacity
+        @refill_rate = refill_rate
+        @tokens = @capcity
+        @last_refill = Time.now
+    end
+    
+    def allow?
+        refill_tokens
+        
+        if @tokens>=1
+            @tokens-=1
+            true
+        else
+            false
+        end
+    end
+    
+    private
+    
+    def refill_tokens
+        now = Time.now
+        elapsed = now - @last_refill
+        new_tokens = elapsed * @refill_rate
+        
+        @tokens = [capacity, @tokens + new_tokens ].min
+        
+        @last_refill = now if new_tokens > 0 
+    end
+end

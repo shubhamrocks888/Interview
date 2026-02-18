@@ -1,0 +1,143 @@
+gem "sidekiq"
+
+bundle install
+
+### config/application.rb
+config.active_job.queue_adapter = :sidekiq   (if this is et dont need to include :sidekiq in worker)
+
+###
+redis-server
+
+###
+bundle exec sidekiq
+
+## app/workers/hello_worker.rb
+
+class HelloWorker < ApplicationJob
+	include :sidekiq
+
+	def perform(name)
+		puts "Hello #{name}"
+	end
+end
+
+## Sidekiq in raw form
+HelloWorker.perform_async("Shubham")
+
+### app/workers/welcome_job.rb
+class WelocomeJob < ApplicationJob
+	queue_as :default
+
+	def perform(user_id)
+		user = User.find_by(id: user_id)
+		UserMailer.welcome_email(user).deliver_later
+	end
+end
+
+## call
+WelcomeJob.perform_later(user.id)
+WelcomeJob.perform_in(5.minutes)
+WelcomeJob.perform_at(1.hour.from_now)
+
+
+###
+sidekiq_options retry:5
+sidekiq_options retry: false
+
+## config/routes.rb
+require 'sidekiq/web'
+mount Sidekiq::Web => '/sidekiq'
+
+##
+Sidekiq.default_worker_options = { retry: 10 }
+
+## config/sidekiq.yml
+:concurrency: 25
+:queues:
+ - default
+ - mailers
+
+# SIDEKIQ_CONCURRENCY=25 bundle exec sidekiq
+
+##
+:queues: 
+ - [critical, 5]
+ - [default, 3],
+ - [low, 1]
+
+### rate_limiter syntax using sidekiq enterprise built-in
+
+class ApiWorker
+	include Sidekiq::Worker
+
+	sidekiq_options rate: {name: 'api_requests', limit: 10, period: 1.minute}
+
+	def perform(user_id)
+	  ## call_external_api
+	end
+end
+
+## Using sidekiq-rate-limiter gem (open-source)
+
+class EmailWorker
+	include Sidekiq::Worker
+	sidekiq_options queues: :mailers
+
+	sidekiq_rate_limiter :user_id, thresold: 5, period: 60
+	 # max 5 emails per user per 60 seconds
+
+	 def perform(user_id, mail_id)
+	   ##send_email
+	 end
+
+
+end
+
+## Uniqueness Option 1: Sidekiq Enterprise unique jobs
+
+class EmailWorker
+	include Sidekiq::Worker
+	sidekiq_options unique: :until_executed
+
+	def perform(user_id)
+	end
+end
+
+## Using sidekiq-unique-jobs gem (open-source)
+
+gem 'sidekiq-unique-jobs'
+
+class WelcomeMailer
+	include Sidekiq::Worker
+	sidekiq_options unique: :until_executed, lock_expiration: 1.hour
+
+	def perform(user_id)
+	end
+end
+
+###  Combining Rate Limiting + Uniqueness
+
+class WelcomeMailer
+	include Sidekiq::worker
+
+	sidekiq_options unique: :until_executed, queue: :mailers, retry: 5
+
+	sidekiq_rate_limiter :user_id, thresold: 5, period: 60
+
+	def perform(user_id)
+	end
+
+end
+
+
+
+
+
+
+1️⃣ Redis basics (queues, retry set, schedule)
+2️⃣ Sidekiq retries & backoff
+3️⃣ Sidekiq concurrency & threads
+4️⃣ Sidekiq + Action Mailer internals
+5️⃣ Real production setup
+6️⃣ Rate limiting / uniqueness
+7️⃣ Sidekiq Enterprise concepts

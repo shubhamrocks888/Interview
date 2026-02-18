@@ -1,0 +1,121 @@
+👉 “Open CSV stream” means reading or writing a CSV file gradually (row by row) instead of loading the entire file into memory at once.
+
+What “stream” really means 🧠
+
+A stream is:
+
+A continuous flow of data
+
+Processed piece by piece
+
+Without holding the full content in RAM
+
+Think:
+
+🚰 Water pipe, not a bucket
+
+CSV without streaming (bad for large files)
+rows = []
+100_000.times do |i|
+  rows << [i, "user#{i}"]
+end
+
+CSV.generate do |csv|
+  rows.each { |row| csv << row }
+end
+
+
+❌ Problems:
+
+High memory usage
+
+Risk of OOM
+
+Slow for large reports
+
+CSV with streaming (open CSV stream)
+CSV.open(file_path, "wb") do |csv|
+  users.find_each do |user|
+    csv << [user.id, user.email]
+  end
+end
+
+What’s happening:
+
+File opened once
+
+Each csv << writes immediately
+
+No full CSV in memory
+
+✅ This is “opening a CSV stream”
+
+Streaming while sending response (even more real)
+self.response_body = Enumerator.new do |y|
+  CSV.generate(y) do |csv|
+    User.find_each do |user|
+      csv << [user.id, user.email]
+    end
+  end
+end
+
+
+Here:
+
+CSV streamed directly to client
+
+No temp file
+
+No full memory load
+
+Why people specifically say “CSV stream”
+
+Because:
+
+CSV is line-based
+
+Perfect for row-by-row writing
+
+Unlike XLS/XLSX (which needs full structure)
+
+CSV vs XLS streaming (important difference)
+
+| Feature            | CSV | XLSX       |
+| ------------------ | --- | ---------- |
+| Row-by-row write   | ✅   | ❌ (mostly) |
+| Streaming friendly | ✅   | ⚠️ limited |
+| Memory efficient   | ✅   | ❌          |
+| Easy S3 upload     | ✅   | ⚠️         |
+
+That’s why people say:
+
+“CSV can be streamed, XLS cannot (easily).”
+
+In your report flow context 🧩
+
+You earlier said:
+
+“CSV row is written one by one but in XLS…”
+
+Now it should click:
+
+CSV flow
+Open CSV stream
+→ write row
+→ write row
+→ write row
+→ close file
+→ upload to S3
+
+XLS flow
+Build workbook in memory
+→ save file
+→ upload to S3
+
+Interview-ready explanation 🎯
+
+Opening a CSV stream means writing or reading the CSV incrementally, usually row by row, so the entire file is never loaded into memory. This makes CSV ideal for large data exports.
+
+One-liner that sounds senior 😄
+
+CSV is stream-friendly because it’s sequential and line-based.

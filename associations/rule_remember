@@ -1,0 +1,164 @@
+🧱 Normal Association (User ↔ Post)
+class User < ApplicationRecord
+  has_many :posts
+end
+
+class Post < ApplicationRecord
+  belongs_to :user
+end
+
+
+This works without class_name and foreign_key because Rails conventions match perfectly.
+
+🔎 Why Rails Doesn’t Need Extra Options Here
+
+Rails follows naming conventions:
+
+1️⃣ belongs_to :user
+
+Rails assumes:
+
+Model name → User
+
+Foreign key → user_id
+
+Table → users
+
+So it automatically looks for:
+
+posts.user_id
+
+
+And runs:
+
+SELECT * FROM users WHERE id = posts.user_id
+
+
+No confusion. Everything matches Rails defaults.
+
+2️⃣ has_many :posts
+
+Rails assumes:
+
+There is a model called Post
+
+It has a foreign key called user_id
+
+So when you call:
+
+user.posts
+
+
+Rails runs:
+
+SELECT * FROM posts WHERE user_id = user.id
+
+
+Again, no confusion.
+
+⚙️ Why Self-Association Needed Extra Options
+
+In your referral example:
+
+belongs_to :referrer
+has_many :referrals
+
+
+Rails would assume:
+
+There is a model called Referrer
+
+There is a model called Referral
+
+Foreign key is referrer_id
+
+But none of that exists ❌
+
+You only have:
+
+Model: User
+
+Column: referred_by_id
+
+So you must override Rails defaults using:
+
+class_name: "User"
+foreign_key: :referred_by_id
+
+
+
+
+
+🧠 Rule to Remember
+
+You only need to specify:
+
+class_name
+
+foreign_key
+
+when you break Rails naming conventions.
+
+📌 When Do You Need class_name?
+
+When association name ≠ model name.
+
+Example:
+
+has_many :authors, class_name: "User"
+
+
+Because Rails would search for Author model otherwise.
+
+📌 When Do You Need foreign_key?
+
+When column name ≠ default Rails expectation.
+
+Rails expects:
+
+association_name_id
+
+
+So:
+
+belongs_to :creator
+
+
+Rails expects:
+
+creator_id
+
+
+If your column is:
+
+created_by
+
+
+Then you must write:
+
+belongs_to :creator,
+           class_name: "User",
+           foreign_key: :created_by
+
+🧠 Simple Comparison
+
+| Case                   | Need class_name? | Need foreign_key? | Why                         |
+| ---------------------- | ---------------- | ----------------- | --------------------------- |
+| `has_many :posts`      | ❌                | ❌                 | Rails conventions match     |
+| `belongs_to :user`     | ❌                | ❌                 | Rails conventions match     |
+| `belongs_to :referrer` | ✅                | ✅                 | Custom name + custom column |
+
+
+🎯 Final Understanding
+
+Rails works automatically when you follow naming convention.
+
+The moment you customize:
+
+association name
+
+column name
+
+or model name
+
+You must help Rails.

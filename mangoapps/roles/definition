@@ -1,0 +1,70 @@
+✅ Correct, scalable design
+Roles should be a separate table
+
+users should reference role_id, not store role names directly.
+
+🧱 Revised tables
+roles
+id
+name        # admin, instructor, coordinator, learner
+description
+created_at
+updated_at
+
+users
+id
+name
+email
+role_id
+status
+created_at
+updated_at
+
+🧠 Why this is the right design (say this)
+
+“We kept roles normalized in a separate table so authorization logic wasn’t tightly coupled to user records and could evolve without schema changes.”
+
+That line alone sounds architect-level.
+
+🔍 Follow-up they may ask
+“Why not just use enum in users?”
+
+Answer:
+
+“Enums are fine for very small, static systems.
+We wanted flexibility to add or modify roles, attach metadata, and manage permissions without redeploying code or running risky migrations.”
+
+🔐 Taking it one step more mature (RBAC)
+
+If they push further 👇
+
+permissions
+id
+name
+
+role_permissions
+role_id
+permission_id
+
+
+Now authorization becomes:
+
+Role → Permissions
+
+User → Role
+
+“This allowed us to manage access centrally and keep authorization logic declarative.”
+
+🔥 Very strong answer.
+
+⚠️ When role column IS acceptable (optional honesty)
+
+You can also say:
+
+“For early versions or very small systems, a role enum can be acceptable, but for an LMS with multiple supervisors and evolving permissions, a separate roles table scales better.”
+
+Balanced, practical answer.
+
+🧠 15-second summary
+
+“Users reference roles via role_id. Roles are normalized so permissions and behavior can evolve without coupling business logic to user records.”

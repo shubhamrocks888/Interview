@@ -1,0 +1,193 @@
+1️⃣ Hard to revoke (BIGGEST con)
+❌ Problem
+
+JWT is stateless.
+
+Once issued:
+
+JWT valid until exp
+
+
+You cannot revoke it unless:
+
+You wait for expiry ❌
+
+You add server-side tracking ❌ (breaks statelessness)
+
+🔥 Real example
+
+User logs out
+
+JWT still works until expiry
+
+Token stolen → attacker keeps access
+
+2️⃣ Logout is basically fake 😬
+
+With JWT:
+
+Logout = “delete token on client”
+
+Server doesn’t know
+
+Compare:
+
+Devise	JWT
+Destroy session	True logout
+Invalidate immediately	❌
+3️⃣ Token size (bloated headers)
+
+JWT contains:
+
+Header
+
+Payload
+
+Signature
+
+Even small JWT ≈ 800–1500 bytes
+
+Every request:
+
+Authorization: Bearer <big_token>
+
+
+📉 Impacts:
+
+Network overhead
+
+Mobile data
+
+CDN cache efficiency
+
+4️⃣ No built-in rotation / refresh safety
+❌ Access token expiry dilemma
+
+Long expiry → security risk
+
+Short expiry → bad UX
+
+You need:
+
+Refresh tokens
+
+Rotation logic
+
+Blacklisting
+
+Extra DB tables
+
+JWT alone doesn’t solve this.
+
+5️⃣ Storage security issues (frontend)
+
+Where do you store JWT?
+
+Location	Risk
+localStorage	❌ XSS
+sessionStorage	❌ XSS
+Cookie	CSRF risk
+
+JWT often moves security burden to frontend.
+
+6️⃣ Payload is readable (not encrypted)
+
+People think:
+
+“JWT is secure”
+
+❌ Wrong.
+
+base64(payload) → readable
+
+
+So:
+
+No PII
+
+No secrets
+
+No internal data
+
+JWT gives integrity, not confidentiality.
+
+7️⃣ Algorithm confusion & misconfig risks
+
+Common mistakes:
+
+Accepting alg: none
+
+Mixing HS256 / RS256 incorrectly
+
+Using same secret everywhere
+
+Many real-world breaches happened due to JWT misconfiguration.
+
+8️⃣ Clock & expiry issues
+
+JWT depends on:
+
+exp, iat, nbf
+
+
+Problems:
+
+Clock skew between servers
+
+Expired token but client still sending
+
+Hard to debug production issues
+
+9️⃣ Hard to change auth rules
+
+Once token is issued:
+
+Role changed ❌
+
+Permissions updated ❌
+
+Account suspended ❌
+
+JWT still authorizes until expiry.
+
+You must:
+
+Short expiry
+
+Or check DB on every request (again breaking statelessness)
+
+🔟 Not ideal for web apps with browsers
+
+JWT shines for:
+
+Mobile apps
+
+Service-to-service
+
+APIs
+
+But for browsers:
+
+Cookies + sessions are simpler
+
+CSRF protection is mature
+
+Immediate logout is possible
+
+That’s why Devise ≠ JWT by default.
+
+1️⃣1️⃣ Summary table (interview gold)
+
+| Problem          | JWT   |
+| ---------------- | ----- |
+| Stateless        | ✅     |
+| Revocation       | ❌     |
+| Logout           | Weak  |
+| Token size       | Large |
+| Payload secrecy  | ❌     |
+| Browser-friendly | ❌     |
+| Complexity       | High  |
+
+1️⃣2️⃣ Interview-ready closing line 🎯
+
+JWT is great for stateless distributed systems, but it introduces challenges around revocation, logout, token storage, and security. For traditional web apps, session-based authentication is often simpler and safer.

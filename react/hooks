@@ -1,0 +1,12 @@
+Interview-ready definitions (use one of these)
+Simple
+
+Hooks are functions that let us use React features inside function components.
+
+Slightly detailed
+
+Hooks allow function components to manage state, perform side effects, access context, and control component behavior without using classes.
+
+One-liner (very good)
+
+Hooks replace class components by enabling state and lifecycle features in function components.

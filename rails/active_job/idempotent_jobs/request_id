@@ -1,0 +1,84 @@
+What request_id really represents
+
+One request_id = one business operation that must happen exactly once
+
+Examples of a business operation:
+
+“Charge ₹100 for order #ORD123”
+
+“Process webhook event evt_789”
+
+“Transfer money for transaction TXN456”
+
+❌ Wrong mental model
+
+“request_id should be unique per user”
+
+That would be wrong because:
+
+A user can have many valid actions
+
+You do want multiple jobs for the same user
+
+Making it per-user would block legitimate work
+
+❌ Example:
+
+request_id = user.id
+
+
+This would prevent the same user from ever doing a second transaction 😬
+
+✅ Correct mental model
+
+request_id must be unique per business event
+
+Examples
+1️⃣ Order payment
+request_id = order.id
+CreditJob.perform_async(user.id, request_id)
+
+2️⃣ API request (no natural ID)
+request_id = SecureRandom.uuid
+
+
+Store it in DB and reuse on retries.
+
+3️⃣ Webhook processing
+request_id = webhook_event_id
+
+
+Webhook providers expect idempotency.
+
+Step-by-step example
+User does two different payments
+Action	user_id	request_id
+Pay order #101	42	ORD101
+Pay order #102	42	ORD102
+
+✔ Same user
+✔ Different business actions
+✔ Both allowed
+
+When SHOULD the request_id be reused?
+
+You reuse the same request_id when:
+
+API retries
+
+Job retries
+
+Sidekiq crash + restart
+
+Webhook replay
+
+User double-clicks
+
+One-line rule (memorize this)
+
+Same business action → same request_id
+Different business action → different request_id
+
+Interview-ready answer 🔥
+
+The request_id is a business-level idempotency key. It should be unique per business operation, not per user. The same request_id is reused across retries or duplicate enqueues to ensure the operation is executed exactly once.	

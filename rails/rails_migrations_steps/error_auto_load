@@ -1,0 +1,82 @@
+🔹 Scenario
+
+Suppose you have a Rails app with this structure:
+
+myapp/
+  app/controllers/posts_controller.rb
+  lib/my_service.rb
+
+lib/my_service.rb
+class MyService
+  def self.call
+    puts "Doing some work"
+  end
+end
+
+posts_controller.rb
+class PostsController < ApplicationController
+  def index
+    MyService.call
+    render plain: "Done"
+  end
+end
+
+1️⃣ Development Environment
+
+Rails dev mode: config.eager_load = false
+
+config.autoload_paths includes lib/ by default
+
+First request triggers autoloading MyService from lib/my_service.rb
+
+Works fine ✅
+
+2️⃣ Production Environment
+
+Rails prod mode: config.eager_load = true
+
+lib/ is not in eager_load_paths by default
+
+All app/ code is loaded, but lib/my_service.rb is never loaded
+
+First request tries to reference MyService
+
+Error you see
+NameError (uninitialized constant MyService)
+
+
+Happens only in production
+
+Works fine in dev → very confusing bug
+
+3️⃣ Why this happens
+
+Autoloading is disabled in production
+
+eager_load_paths does not include lib/ by default
+
+Rails never loaded MyService → constant missing
+
+4️⃣ How to fix
+Option 1 — Move code under app/ (preferred)
+app/services/my_service.rb
+
+
+Rails automatically eager-loads app/services in production.
+
+Option 2 — Add lib/ to eager_load_paths
+# config/application.rb
+config.eager_load_paths << Rails.root.join('lib')
+
+
+Now Rails loads lib/my_service.rb at boot
+
+NameError disappears
+
+5️⃣ Key lesson
+
+Autoload works in development because Rails loads constants on demand, but in production, everything must be eager-loaded. Any code outside app/ that isn’t in eager_load_paths can cause NameError.
+
+Interview one-liner
+
+A classic production bug is referencing a class in lib/ that is autoloaded in dev — it works locally but fails in production with NameError because Rails disables autoloading and doesn’t eager-load lib/ by default.

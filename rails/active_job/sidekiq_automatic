@@ -1,0 +1,112 @@
+What Sidekiq does automatically (out of the box)
+
+When you write:
+
+MyJob.perform_later(1)
+
+
+Sidekiq automatically handles:
+
+✅ Serialization
+
+Converts job into JSON
+
+Adds metadata (jid, queue, timestamps, retry info)
+
+✅ Choosing Redis data structures
+
+Sidekiq decides:
+
+LIST for pending jobs
+
+SORTED SET for scheduled jobs
+
+SORTED SET for retries
+
+SORTED SET for dead jobs
+
+HASH / SET for running jobs
+
+You never configure this.
+
+✅ Moving jobs between states
+
+Sidekiq automatically:
+
+Pushes → queue:default
+
+Pops → worker memory
+
+On failure → retry
+
+On delay → schedule
+
+On crash → re-enqueue
+
+On retries exhausted → dead
+
+✅ Heartbeats & crash detection
+
+Tracks running workers
+
+Detects dead processes
+
+Resurrects jobs
+
+✅ Retry logic
+
+Exponential backoff
+
+Retry counts
+
+Retry timing
+
+Dead job handling
+
+✅ Graceful shutdown
+
+Finishes running jobs
+
+Re-enqueues unfinished jobs
+
+Avoids job loss during deploys
+
+What YOU control (optionally)
+
+You only configure policy, not storage.
+
+Examples:
+
+sidekiq_options retry: 5, queue: :critical
+
+MyJob.set(wait: 10.minutes).perform_later
+
+sidekiq -q critical,5 -q default,2
+
+
+Sidekiq translates these into Redis operations.
+
+What you NEVER do manually
+
+❌ You never:
+
+Choose Redis data types
+
+Write LPUSH, ZADD
+
+Move jobs between sets
+
+Track worker crashes
+
+Clean retry / dead sets
+
+Mental model (remember this)
+
+Sidekiq = job engine
+Redis = storage engine
+
+Redis is passive. Sidekiq is active.
+
+Interview-ready one-liner 💡
+
+Yes, Sidekiq automatically serializes jobs, chooses Redis data structures, moves jobs between queues, handles retries, crash recovery, and cleanup — developers only define job behavior and options.

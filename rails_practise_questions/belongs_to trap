@@ -1,0 +1,16 @@
+belongs_to Trap (Rails 5+)
+class Comment < ApplicationRecord
+  belongs_to :post
+end
+
+❌ Bug
+
+post_id is required by default
+
+Creation fails if post missing
+
+✅ Fix
+belongs_to :post, optional: true
+
+
+(If business logic allows)

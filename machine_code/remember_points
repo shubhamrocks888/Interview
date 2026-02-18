@@ -1,0 +1,179 @@
+1. user.as_json(include: posts)
+
+2  params.require(:user).permit(:email, :full_name, posts: [:title, :status])
+
+3.   accepts_nested_attributes_for :posts
+
+4.	user = User.new(user_params) => user.save
+
+5.   USer.create (classmethod)
+
+6.  ActiveRecord::RecordInvalid
+
+7. render json: user, include: :posts
+
+8. render json: user.as_json(include: :posts)
+
+9.	render json: user.as_json(
+	  only: [:id, :full_name],
+	  include: {
+	    posts: {
+	      only: [:id, :title, :status]
+	    }
+	  }
+	), status: :created
+
+10.      render json: posts,{only: [:title, :status], include: {user: {only: [:id, :full_name]}}}
+
+11.   render json: posts, only: [:title, :status],
+       include: { user: { only: [:id, :full_name] } }
+
+	12. render({
+	  json: posts,
+	  only: [:title, :status],
+	  include: { user: { only: [:id, :full_name] } }
+	})
+
+12. render json: { user: user.as_json(only: [:id, :email, :name]) }, status: :created
+
+13.  user_id = User.find_by(id: params[:id])
+	 task  = user.tasks.new(task_params) => task.save
+
+
+14.   wallet_ids = [from_wallet_id, to_wallet_id].sort
+      wallets = Wallet.where(id: wallet_ids).index_by(&:id)
+      sender_id = wallets[from_wallet_id]
+      receiver_id = wallets[to_wallet_id] 	
+
+15.  amount = BigDecimal(params[:amount].to_s)
+
+16.  validates :balance, numericality: { greater_than_or_equal_to: 0}
+
+17.   rescue ActiveRecord::Rollback
+
+18.   raise "Insufficient balance" if amount <=0
+
+19. return render json: {errors: ""}
+
+20.   user.referrer = referree if referre.present?
+
+21.  CouponRedemption.new(user_id: ..., coupon_id: ...)
+	
+	CouponRedemption.new(user: user, coupon: coupon)
+
+
+22.  User.includes(bookings: { show: :movie })
+
+
+	This loads:
+
+	User → bookings → show → movie
+	in minimal queries.
+
+	Then inside the loop:
+
+	booking.show
+	booking.show.movie
+
+	will NOT hit DB again.
+
+	That’s true N+1 prevention.
+
+23. validates :seat_number, uniqueness: { scope: :show_id }
+
+24. numericality: { only_integer: true }
+
+25. numericality: true
+
+26. validates :rider_id, presence: true ❌
+     validates :rider, presence: true  (Better approach:)
+
+27.   validates :pickup_lat, :pickup_lng, :drop_lat, :drop_lng, presence: true, numericality: true
+
+28. 	enum status: { requested: 0, accepted: 1, completed: 2, cancelled: 3 }
+
+29. attachments["invoice_#{ride.id}"] = File.read(Rails.root.join('/tmp/sample_voice.pdf'))
+
+30. class UserMailer < ApplicationMailer
+	  default from: "no-reply@ridesapp.com"
+
+	  def welcome_email(user)
+	    @user = user
+
+	    mail(
+	      to: @user.email,
+	      subject: "Welcome to Rides App"
+	    )
+	  end
+	end
+
+31.   attachments.inline["logo.png"] =
+	  File.read(Rails.root.join("app/assets/images/logo.png"))
+
+
+	In HTML:
+
+	<%= image_tag attachments["logo.png"].url %>
+
+32.	enum status: { requested: 0, accepted: 1, started: 2, completed: 3, cancelled: 4 }
+	order.completed?
+	Order.completed  --> return all the orders which gets completed
+
+	order.status          # => "requested"
+	order.status = "accepted"
+	order.status = :started
+
+	order.completed!
+
+	Order.statuses = {
+					  "requested" => 0,
+					  "accepted" => 1,
+					  "started" => 2,
+					  "completed" => 3,
+					  "cancelled" => 4
+					}
+
+
+	🚀 Summary
+
+		For each enum value (requested, accepted, etc.), Rails gives:
+
+		order.requested? → predicate
+
+		order.requested! → update + save
+
+		Order.requested → scope
+
+		order.status → getter
+
+		order.status = → setter
+
+		Order.statuses → mapping hash
+
+		order.status_before_type_cast
+
+
+33.   order.status = :completed
+		order.save
+
+		order.saved_change_to_status?
+		# => true
+
+		order.saved_change_to_status
+		# => ["requested", "completed"]
+
+		order.status_before_last_save
+		# => "requested"
+
+34.   RideMailer.completed(self).deliver_later(wait: 1.minute)
+
+35.   RideCompletionJob.perform_later(id)
+
+36.   queue_as :default  (forsidekiq)
+
+37.   	retry_on StandardError, attempts: 5  (active job method)
+
+38. 	RideCompletionJob.set(wait: 10.minutes).perform_later(id)
+
+
+

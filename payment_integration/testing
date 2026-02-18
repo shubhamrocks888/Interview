@@ -1,0 +1,70 @@
+1️⃣ Key Types in Razorpay
+a) Test Keys (Sandbox / QA)
+
+Provided in Razorpay Dashboard → Settings → API Keys → Test Keys
+
+Can simulate payments:
+
+Success
+
+Failure
+
+Card declined
+
+UPI timeout
+
+No real money is transferred
+
+Useful for QA / development / staging environment
+
+Example:
+
+RAZORPAY_KEY_ID=test_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=test_xxxxxxxxxxxxx
+
+b) Live / Production Keys
+
+Used in production environment
+
+Real money is processed
+
+Never share secret key in frontend!
+
+Set in environment variables:
+
+RAZORPAY_KEY_ID=live_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=live_xxxxxxxxxxxxx
+
+2️⃣ Switching Between Test and Live
+
+Rails example:
+
+# config/initializers/razorpay.rb
+if Rails.env.production?
+  Razorpay.setup(ENV['RAZORPAY_LIVE_KEY_ID'], ENV['RAZORPAY_LIVE_KEY_SECRET'])
+else
+  Razorpay.setup(ENV['RAZORPAY_TEST_KEY_ID'], ENV['RAZORPAY_TEST_KEY_SECRET'])
+end
+
+
+QA / dev → uses test keys
+
+Production → uses live keys
+
+3️⃣ Testing Different Scenarios in QA
+
+Razorpay provides dummy card/UPI details for testing:
+
+Payment Type	Card/UPI Details	Result
+Success	4111 1111 1111 1111, any future date	Payment captured
+Failure	4000 0000 0000 0002	Payment failed
+Insufficient funds	4000 0000 0000 9995	Payment failed
+Expired card	4000 0000 0000 0069	Payment failed
+
+Also supports webhook testing in sandbox
+
+You can simulate refunds, partial refunds, retries safely
+
+4️⃣ Interview-ready line
+
+Razorpay provides separate test and live keys. Test keys allow QA or developers to simulate success, failure, refunds, and retries without transferring real money. Live keys are used in production for real payments. The backend must switch keys based on environment.

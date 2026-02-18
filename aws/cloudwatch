@@ -1,0 +1,83 @@
+1️⃣ What is CloudWatch?
+
+CloudWatch is AWS’s monitoring and observability service.
+It collects metrics, logs, and events from AWS resources and applications so you can monitor, alert, and troubleshoot your systems.
+
+2️⃣ What can CloudWatch monitor?
+
+1️⃣ Metrics → Numerical data over time
+
+CPU usage, memory, disk I/O, network traffic
+
+EC2, RDS, Lambda, ELB, custom metrics
+
+2️⃣ Logs → Application or system logs
+
+Rails / Phoenix app logs
+
+Error logs, access logs
+
+3️⃣ Events → AWS system or custom events
+
+Auto Scaling events, EC2 state changes
+
+3️⃣ Why use CloudWatch?
+
+Visibility → Know how your system is performing
+
+Alerts → Get notified if CPU, memory, or errors exceed threshold
+
+Troubleshooting → Analyze logs to find issues
+
+Automation → Trigger actions via CloudWatch Alarms
+
+4️⃣ CloudWatch Components
+Component	Purpose
+Metrics	Track numeric performance (CPU, memory, requests/sec)
+Logs	Store application and system logs
+Alarms	Notify when metrics cross thresholds (e.g., CPU > 80%)
+Dashboards	Visualize metrics & logs in one place
+Events	Respond to system or custom events
+5️⃣ Example Use Case
+
+Scenario: Rails/Phoenix app on EC2 + RDS
+
+Metrics: CPU usage of EC2, read/write IOPS of RDS
+
+Logs: Application errors (log/production.log)
+
+Alarms: CPU > 80% → send Slack / trigger Auto Scaling
+
+Dashboard: Combine EC2 + RDS metrics for overall health
+
+6️⃣ Pros & Cons (Simple Version)
+✅ Pros
+
+Centralized monitoring for AWS resources
+
+Works with custom application metrics
+
+Can trigger automated actions
+
+Scales with AWS infrastructure
+
+❌ Cons
+
+AWS-only by default (requires extra setup for on-prem)
+
+Cost increases with high log retention or metrics
+
+7️⃣ Interview-Perfect Answer (Memorize)
+
+“AWS CloudWatch is a monitoring service that collects metrics, logs, and events from AWS resources and applications. It helps us track performance, set alarms for critical thresholds, troubleshoot issues, and automate responses to maintain system reliability.”
+
+🔹 Quick One-Liners
+
+Metrics: CPU, memory, network
+
+Logs: Application/system errors
+
+Alarms: Notify or trigger actions
+
+Dashboards: Visual overview of system health
+

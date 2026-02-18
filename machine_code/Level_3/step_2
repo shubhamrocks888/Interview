@@ -1,0 +1,99 @@
+🚀 Now We Go To The Real Part
+
+Implement:
+
+POST /wallets/transfer
+Controller logic only.
+Requirements again:
+Cannot transfer to same wallet
+Amount positive
+Sufficient balance
+Atomic operation
+Create debit + credit transaction records
+Prevent race condition
+
+This is the real challenge.
+Write the method.
+
+No explanation.
+Only code. 💰⚔️
+
+
+######
+
+💰 Core Task
+Implement:
+POST /wallets/transfer
+
+Payload:
+
+{
+  "from_wallet_id": 1,
+  "to_wallet_id": 2,
+  "amount": 500
+}
+
+🚨 Requirements
+
+Cannot transfer to same wallet
+Amount must be positive
+From wallet must have sufficient balance
+Operation must be atomic (no partial update)
+If anything fails → rollback everything
+Create TWO transaction records:
+debit record for sender
+credit record for receiver
+Prevent race condition (important)
+Proper error handling
+
+⚠️ Constraint
+
+You CANNOT use any external gems.
+Manual implementation only.
+
+
+class WalletsController < ApplicationController
+  def transfer
+    amount = BigDecimal(params[:amount].to_s)
+
+    return render json: { error: "Invalid amount" }, status: :unprocessable_entity if amount <= 0
+
+    sender_id = params[:from_wallet_id].to_i
+    receiver_id = params[:to_wallet_id].to_i
+
+    return render json: { error: "Cannot transfer to same wallet" }, status: :unprocessable_entity if sender.id == receiver.id
+
+
+    wallet_ids = [sender_id, receiver_id].sort
+
+    ActiveRecord::Base.transaction do
+      
+      wallets = Wallet.where(id: wallet_ids).index_by(&:id)
+      sender = wallet[sender_id]
+      receiver = waller[receiver_id]
+
+      raise ""
+      sender.update!(balance: sender.balance - amount)
+      receiver.update!(balance: receiver.balance + amount)
+
+      Transaction.create!(
+        wallet: sender,
+        amount: amount,
+        transaction_type: "debit",
+        status: "success"
+      )
+
+      Transaction.create!(
+        wallet: receiver,
+        amount: amount,
+        transaction_type: "credit",
+        status: "success"
+      )
+
+      render json: { message: "Transfer successful" }
+    end
+
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+end

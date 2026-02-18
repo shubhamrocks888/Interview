@@ -1,0 +1,11 @@
+📌 Final punch line:
+
+Secret key must always stay on server
+
+Interview line:
+
+The secret key ensures only authorized servers can create orders.
+
+Interview line:
+
+The key_id identifies the merchant account.

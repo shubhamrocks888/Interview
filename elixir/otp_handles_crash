@@ -1,0 +1,170 @@
+How OTP handles “Let it crash”
+Interview-ready definition (say this first)
+
+OTP follows a “let it crash” philosophy where individual processes are allowed to fail, and supervisors automatically detect the failure and restart them, keeping the system running.
+
+1️⃣ What “let it crash” actually means (clear the myth)
+
+❌ It does NOT mean:
+
+Ignore errors
+
+Write buggy code
+
+Crash the whole app
+
+✅ It means:
+
+Don’t defensively handle every possible error
+
+Let a process fail fast
+
+Recover using supervision
+
+2️⃣ Core OTP building blocks
+
+OTP handles “let it crash” using three layers:
+
+🔹 1. Worker processes
+
+GenServer
+
+Task
+
+Kafka consumer
+
+Background worker
+
+These do the work and may crash.
+
+🔹 2. Supervisors
+
+Monitor worker processes
+
+Restart them on failure
+
+Example:
+
+Supervisor.start_link(children, strategy: :one_for_one)
+
+
+🔥 Interview line:
+
+Supervisors observe child processes and apply restart strategies when failures occur.
+
+🔹 3. Supervision trees
+
+Supervisors can supervise other supervisors
+
+Forms a hierarchy
+
+This ensures:
+
+Local failures stay local
+
+System remains stable
+
+3️⃣ What happens when a process crashes (STEP BY STEP)
+
+Let’s say a GenServer crashes:
+
+Process encounters an error
+
+Process exits
+
+Supervisor receives exit signal
+
+Supervisor applies restart strategy
+
+Process restarts with clean state
+
+🔥 Key point:
+
+The failed process is restarted in isolation without impacting other processes.
+
+4️⃣ Supervisor strategies (INTERVIEW FAVORITE)
+🔹 :one_for_one
+
+Restart only the failed process
+👉 Most common
+
+🔹 :one_for_all
+
+Restart all child processes
+👉 Use when processes depend on each other
+
+🔹 :rest_for_one
+
+Restart the failed process and those started after it
+
+🔥 Interview line:
+
+Supervisor strategies allow us to model dependency relationships between processes.
+
+5️⃣ Why OTP doesn’t use try/catch everywhere
+
+In Rails:
+
+Rescue exceptions everywhere
+
+Retry logic in app code
+
+In OTP:
+
+Crashes are signals
+
+Recovery is centralized
+
+🔥 Interview line:
+
+OTP treats failures as expected events and handles recovery declaratively via supervisors.
+
+6️⃣ Message passing + let it crash
+
+Important detail:
+
+Messages sent to a crashed process:
+
+Are lost
+
+Restarted process:
+
+Starts fresh
+
+Does not resume old mailbox
+
+This avoids:
+
+Corrupted state
+
+Half-processed data
+
+7️⃣ Real-world example (Kafka consumer – USE THIS)
+
+Each Kafka partition consumer can run as a GenServer under a supervisor. If message processing fails, the consumer crashes, the supervisor restarts it, and the system continues processing without affecting other partitions.
+
+🔥 This directly matches their JD.
+
+8️⃣ Comparison with Rails (VERY INTERVIEW FRIENDLY)
+Rails	OTP
+Rescue everywhere	Let process crash
+Sidekiq retries	Supervisor restarts
+App restarts	Process restarts
+Shared failure	Isolated failure
+9️⃣ When NOT to let it crash
+
+Important senior insight:
+
+Business errors should be handled explicitly, while unexpected system errors should crash the process.
+
+Example:
+
+❌ Invalid input → handle
+
+❌ DB unavailable → crash & restart
+
+🔟 One-liner summary (MEMORIZE THIS)
+
+OTP embraces failure by isolating processes and using supervisors to automatically restart failed components, keeping the system resilient.
+
+Final confidence booster 💪

@@ -1,0 +1,231 @@
+| React    | Rails            |
+| -------- | ---------------- |
+| reducer  | Service object   |
+| action   | method call      |
+| dispatch | calling service  |
+| state    | model attributes |
+
+
+
+🧩 useReducer — FROM SCRATCH
+1️⃣ Why do we need useReducer?
+
+You already know useState:
+
+const [count, setCount] = useState(0);
+
+
+This is perfect for simple state.
+
+But imagine state like this:
+
+{
+  loading: false,
+  user: null,
+  error: null
+}
+
+
+And actions:
+
+start loading
+
+success
+
+failure
+
+reset
+
+With useState:
+
+logic spreads everywhere
+
+hard to track
+
+bugs increase ❌
+
+2️⃣ What is useReducer?
+
+useReducer is a hook for managing complex state logic using actions and a reducer function.
+
+Think:
+
+Centralized state updates
+
+Predictable transitions
+
+3️⃣ Mental model 🧠
+
+useReducer is basically:
+
+Redux, but inside a single component
+
+4️⃣ Basic syntax
+const [state, dispatch] = useReducer(reducer, initialState);
+
+
+Where:
+
+state → current state
+
+dispatch → function to send actions
+
+reducer → pure function
+
+initialState → starting value
+
+5️⃣ What is a reducer?
+
+A reducer is a pure function:
+
+(state, action) => newState
+
+
+Example:
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "increment":
+      return { count: state.count + 1 };
+    default:
+      return state;
+  }
+}
+
+6️⃣ First simple example (counter)
+import { useReducer } from "react";
+
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "increment":
+      return { count: state.count + 1 };
+
+    case "decrement":
+      return { count: state.count - 1 };
+
+    default:
+      return state;
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  return (
+    <>
+      <p>{state.count}</p>
+      <button onClick={() => dispatch({ type: "increment" })}>
+        +
+      </button>
+      <button onClick={() => dispatch({ type: "decrement" })}>
+        -
+      </button>
+    </>
+  );
+}
+
+7️⃣ How it works (step-by-step)
+
+Button clicked
+
+dispatch({ type: "increment" })
+
+React calls reducer(state, action)
+
+Reducer returns new state
+
+React re-renders
+
+👉 State updates are predictable
+
+8️⃣ Important rules ⚠️
+Reducer must be PURE
+
+❌ No API calls
+❌ No mutations
+❌ No random values
+
+✅ Always return new state
+
+9️⃣ When should you use useReducer?
+
+Use useReducer when:
+
+State object is complex
+
+Many related state values
+
+State transitions depend on previous state
+
+You want Redux-like structure
+
+🔟 useReducer vs useState
+useState	useReducer
+Simple state	Complex state
+Direct updates	Action-based
+Scattered logic	Centralized logic
+1️⃣1️⃣ Real-world example (API state)
+const initialState = {
+  loading: false,
+  data: null,
+  error: null
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, loading: true };
+
+    case "FETCH_SUCCESS":
+      return {
+        loading: false,
+        data: action.payload,
+        error: null
+      };
+
+    case "FETCH_ERROR":
+      return {
+        loading: false,
+        data: null,
+        error: action.error
+      };
+
+    default:
+      return state;
+  }
+}
+
+1️⃣2️⃣ Dispatch with payload
+dispatch({
+  type: "FETCH_SUCCESS",
+  payload: users
+});
+
+1️⃣3️⃣ Interview questions 🏆
+
+Q: Why useReducer instead of useState?
+A: For complex state transitions and better predictability.
+
+Q: Is useReducer async?
+A: No, but dispatch is batched.
+
+Q: Can useReducer replace Redux?
+A: For local state yes, for global state usually no.
+
+Rails analogy 🧠
+React	Rails
+reducer	Service object
+action	method call
+dispatch	calling service
+state	model attributes
+🔑 Summary
+
+useReducer manages complex state
+
+Uses reducer + actions
+
+Predictable updates
+
+Redux-like pattern

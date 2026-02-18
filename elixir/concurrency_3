@@ -1,0 +1,87 @@
+Concurrency means running multiple independent operations at the same time or overlapping in time — not multiple operations mutating the same object at the same time.
+
+⚠️ That second case is actually a problem, not the goal.
+
+🔹 What Concurrency ACTUALLY Means
+	✅ Concurrency
+
+	Many tasks in progress
+	Tasks are independent
+	May run truly in parallel OR interleaved
+	No shared mutable state
+
+❌ NOT Concurrency
+
+	Multiple operations changing the same object.
+	Shared state with race conditions
+	Needs locks/mutexes
+
+
+	Simple Real-Life Analogy
+	Concurrency
+
+	🧑‍🍳 Kitchen with many chefs
+	Each chef cooks their own dish
+	They coordinate via orders (messages)
+
+	Shared Object Mutation
+
+	🧑‍🍳🧑‍🍳 Everyone cooking from one pan
+	Needs locks → chaos → bugs
+
+
+	Ruby Example (Problematic Concurrency)
+	@count = 0
+
+	Thread.new { @count += 1 }
+	Thread.new { @count += 1 }
+
+
+	❌ Both threads modify the same object
+	→ race condition
+	→ needs mutex
+
+
+	Elixir Concurrency Model (IMPORTANT)
+		Key principles:
+
+		No shared memory
+
+		Each process has its own state
+
+		Communication via messages
+
+		spawn(fn ->
+		  receive do
+		    msg -> IO.inspect(msg)
+		  end
+		end)
+
+
+		✔ Multiple processes
+		✔ No shared objects
+		✔ Safe concurrency
+
+
+		So what are we running concurrently?
+			✅ Multiple independent operations:
+
+			API requests
+
+			Kafka consumers
+
+			Background jobs
+
+			WebSocket connections
+
+			❌ Not:
+
+			Multiple writes to the same object in memory
+
+			🔹 Why Elixir is special here
+
+			Golden line (use this):
+
+			“Elixir achieves concurrency by isolating state inside processes and using message passing, instead of allowing multiple operations on the same object.”
+
+			This is 🔥 interview material.

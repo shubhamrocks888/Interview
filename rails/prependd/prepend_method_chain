@@ -1,0 +1,149 @@
+Great question — this is exactly how to really understand prepend.
+Let’s look at the method lookup chain before and after prepend.
+
+Example setup
+module M
+  def greet
+    "from M"
+  end
+end
+
+class User
+  def greet
+    "from User"
+  end
+end
+
+🔍 Method lookup chain BEFORE prepend
+No include, no prepend
+User.ancestors
+
+[User, Object, Kernel, BasicObject]
+
+Call:
+User.new.greet
+
+
+Output:
+
+"from User"
+
+
+Ruby checks:
+
+User ✅
+
+Stops (method found)
+
+🔍 Method lookup chain AFTER include
+class User
+  include M
+end
+
+User.ancestors
+
+[User, M, Object, Kernel, BasicObject]
+
+Call:
+User.new.greet
+
+
+Output:
+
+"from User"
+
+
+Ruby checks:
+
+User ✅
+
+M ❌ (never reached)
+
+👉 include does not override class methods.
+
+🔥 Method lookup chain AFTER prepend
+class User
+  prepend M
+end
+
+User.ancestors
+
+[M, User, Object, Kernel, BasicObject]
+
+Call:
+User.new.greet
+
+
+Output:
+
+"from M"
+
+
+Ruby checks:
+
+M ✅
+
+Stops (unless super is called)
+
+🔁 With super in prepended module
+module M
+  def greet
+    "M -> " + super
+  end
+end
+
+
+Output:
+
+"M -> from User"
+
+
+Lookup:
+
+M#greet
+
+super → User#greet
+
+🧠 Visual summary
+Before prepend
+User
+ ↓
+Object
+ ↓
+Kernel
+ ↓
+BasicObject
+
+After include
+User
+ ↓
+M
+ ↓
+Object
+ ↓
+Kernel
+ ↓
+BasicObject
+
+After prepend
+M
+ ↓
+User
+ ↓
+Object
+ ↓
+Kernel
+ ↓
+BasicObject
+
+Interview-ready one-liner 🧠✨
+
+Before prepend, Ruby looks for methods in the class first. After prepend, the prepended module is searched before the class in the method lookup chain.
+
+Key takeaway
+
+include → module goes after class
+
+prepend → module goes before class
+
+super moves down the ancestor chain

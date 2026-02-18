@@ -1,0 +1,48 @@
+Reverse Vowels of a String — what the question really means
+
+At first glance:
+
+“Reverse vowels of a string.”
+
+Sounds similar to reversing the whole string, but it’s not.
+
+What they want is:
+
+Only vowels change position
+
+All other characters stay exactly where they are
+
+The order of vowels is reversed
+
+Input : "hello"
+Output: "holle"
+
+
+
+
+
+def reverse_vowels(str)
+  vowels = Set.new(%w[a e i o u A E I O U])
+  ###  vowels = Set.new(['a','i','e','o','u','A','I','E','O','U'])
+
+  left = 0
+  right = str.length - 1
+
+  while left < right
+    if !vowels.include?(str[left])
+      left += 1
+    elsif !vowels.include?(str[right])
+      right -= 1
+    else
+      str[left], str[right] = str[right], str[left]
+      left += 1
+      right -= 1
+    end
+  end
+
+  str
+end
+
+puts reverse_vowels("hello")      # => "holle"
+puts reverse_vowels("hEllO")      # => "hOllE"
+puts reverse_vowels("leetcode")   # => "leotceed"

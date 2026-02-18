@@ -1,0 +1,66 @@
+Q1️⃣ What does this return?
+	User.select(:email).first
+
+
+	Answer:
+
+	#<User id: nil, email: "a@test.com">
+
+
+	💥 Trap
+
+	id is nil
+
+	Calling user.save → ❌ ERROR
+
+	Partial object, not safe to persist
+
+	📌 Interview line:
+
+	select creates partial ActiveRecord objects.
+
+
+Q4️⃣ Will this hit the DB once or twice?
+	relation = User.select(:email)
+	relation.pluck(:email)
+
+
+	❌ Twice
+
+	Why?
+
+	pluck ignores previous select
+
+	Fires its own SQL
+
+Q5️⃣ Output?
+	User.where(active: false).pluck(:id).count
+
+
+	❌ BAD
+	Loads all IDs into memory.
+
+	✅ Better:
+
+	User.where(active: false).count
+
+
+	📌 Interview rule:
+
+	If DB can count, let DB count.
+
+
+❌ Mistake 2: Using select in background jobs
+
+	User.select(:id).each do |user|
+	  process(user)
+	end
+
+
+	Still creates objects → memory waste.
+
+	✅ Better:
+
+	User.ids.each do |id|
+	  process(id)
+	end

@@ -1,0 +1,141 @@
+1️⃣ Rails + Elixir — the core app
+
+Rails: HTTP API layer, handles user requests, validations, authentication, business logic.
+
+Elixir: Handles concurrency-heavy tasks (notifications, background jobs, real-time processing).
+
+Communication: Rails triggers Elixir processes via message passing, HTTP calls, or queues.
+
+2️⃣ Kafka — messaging and async coordination
+
+Role in this architecture:
+
+Kafka is a distributed message broker.
+
+Decouples Rails from Elixir for async tasks.
+
+Example workflow:
+
+User clicks “Send Notification” → Rails API
+
+Rails publishes message to Kafka topic: notifications
+
+Elixir service subscribes to Kafka topic
+
+Elixir spawns processes for each message and sends emails
+
+Elixir can publish back a status message to Kafka (notification_sent) for logging, metrics, or audit
+
+Interview bullets:
+
+Kafka allows high throughput, asynchronous processing
+
+Decouples services (Rails doesn’t wait for Elixir to finish)
+
+Provides reliability & replay (messages can be reprocessed)
+
+3️⃣ Docker — containerization
+
+Role:
+
+Encapsulates Rails + Elixir services into portable containers
+
+Ensures consistent environment across dev, staging, and production
+
+Example:
+
+rails_app → Docker container
+
+elixir_service → Docker container
+
+Kafka, PostgreSQL → Docker containers (or separate infrastructure)
+
+Benefits:
+
+Easy deployment
+
+Isolation of dependencies
+
+Reproducible builds
+
+4️⃣ AWS — hosting & infrastructure
+
+Role:
+
+Host Docker containers (EC2, ECS, or EKS)
+
+Managed Kafka (MSK) or Elixir cluster
+
+Databases: PostgreSQL or MySQL RDS
+
+Object storage (S3) for assets or logs
+
+Interview bullets:
+
+AWS provides scalable infrastructure
+
+Containers can scale horizontally
+
+Elixir processes scale with BEAM VM, Kafka scales for message throughput
+
+5️⃣ Jenkins — CI/CD pipeline
+
+Role:
+
+Automates build, test, and deployment for Rails + Elixir + Docker containers
+
+Typical Jenkins pipeline:
+
+Code pushed to GitHub
+
+Jenkins build stage:
+
+Run Rails tests
+
+Run Elixir tests (mix test)
+
+Docker build stage: Build images for Rails + Elixir
+
+Push stage: Push Docker images to container registry (ECR, DockerHub)
+
+Deploy stage: Deploy containers to AWS (ECS, EKS, or EC2)
+
+Interview bullets:
+
+Ensures reliable deployments
+
+Automates tests → prevents breaking changes
+
+Makes scaling easier → new container instances pick up latest code
+
+6️⃣ How it all connects
+
+Let’s combine everything:
+
+[User] 
+   |
+   v
+[Rails API] --------+
+   |                |
+   | publishes       | <-- Kafka Topic: notifications
+   v                |
+[Kafka Cluster]     |
+   | subscribes     |
+   v                |
+[Elixir Service] <--+
+   | spawns processes to send notifications
+   |
+   +--> Updates status (Kafka / DB / logs)
+
+
+Infrastructure layer:
+
+Rails + Elixir = Docker containers
+
+Hosted on AWS ECS/EKS/EC2
+
+CI/CD pipeline via Jenkins automatically builds, tests, and deploys new versions
+
+7️⃣ Interview-ready explanation
+
+“In this system, Rails handles API requests and publishes tasks to Kafka for asynchronous processing. Elixir subscribes to Kafka and spawns lightweight processes for concurrent tasks like sending notifications. Rails and Elixir services are containerized with Docker and hosted on AWS for scalability. Jenkins automates the CI/CD pipeline to build, test, and deploy these containers. Kafka ensures decoupled, reliable communication between Rails and Elixir, and AWS provides the infrastructure for scaling both the API and background processing.”

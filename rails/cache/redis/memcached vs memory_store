@@ -1,0 +1,93 @@
+MemoryStore and Memcached are both in-memory and non-persistent, but they differ in scope, scalability, and usage.
+
+Key Differences: MemoryStore vs Memcached
+
+1️⃣ Where Data Lives (MOST IMPORTANT)
+
+| MemoryStore                     | Memcached                     |
+| ------------------------------- | ----------------------------- |
+| Inside **Rails process memory** | Separate **external service** |
+| Per Rails server                | Shared across servers         |
+
+📌 Interview line:
+
+“MemoryStore is local to one Rails process; Memcached is centralized.”
+
+2️⃣ Multi-Server Support
+
+| Feature                         | MemoryStore | Memcached |
+| ------------------------------- | ----------- | --------- |
+| Works with multiple app servers | ❌           | ✅         |
+| Shared cache                    | ❌           | ✅         |
+
+📌 This is the biggest difference.
+
+3️⃣ Persistence
+
+| MemoryStore     | Memcached       |
+| --------------- | --------------- |
+| No persistence  | No persistence  |
+| Lost on restart | Lost on restart |
+
+✔ Here they are similar.
+
+4️⃣ Performance
+| MemoryStore            | Memcached                      |
+| ---------------------- | ------------------------------ |
+| Very fast (no network) | Slightly slower (network call) |
+
+📌 Interview line:
+
+“MemoryStore is fastest but not scalable.”
+
+5️⃣ Eviction & Size Control
+
+| MemoryStore          | Memcached    |
+| -------------------- | ------------ |
+| Limited size control | LRU eviction |
+| Can bloat app memory | Fixed memory |
+
+
+6️⃣ Thread & Process Safety
+
+| MemoryStore                  | Memcached   |
+| ---------------------------- | ----------- |
+| Thread-safe                  | Thread-safe |
+| Not shared between processes | Shared      |
+
+
+Rails Configuration Example
+# MemoryStore
+config.cache_store = :memory_store
+
+# Memcached
+config.cache_store = :mem_cache_store, "cache.example.com"
+
+When to Use What (INTERVIEW GOLD)
+	✅ Use MemoryStore when:
+
+	Single server
+
+	Development
+
+	Small apps
+
+	Temporary caching
+
+	✅ Use Memcached when:
+
+	Multiple app servers
+
+	Shared cache needed
+
+	Simple caching only
+
+One-Line Interview Answer ⭐
+
+“MemoryStore is per-process in-memory caching, while Memcached is a centralized in-memory cache shared across servers.”
+
+Extra Interview Follow-up ❓
+
+Q: Why is MemoryStore dangerous in production?
+
+Because cache is duplicated across servers and increases memory usage per process.

@@ -1,0 +1,205 @@
+The full regex
+/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
+
+
+Think of it as rules for a valid email.
+
+1️⃣ / ... /
+
+This just tells Ruby:
+
+“Hey, this is a regex pattern”
+
+Nothing fancy here.
+
+2️⃣ \A — start of string
+\A
+
+
+Means:
+
+The string must start here
+
+So:
+
+✅ "test@example.com"
+
+❌ " abc@test.com"
+
+❌ "test@example.com xyz"
+
+Why Rails prefers this:
+
+\A = start of entire string
+
+Safer than ^
+
+3️⃣ [^@\s]+ — email username part
+
+Let’s break THIS piece:
+
+3.1 [ ... ] — character class
+
+Matches one character from inside
+
+3.2 ^ inside [ ] — NOT operator
+[^@\s]
+
+
+Means:
+
+match anything except @ or space
+
+3.3 @ — literal @
+
+We don’t want another @ here
+
+3.4 \s — whitespace
+
+This blocks:
+
+space
+
+tab
+
+newline
+
+3.5 + — one or more
+[^@\s]+
+
+
+Means:
+
+One or more characters that are not @ and not space
+
+Examples:
+
+✅ john
+
+✅ john.doe
+
+❌ john doe
+
+❌ john@@
+
+📌 This matches the left side of email
+👉 john.doe in john.doe@example.com
+
+4️⃣ @ — literal at symbol
+@
+
+
+Exactly one @ must exist.
+
+So:
+
+❌ johnexample.com
+
+❌ john@@example.com
+
+✅ john@example.com
+
+5️⃣ [^@\s]+ — domain name part
+
+Same rule again:
+
+[^@\s]+
+
+
+Matches:
+
+gmail
+
+example
+
+my-company
+
+Blocks:
+
+spaces
+
+another @
+
+📌 This is the domain name part.
+
+6️⃣ \. — literal dot
+\.
+
+
+Why escape it?
+
+. alone = “any character”
+
+\. = actual dot
+
+So:
+
+❌ gmailcom
+
+✅ gmail.com
+
+7️⃣ [^@\s]+ — top-level domain
+
+Again:
+
+[^@\s]+
+
+
+Matches:
+
+com
+
+co.in
+
+org
+
+Blocks:
+
+spaces
+
+@
+
+📌 This is the TLD part.
+
+8️⃣ \z — end of string
+\z
+
+
+Means:
+
+The string must end here
+
+So:
+
+❌ test@gmail.com
+
+❌ test@gmail.com.extra
+
+✅ test@gmail.com
+
+9️⃣ Full meaning in one sentence (INTERVIEW PERFECT)
+
+“The string must start with one or more non-space, non-@ characters, followed by exactly one @, then one or more non-space, non-@ characters, a dot, one or more non-space, non-@ characters, and nothing else.”
+
+🔟 Quick test examples
+
+| Email                | Match? | Why            |
+| -------------------- | ------ | -------------- |
+| `a@b.com`            | ✅      | Minimal valid  |
+| `john.doe@gmail.com` | ✅      | Allowed dots   |
+| `john doe@gmail.com` | ❌      | Space          |
+| `john@@gmail.com`    | ❌      | Double @       |
+| `john@gmail`         | ❌      | Missing dot    |
+| `john@gmail.com `    | ❌      | Trailing space |
+
+
+⚠️ Important Rails note (say this in interviews)
+
+“This regex validates format only.
+It doesn’t guarantee the email exists or can receive mail.”
+
+Rails best practice:
+
+Regex → basic format
+
+Confirmation → email verification link

@@ -1,0 +1,75 @@
+2️⃣ Mock
+Definition
+
+A mock is used to set expectations on a method:
+
+"I expect this method to be called with these arguments, and maybe return a value."
+
+Mocks are more strict than stubs.
+
+They test interaction as well as behavior.
+
+Example
+class User
+  def send_email
+    # sends email
+  end
+end
+
+RSpec.describe User do
+  it "expects send_email to be called" do
+    user = User.new
+    expect(user).to receive(:send_email)
+
+    user.send_email  # must call it
+  end
+end
+
+
+✅ Output: test passes
+
+If user.send_email isn’t called, the test fails
+
+Key points about mocks
+
+Used to verify interactions
+
+Can also stub return values at the same time:
+
+expect(user).to receive(:admin?).and_return(true)
+
+
+
+
+Stub vs Mock — Quick Comparison
+
+| Feature           | Stub                                            | Mock                            |
+| ----------------- | ----------------------------------------------- | ------------------------------- |
+| Purpose           | Provide fake return values                      | Expect method calls             |
+| Checks calls      | ❌ usually                                       | ✅                               |
+| Verifies behavior | ❌                                               | ✅                               |
+| Example           | `allow(user).to receive(:foo).and_return(:bar)` | `expect(user).to receive(:foo)` |
+
+
+
+🔹 Real-world Rails example
+
+RSpec.describe OrdersController do
+  it "sends email after order" do
+    order = Order.new
+    mailer = double("Mailer")
+    allow(OrderMailer).to receive(:confirmation_email).and_return(mailer)
+    expect(mailer).to receive(:deliver_now)
+
+    order.complete!
+  end
+end
+
+
+allow → stub method (confirmation_email)
+
+expect(...).to receive → mock interaction (deliver_now called)
+
+🧠 Interview one-liner
+
+Stub replaces a method’s return value, Mock sets an expectation that a method is called (and optionally returns a value).

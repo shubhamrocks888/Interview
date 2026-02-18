@@ -1,0 +1,19 @@
+ def longest_common_prefix(arr)
+  return "" if arr.empty?
+
+  reference = arr.first
+  result = ""
+
+  (0...reference.length).each do |i|
+    (1...arr.length).each do |j|
+      return result if arr[j].nil? || arr[j][i] != reference[i]
+    end
+    result << reference[i]
+  end
+
+  result
+end
+
+p longest_common_prefix(["flower", "flow", "flight", "flock"])  # => "fl"
+p longest_common_prefix(["dog", "racecar", "car"])              # => ""
+p longest_common_prefix(["interview"])                          # => "interview"

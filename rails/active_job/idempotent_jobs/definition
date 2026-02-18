@@ -1,0 +1,218 @@
+1️⃣ What is an idempotent job?
+Simple definition
+
+An idempotent job can be executed multiple times and still produce the same final result.
+
+Run it:
+
+once ✅
+
+twice ✅
+
+ten times ✅
+
+👉 End state is the same.
+
+Non-idempotent (BAD ❌)
+def perform(user_id)
+  user = User.find(user_id)
+  user.update!(balance: user.balance + 100)
+end
+
+
+If job runs twice:
+
++100
++100  ❌ WRONG
+
+Idempotent (GOOD ✅)
+def perform(user_id, job_id)
+  return if Transaction.exists?(job_id: job_id)
+
+  Transaction.create!(
+    job_id: job_id,
+    user_id: user_id,
+    amount: 100
+  )
+end
+
+
+Run it twice:
+
++100
++0
+
+2️⃣ Why idempotency is REQUIRED (not optional)
+Because Sidekiq guarantees:
+
+At-least-once execution
+
+This means a job can run more than once.
+
+Real reasons jobs run twice
+
+Sidekiq process crashes mid-job
+
+Redis goes down after DB commit
+
+Worker timeout
+
+Manual retry from UI
+
+Deploy restart
+
+Network failure
+
+Duplicate enqueue
+
+None of these are bugs. They are normal.
+
+3️⃣ Where duplication happens (important)
+
+Even this is possible:
+
+User.create!(...)
+# DB commit succeeded
+
+# 💥 Sidekiq crashes here
+
+# job retried
+User.create!(...)  ❌ duplicate
+
+
+Sidekiq has no way to know DB already committed.
+
+4️⃣ Core rule to remember forever
+
+Sidekiq retries the whole job, not “from where it failed”.
+
+So your job must be safe to re-run from line 1.
+
+5️⃣ How to make jobs idempotent (patterns)
+
+Now the practical part 👇
+
+✅ Pattern 1: Database uniqueness constraint (BEST)
+Step 1 — Add unique key
+add_index :transactions, :job_id, unique: true
+
+Step 2 — Code
+def perform(user_id, job_id)
+  Transaction.create!(
+    job_id: job_id,
+    user_id: user_id,
+    amount: 100
+  )
+rescue ActiveRecord::RecordNotUnique
+  # already processed → safe to ignore
+end
+
+
+✔ Most reliable
+✔ Works across processes
+✔ Survives crashes
+
+✅ Pattern 2: Find-or-create
+def perform(user_id, job_id)
+  Transaction.find_or_create_by!(job_id: job_id) do |t|
+    t.user_id = user_id
+    t.amount = 100
+  end
+end
+
+
+⚠️ Requires DB unique index to be truly safe.
+
+✅ Pattern 3: State machine (status flag)
+def perform(order_id)
+  order = Order.find(order_id)
+  return if order.paid?
+
+  order.update!(status: :paid)
+end
+
+
+Idempotent because:
+
+second run sees paid
+
+exits early
+
+✅ Pattern 4: Upserts
+Transaction.upsert(
+  { job_id: job_id, user_id: user_id, amount: 100 },
+  unique_by: :job_id
+)
+
+
+Atomic and clean.
+
+✅ Pattern 5: External idempotency keys (APIs)
+
+When calling external services:
+
+Stripe::Charge.create(
+  amount: 100,
+  idempotency_key: job_id
+)
+
+
+Same key → same result.
+
+❌ Pattern that looks safe but isn’t
+return if Transaction.exists?(job_id: job_id)
+Transaction.create!(...)
+
+
+❌ Race condition without unique index.
+
+6️⃣ Where to get job_id from?
+
+Sidekiq gives you:
+
+jid
+
+
+Example:
+
+def perform(user_id)
+  jid # unique per job execution
+end
+
+
+Or pass a business-level id:
+
+order_id
+
+payment_id
+
+request_id
+
+7️⃣ When idempotency is NOT needed (rare)
+
+Logging
+
+Metrics
+
+Cache warming
+
+Email re-send (sometimes acceptable)
+
+Everything else?
+👉 Make it idempotent.
+
+8️⃣ Interview-ready answer (perfect)
+
+An idempotent job is one that can be executed multiple times without changing the final outcome. This is necessary because Sidekiq provides at-least-once execution and jobs may run more than once due to crashes or retries. We make jobs idempotent using database constraints, idempotency keys, state checks, or upserts so duplicate execution doesn’t cause duplicate side effects.
+
+Mental checklist before writing any Sidekiq job
+
+Ask yourself:
+
+“What happens if this runs twice?”
+
+“What happens if it crashes after DB commit?”
+
+“Can I safely retry this job 10 times?”
+
+If answers scare you → add idempotency 😄-

@@ -1,0 +1,211 @@
+1️⃣ Temporary data (Rails.cache)
+	Definition
+
+	Derived, reproducible, disposable data
+
+	Data that can be recomputed safely if it disappears.
+
+	If cache is wiped → app still works.
+
+	Examples (very important)
+	✅ Query results
+	Rails.cache.fetch("users_count") { User.count }
+
+
+	If deleted → DB recomputes → OK.
+
+	✅ View fragments
+		<% cache @user do %>
+		  <%= render @user %>
+		<% end %>
+
+
+		Lost cache → page re-renders → OK.
+
+	✅ API responses
+		Rails.cache.fetch("github_repos", expires_in: 10.minutes) do
+		  Github.fetch_repos
+		end
+
+
+		API is called again → OK.
+
+	✅ Computed values
+		Rails.cache.fetch("leaderboard") { expensive_sorting }
+
+	Key rule
+
+		Temporary data can always be regenerated from source of truth
+		(DB, API, computation)
+
+
+2️⃣ Permanent data (Redis directly)
+	Definition
+
+	Authoritative data stored because it must survive cache clears
+
+	If Redis data is lost → business breaks.
+
+	Examples
+	✅ Counters that matter
+	redis.incr("video:123:views")
+
+
+	If lost → view count wrong ❌
+
+	✅ Rate limiting state
+	redis.incr("user:1:requests")
+
+
+	Lost → rate limits reset ❌
+
+	✅ Locks
+	SET resource_lock NX EX 30
+
+
+	Lost → double execution ❌
+
+	✅ Job deduplication
+	redis.set("job:123", 1, nx: true, ex: 1.hour)
+
+	Key rule
+
+		Redis is the source of truth here.
+
+3️⃣ Business logic (Redis directly)
+	Definition
+
+	When Redis participates in decision-making
+
+	Redis data decides what the app does.
+
+	Examples (very interview-heavy)
+	✅ Rate limiting
+	if redis.incr("user:1:reqs") > 100
+	  block_request
+	end
+
+
+	Redis controls behavior.
+
+	✅ Feature flags
+	redis.get("feature:new_checkout") == "on"
+
+
+	✅ Distributed locks
+	unless redis.set("lock:invoice:5", 1, nx: true, ex: 30)
+	  raise "Already processing"
+	end
+
+	✅ Queues / PubSub
+	redis.lpush("emails", payload)
+
+Key rule
+
+If Redis data affects control flow → business logic
+
+
+
+🚫 Why NOT use Rails.cache for permanent / business data?
+
+	Because Rails.cache assumes:
+
+	Data can disappear
+	Data can be evicted
+	Data can expire
+	Data can be overwritten
+
+	Because Rails.cache assumes data is disposable:
+
+		Keys can expire
+		Keys can be evicted
+		Keys can be deleted on deploy
+		Cache clears are normal
+		Rails does not guarantee durability.
+
+	Bad example ❌
+
+	Rails.cache.write("user_balance", 500)
+	Cache eviction → 💥 wrong balance
+
+
+
+	Final comparison table
+
+	| Type              | Rails.cache | Redis directly           |
+	| ----------------- | ----------- | ------------------------ |
+	| Temporary data    | ✅ Yes       | ⚠️ Possible but overkill |
+	| Recomputable      | ✅ Yes       | ❌ Usually no             |
+	| Business decision | ❌ No        | ✅ Yes                    |
+	| Source of truth   | ❌ No        | ✅ Yes                    |
+	| Eviction-safe     | ✅           | ❌                        |
+
+
+Ultra-clear one-liner (memorize)
+
+Rails.cache is for temporary, reproducible data, while Redis should be used directly when the data is permanent or part of business logic that must not be lost.
+
+
+The correct distinction
+
+Both Rails.cache keys and Redis keys CAN be deleted or missing.
+The difference is expectation, guarantees, and how you design around it.
+
+
+
+
+1️⃣ Rails.cache keys
+
+	Rails.cache is designed with the assumption that keys may disappear at any time.
+
+	Why keys can vanish:
+
+	TTL (expires_in)
+
+	LRU/LFU eviction
+
+	Rails.cache.clear
+
+	App deploy / restart
+
+	Store change
+
+	Memory pressure
+
+	📌 Rails.cache treats this as NORMAL behavior
+
+	That’s why:
+
+	Rails.cache.fetch("key") { recompute }
+
+	Missing key → recompute → OK
+
+
+2️⃣ Redis keys (used directly)
+
+	Redis keys can also disappear, but:
+
+	You design your system assuming they must not
+
+	You usually:
+
+	Control TTL carefully
+
+	Use persistence (AOF/RDB)
+
+	Monitor memory
+
+	Treat Redis as authoritative
+
+	📌 Missing Redis key = BUG / incident
+
+
+This is the REAL difference (memorize this)
+
+| Aspect                  | Rails.cache | Redis directly   |
+| ----------------------- | ----------- | ---------------- |
+| Keys can disappear      | ✅ Yes       | ✅ Yes            |
+| Disappearance expected  | ✅ Yes       | ❌ No             |
+| App handles miss safely | ✅ Yes       | ❌ Usually breaks |
+| Source of truth         | ❌ No        | ✅ Yes            |
+| Safe to evict           | ✅ Yes       | ❌ No             |

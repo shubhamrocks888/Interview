@@ -1,0 +1,129 @@
+What is a Load Balancer? (1 line)
+
+A load balancer distributes incoming traffic across multiple servers to improve availability and scalability.
+
+✅ Pros of Load Balancer
+
+1️⃣ High Availability
+
+	If one server goes down, traffic is sent to others
+
+	No single point of failure
+
+	2️⃣ Scalability
+
+		Can add/remove servers without changing client behavior
+
+		Works well with Auto Scaling
+
+	3️⃣ Better Performance
+
+		Distributes load evenly
+
+		Prevents any one server from being overloaded
+
+	4️⃣ Health Checks
+
+		Automatically stops sending traffic to unhealthy servers
+
+	5️⃣ Security
+
+		Servers are not exposed directly to the internet
+
+		SSL termination at the load balancer
+
+❌ Cons of Load Balancer
+
+1️⃣ Additional Cost
+
+Load balancers are not free
+
+2️⃣ Extra Complexity
+
+More components to configure and manage
+
+3️⃣ Single Point if Misconfigured
+
+If not set up across multiple AZs, it can become a bottleneck
+
+4️⃣ Latency (Small)
+
+One extra network hop (usually negligible)
+
+5️⃣ Session Handling Issues
+
+Sticky sessions can reduce scalability if used incorrectly
+
+⚖️ When should you use a Load Balancer?
+
+✔ When:
+
+Multiple servers
+
+High availability required
+
+Traffic is unpredictable
+
+❌ Not necessary when:
+
+Single internal tool
+
+Low traffic, non-critical app
+
+🎯 Interview-Perfect Answer (Memorize)
+
+“A load balancer improves availability and scalability by distributing traffic across multiple servers and routing requests only to healthy instances. The trade-offs are additional cost and system complexity.”
+
+🔥 One-liner follow-up (if asked)
+
+“For production systems, the benefits of a load balancer usually outweigh the downsides.”
+
+If you want next (still simple):
+
+Auto Scaling – pros & cons
+
+EC2 vs ECS
+
+RDS Multi-AZ – pros & cons
+
+Just tell me 👍
+
+A load balancer improves availability and scalability
+
+#### what does availability means here?
+
+Perfect, let’s make “availability” crystal clear — this comes up almost every time.
+
+🔹 Availability (in this context)
+
+Availability means how much of the time your application is up and accessible to users.
+
+Usually measured as uptime %
+
+Example: 99.99% availability → ~52 minutes of downtime per year
+
+In the context of a load balancer:
+
+EC2 instances may fail or go down for maintenance
+
+Load balancer routes traffic to healthy instances
+
+Users can still access the app → high availability
+
+Simple analogy
+
+Without LB: single server → server goes down → app is down → users can’t access
+
+With LB: multiple servers → one fails → LB sends users to others → app stays up
+
+Key point for interview:
+
+“Availability is about keeping the application reachable for users, even if some servers fail.”
+
+💡 Golden interview line you can memorize:
+
+“In AWS, a load balancer improves availability by routing traffic only to healthy instances across multiple servers and AZs, ensuring the app stays accessible even if some servers fail.”
+
+If you want, I can next explain scalability in one simple line, so you can pair availability vs scalability for your answer tomorrow.
+
+Do you want me to do that?

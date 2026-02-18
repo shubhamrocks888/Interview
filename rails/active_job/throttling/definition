@@ -1,0 +1,168 @@
+1️⃣ What is throttling? (plain English)
+
+Throttling = controlling how fast something is allowed to happen
+
+In software:
+
+Limit how many requests / actions a user or system can do within a given time.
+
+Think:
+
+“Slow down, don’t overload me.”
+
+2️⃣ Why do we need throttling?
+
+Without throttling:
+
+A single user can spam your API
+
+Bots can DDoS your app
+
+Database gets overloaded
+
+CPU / memory spikes
+
+Legit users suffer 😬
+
+With throttling:
+
+Fair usage
+
+System stability
+
+Protection from abuse
+
+3️⃣ Real-life analogy 🛣️
+
+Highway toll booth:
+
+Cars allowed X per minute
+
+Extra cars must wait
+
+That’s throttling.
+
+4️⃣ Throttling vs Rate Limiting (interview confusion)
+Rate limiting
+
+Hard cap
+
+100 requests / minute
+101st request → ❌ blocked
+
+Throttling
+
+Gradual slowing
+
+1–50 req → fast
+51–80 req → slower
+81+ req → very slow / blocked
+
+
+📌 Many people use the terms interchangeably — that’s okay in interviews unless they ask deeply.
+
+5️⃣ Common places where throttling is used
+1️⃣ APIs
+POST /login → max 5 per minute
+GET /search → max 100 per minute
+
+2️⃣ Authentication
+
+Login attempts
+
+OTP resend
+
+Password reset emails
+
+3️⃣ Background jobs
+
+Sending emails
+
+Webhooks
+
+Third-party API calls
+
+6️⃣ Throttling in Rails (practical)
+6.1 Rack::Attack (very common)
+class Rack::Attack
+  throttle('req/ip', limit: 300, period: 5.minutes) do |req|
+    req.ip
+  end
+end
+
+
+Meaning:
+
+Max 300 requests
+
+Per IP
+
+Every 5 minutes
+
+Extra requests → 429 Too Many Requests
+
+6.2 Login throttling example
+throttle('logins/ip', limit: 5, period: 1.minute) do |req|
+  req.ip if req.path == '/login'
+end
+
+
+Stops brute-force attacks 🔒
+
+7️⃣ Throttling using Redis (conceptual)
+
+Very common interview answer:
+
+key = "user:123:req_count"
+INCR key
+EXPIRE key 60
+
+
+If count > limit → throttle
+
+Why Redis?
+
+Fast
+
+Atomic
+
+Shared across servers
+
+8️⃣ Throttling vs Debouncing (frontend question)
+Concept	Meaning
+Throttling	Allow once every X time
+Debouncing	Run only after activity stops
+
+Example:
+
+Scroll → throttle
+
+Search input → debounce
+
+9️⃣ Interview-ready definition 🎯
+
+“Throttling is a technique used to control the rate of requests or actions over time to protect system resources and prevent abuse.”
+
+🔟 Bonus: what happens when throttled?
+
+Usually:
+
+HTTP 429 status
+
+Retry-After header
+
+Delayed execution
+
+1️⃣1️⃣ Common interview follow-ups
+
+Be ready to answer:
+
+Why Redis is preferred?
+
+What happens in multi-server setup?
+
+Difference between throttling and rate limiting?
+
+What if Redis goes down?
+
+🔥 You already touched this earlier with Sidekiq + Redis — perfect connection.

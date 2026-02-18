@@ -1,0 +1,21 @@
+✅ Basic Definition
+
+React is a JavaScript library for building user interfaces (UI) in a declarative and component-based way.
+
+
+✅ Basic Definition of Props
+
+Props (short for “properties”) are inputs to a React component that allow data to be passed from a parent component to a child component.
+
+
+🆚 State vs Props
+
+| Feature        | Props                                          | State                                                    |
+| -------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| **Definition** | Inputs to a component, passed from parent      | Internal data of a component                             |
+| **Ownership**  | Owned by parent component                      | Owned by the component itself                            |
+| **Mutability** | **Read-only** inside child                     | **Mutable**, can be updated with `setState` / `useState` |
+| **Purpose**    | Customize or configure child component         | Store component’s dynamic data                           |
+| **Updates**    | Changes when parent re-renders with new values | Changes with `setState` / `useState`, triggers re-render |
+| **Usage**      | `<Child name="Shubham" />`                     | `const [count, setCount] = useState(0)`                  |
+| **Example**    | Parent → Child communication                   | Component’s own interactive behavior                     |

@@ -1,0 +1,99 @@
+Your requirement (clearly stated)
+
+Global rate limit
+👉 Max 5 jobs per 10 minutes
+
+Per-user limit
+👉 Each user can run only 1 job at a time
+
+That means:
+
+Even if 100 users request reports,
+
+Only 5 reports total can start in 10 minutes,
+
+And no user can run two reports concurrently.
+
+The correct solution: combine TWO limiters
+1️⃣ Job-level rate limiter (global)
+sidekiq_options rate: { limit: 5, period: 10.minutes }
+
+
+This controls how often the job executes globally.
+
+2️⃣ Per-user concurrency limiter
+def perform(user_id)
+  user_limiter = Sidekiq::Limiter.concurrent(
+    "reports:user:#{user_id}",
+    1
+  )
+
+  user_limiter.within_limit do
+    generate_report(user_id)
+  end
+end
+
+
+This ensures:
+
+User 42 → max 1 running report
+
+User 43 → independent
+
+Final combined job (CORRECT)
+class ReportGenerationJob
+  include Sidekiq::Worker
+
+  sidekiq_options rate: { limit: 5, period: 10.minutes }
+
+  def perform(user_id)
+    user_limiter = Sidekiq::Limiter.concurrent(
+      "reports:user:#{user_id}",
+      1
+    )
+
+    user_limiter.within_limit do
+      generate_report(user_id)
+    end
+  end
+end
+
+Execution timeline (example)
+Requests come in
+
+User 1 → request
+
+User 2 → request
+
+User 3 → request
+
+User 4 → request
+
+User 5 → request
+
+User 6 → request ❌ (rate limited, delayed)
+
+What happens
+
+First 5 jobs allowed (global rate)
+
+6th job delayed to next window
+
+Per user: only 1 job runs at a time
+
+Interview-ready explanation 🔥
+
+We combine a job-level rate limiter to cap global throughput and a keyed concurrency limiter to restrict per-user execution. This allows us to protect the system globally while maintaining fairness at the user level.
+
+Common follow-up question (be ready)
+
+Q: Why not use only per-user limiter?
+A: Because total throughput could still overload the system if many users submit jobs simultaneously.
+
+Q: Why not only rate limiter?
+A: Because a single user could monopolize execution slots.
+
+One-line memory hook
+
+Rate limiter = how often
+Concurrency limiter = how many at once

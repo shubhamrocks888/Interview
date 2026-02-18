@@ -1,0 +1,216 @@
+🎥 Admin uploads a video — step by step (no gaps)
+🟢 STEP 0: Context (say this first)
+
+“Videos are large and expensive to process, so the upload, processing, storage, and delivery are fully decoupled from Rails request lifecycle.”
+
+This sets the tone.
+
+🟢 STEP 1: Admin opens “Create Video Chapter”
+
+Admin selects:
+
+Course
+
+Chapter type = video
+
+Title, description
+
+👉 No video uploaded yet
+
+Rails creates a chapter draft:
+
+chapters
+--------
+id = 101
+course_id = 12
+chapter_type = video
+position = 3
+status = draft
+
+🟢 STEP 2: Admin clicks “Upload Video”
+
+Frontend calls Rails:
+
+POST /videos/presign
+
+
+Rails does:
+
+Authenticates admin
+
+Authorizes action (VideoPolicy#create?)
+
+Generates pre-signed upload URL
+
+Rails response:
+
+{
+  "upload_url": "https://s3/...signed...",
+  "storage_key": "videos/2026/02/uuid.mp4"
+}
+
+
+👉 Rails is still not handling file data
+
+🟢 STEP 3: Direct upload to object storage
+
+Browser uploads video directly to S3 / GCS:
+
+Browser → Object Storage
+
+
+Chunked upload
+
+Retry handled by frontend
+
+Rails is out of the picture
+
+Why architect cares:
+
+Prevents server memory exhaustion
+
+Scales horizontally
+
+🟢 STEP 4: Create video record in DB
+
+Once upload completes, frontend notifies Rails:
+
+POST /videos
+
+
+Rails creates:
+
+videos
+------
+id = 55
+chapter_id = 101
+storage_key = "videos/2026/02/uuid.mp4"
+status = uploaded
+
+
+Chapter now points to video:
+
+chapters.content_id = 55
+chapters.content_type = "Video"
+
+🟢 STEP 5: Storage event triggers processing
+
+Object storage emits event:
+
+ObjectCreated → Queue / EventBridge
+
+
+Background job starts:
+
+VideoTranscodeJob.perform_later(video_id)
+
+🟢 STEP 6: Video processing (async)
+
+Background job:
+
+Downloads raw video
+
+Extracts metadata:
+
+Duration
+
+Resolution
+
+Codec
+
+Transcodes to streaming format:
+
+HLS segments
+
+Multiple bitrates
+
+Updates DB:
+
+videos
+------
+status = processing
+duration_seconds = 1800
+
+🟢 STEP 7: Processing completes
+
+After success:
+
+videos
+------
+status = ready
+playback_manifest = ".../index.m3u8"
+thumbnail_url = ".../thumb.jpg"
+
+
+If failed:
+
+status = failed
+error_message = "codec not supported"
+
+
+Admin sees UI feedback.
+
+🟢 STEP 8: Video published
+
+Admin clicks Publish Course (or chapter):
+
+chapters.status = published
+
+
+Only now learners can access it.
+
+Architect phrase:
+
+“Upload and publish are separate steps to avoid exposing partially processed content.”
+
+🟢 STEP 9: Learner clicks play
+
+Rails authenticates user
+
+Authorizes:
+
+Enrolled?
+
+Chapter unlocked?
+
+Generates signed playback URL
+
+Rails → Signed CDN URL
+
+
+Browser streams from CDN.
+
+🟢 STEP 10: Progress tracking
+
+While video plays:
+
+Frontend sends heartbeat every few seconds
+
+Rails updates:
+
+video_progresses
+----------------
+user_id
+video_id
+last_watched_second
+percentage
+
+🟢 STEP 11: Completion logic
+
+When:
+
+percentage >= 90%
+
+Rails:
+
+Marks chapter completed
+
+Updates course progress
+
+Rolls up program progress
+
+🧠 Final architect-level wrap-up (memorize this)
+
+“The admin upload flow is fully asynchronous and storage-driven.
+Rails handles authentication, authorization, and metadata, while object storage and background workers handle heavy video operations.
+This keeps the system scalable, fault-tolerant, and secure.”

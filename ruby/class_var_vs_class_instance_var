@@ -1,0 +1,144 @@
+Let’s clearly separate:
+
+Class Variable → @@variable
+
+Class Instance Variable → @variable inside class
+
+They look similar but behave VERY differently.
+
+🔹 1️⃣ Class Variable (@@variable)
+✅ Defined with @@
+class BankAccount
+  @@count = 0
+
+  def initialize
+    @@count += 1
+  end
+
+  def self.count
+    @@count
+  end
+end
+
+✔ Shared across:
+
+The class
+
+All instances
+
+All subclasses ❗ (important)
+
+🔥 Problem: Shared Across Inheritance
+class Parent
+  @@value = 10
+
+  def self.value
+    @@value
+  end
+end
+
+class Child < Parent
+end
+
+Child.value   # => 10
+
+
+Now if Child changes it:
+
+class Child
+  @@value = 20
+end
+
+Parent.value  # => 20 😳
+
+
+🚨 Parent and Child share the SAME variable.
+
+This is why class variables are considered dangerous in Ruby.
+
+🔹 2️⃣ Class Instance Variable (@variable in class body)
+
+Defined like this:
+
+class BankAccount
+  @interest_rate = 5
+
+  def self.interest_rate
+    @interest_rate
+  end
+end
+
+
+Notice:
+
+No @@
+
+Just @
+
+Defined inside class body
+
+Accessed using class methods
+
+✔ Behavior
+class Parent
+  @value = 10
+
+  def self.value
+    @value
+  end
+end
+
+class Child < Parent
+end
+
+Parent.value  # => 10
+Child.value   # => nil
+
+
+✅ NOT shared with subclasses.
+
+Each class has its own copy.
+
+🔥 Key Differences
+
+| Feature                  | Class Variable (`@@`) | Class Instance Variable (`@`) |
+| ------------------------ | --------------------- | ----------------------------- |
+| Syntax                   | `@@var`               | `@var` inside class           |
+| Shared across instances  | ✅ Yes                 | ❌ No                          |
+| Shared across subclasses | ✅ Yes                 | ❌ No                          |
+| Safe in inheritance?     | ❌ No                  | ✅ Yes                         |
+| Used in Rails?           | ❌ Rarely              | ✅ Yes                         |
+
+🔥 Why Rails Avoids @@
+
+Rails uses class instance variables everywhere.
+
+Example (conceptually):
+
+class ApplicationRecord < ActiveRecord::Base
+  @abstract_class = true
+end
+
+
+Each model gets its own configuration.
+
+If Rails used @@, changing one model would affect all others 😬
+
+🔥 Visual Memory Trick
+
+Think of it like this:
+
+@@ → FAMILY SHARED BANK ACCOUNT
+
+Everyone in inheritance tree uses same money.
+
+@ (class instance variable) → PERSONAL BANK ACCOUNT
+
+Each class has its own.
+
+🧠 When Should You Use Which?
+
+Almost always:
+
+👉 Use class instance variables
+👉 Avoid class variables unless you REALLY understand the inheritance consequences.

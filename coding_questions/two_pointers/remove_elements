@@ -1,0 +1,150 @@
+nums = [3,2,2,3], val = 3
+Output: 2
+nums = [2,2,?,?]
+
+
+Remove Element — what the question is really asking
+
+Typical wording:
+
+“Given an array nums and a value val, remove all instances of val in place and return the number of elements remaining.”
+
+This sounds simple, but again — the wording is doing a lot of work.
+
+Key constraints (read these carefully)
+1️⃣ Remove in place
+
+❌ Do NOT create a new array
+
+❌ Do NOT use extra memory
+
+✅ Modify the given array
+
+You are allowed to overwrite elements.
+
+2️⃣ Order does NOT matter (this is huge)
+
+Most versions explicitly say:
+
+“The order of elements can be changed.”
+
+This means:
+
+You don’t need to preserve original ordering
+
+You can move elements freely
+
+🧠 This gives you multiple valid strategies.
+
+3️⃣ Return the new length, not the array
+
+Just like Remove Duplicates:
+
+Only the first k elements matter
+
+Everything after index k - 1 is irrelevant
+
+Example:
+
+nums = [3,2,2,3], val = 3
+Output: 2
+nums = [2,2,?,?]
+
+
+Those ? values don’t matter.
+
+How this differs from Remove Duplicates
+Remove Duplicates	Remove Element
+Array is sorted	Array may be unsorted
+Remove repeated values	Remove a specific value
+Keep one copy	Remove all copies
+Order matters	Order usually doesn’t
+
+This difference changes pointer strategy.
+
+Mental model (important)
+
+Think of it as:
+
+“Keep all elements that are NOT equal to val, and overwrite the array from the front.”
+
+You are filtering in place.
+
+Two common pointer strategies (conceptual)
+🔹 Strategy 1: Slow/Fast pointers (order preserved)
+
+One pointer scans
+
+One pointer writes non-val elements
+
+Used when:
+
+Order must be preserved (or you choose to)
+
+🔹 Strategy 2: Swap with end (order not preserved)
+
+One pointer from start
+
+One pointer from end
+
+When val found → swap with last element
+
+Shrink array
+
+Used when:
+
+Order doesn’t matter
+
+You want fewer writes
+
+Interviewers love when you mention both.
+
+What interviewers are testing
+
+This question checks if you:
+
+Read constraints carefully
+
+Understand in-place mutation
+
+Can filter without extra memory
+
+Choose the right pointer pattern
+
+Don’t over-engineer
+
+It’s a discipline + reading comprehension test.
+
+Common mistakes
+
+❌ Creating a new array
+
+❌ Using delete or reject
+
+❌ Returning the array instead of length
+
+❌ Forgetting that order doesn’t matter
+
+Interview-ready explanation (say this)
+
+“I iterate through the array and overwrite elements that are not equal to the target value, returning the count of remaining elements.”
+
+That explanation is clean and correct 🔥
+
+Why interviewers like this question
+
+########
+
+
+def remove_element(nums, val)
+  write = 0
+
+  nums.each do |num|
+    if num != val
+      nums[write] = num
+      write += 1
+    end
+  end
+
+  write
+end

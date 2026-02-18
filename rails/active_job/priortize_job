@@ -1,0 +1,282 @@
+1️⃣ Are critical, mailers, default, low built-in Sidekiq queues?
+
+👉 NO
+
+Sidekiq does not ship with predefined queues like this.
+
+These are just names you chose.
+
+Sidekiq treats queue names as plain strings.
+
+sidekiq -q anything -q foo -q bar
+
+
+All are equally valid.
+
+2️⃣ Then why do we always see default, mailers, critical?
+
+Because of Rails conventions, not Sidekiq defaults.
+
+Rails default
+
+If you don’t specify:
+
+queue_as :something
+
+
+Rails uses:
+
+queue_as :default
+
+
+That’s why default feels “special” — but it’s Rails, not Sidekiq.
+
+3️⃣ What queues DOES Sidekiq create by default?
+✅ Only ONE internal queue exists:
+default
+
+
+And even this is created only when a job is pushed there.
+
+Sidekiq itself:
+
+❌ does not pre-create queues
+
+❌ does not enforce queue names
+
+❌ does not define priorities
+
+Queues appear in Redis on demand.
+
+4️⃣ How does Sidekiq interpret this command?
+bundle exec sidekiq -q critical -q mailers -q default -q low
+
+Means:
+
+“This Sidekiq process will poll these queues in this order.”
+
+Priority is left → right.
+
+Polling order:
+
+critical
+
+mailers
+
+default
+
+low
+
+⚠️ If critical always has jobs, others may starve.
+
+5️⃣ Priority weights (important detail)
+
+You can assign weights:
+
+sidekiq -q critical,5 -q default,2 -q low,1
+
+
+Meaning:
+
+For every 5 critical jobs
+
+Process 2 default
+
+Process 1 low
+
+This is not default behavior, it’s your configuration.
+
+6️⃣ Where do these queue names usually come from?
+a) Active Job
+queue_as :mailers
+
+b) Rails generators
+
+Mailer jobs often use:
+
+queue_as :mailers
+
+c) Team conventions
+
+Most teams agree on:
+
+critical
+default
+mailers
+low
+
+
+But they are 100% optional.
+
+7️⃣ What happens if a job goes to a queue Sidekiq is NOT listening to?
+
+Example:
+
+queue_as :reports
+
+
+But Sidekiq started as:
+
+sidekiq -q default
+
+Result:
+
+❌ Job stays in Redis forever
+❌ Never executed
+❌ No error shown
+
+This is a silent failure → very dangerous.
+
+8️⃣ Sidekiq Web UI proof
+
+In /sidekiq dashboard:
+
+You’ll see queues only after jobs are pushed
+
+Queue names match exactly what you used
+
+No magic names appear.
+
+9️⃣ Interview-level clarification (very important)
+
+❓ “Are Sidekiq queues predefined?”
+✅ Answer: No, Sidekiq queues are user-defined; only default is commonly used by convention via Rails.
+
+❓ “Does Sidekiq have modes?”
+✅ Answer: No, Sidekiq has queues, not modes.
+
+🔟 One-line truth to remember
+
+Sidekiq does not define queues — your application does.
+
+
+
+###########
+
+
+✅ CORRECT meaning (simple)
+sidekiq -q critical,5 -q default,2 -q low,1
+
+
+Means:
+
+When Sidekiq chooses the next job to run, it will pick jobs from queues in this ratio.
+
+It affects job selection frequency, not parallel execution.
+
+1️⃣ Let’s build the right mental model
+
+Sidekiq works like this:
+
+Worker thread finishes a job
+
+Sidekiq asks:
+👉 “Which queue should I pull the next job from?”
+
+Weights influence that decision
+
+2️⃣ What does critical,5 really mean?
+
+Internally, Sidekiq expands queues like this:
+
+[critical, critical, critical, critical, critical,
+ default, default,
+ low]
+
+
+Then it:
+
+Randomly picks from this list
+
+Pulls a job from the chosen queue
+
+3️⃣ Example with numbers (very important)
+
+Assume:
+
+Each job takes ~1 second
+
+You have 1 Sidekiq process
+
+10 worker threads
+
+All queues are full
+
+Over time, Sidekiq will roughly execute:
+Queue	% of jobs processed
+critical	~62% (5/8)
+default	~25% (2/8)
+low	~13% (1/8)
+
+⚠️ This is probabilistic, not exact.
+
+4️⃣ Concurrency is a DIFFERENT concept
+Concurrency is controlled by:
+:concurrency: 10
+
+
+Or CLI:
+
+sidekiq -c 10
+
+Meaning:
+
+At most 10 jobs can run in parallel
+
+Queues and weights do NOT change this.
+
+5️⃣ Putting it all together (real scenario)
+Config:
+sidekiq -c 10 -q critical,5 -q default,2 -q low,1
+
+Reality:
+
+Up to 10 jobs running at once
+
+Most of them will be critical
+
+Some will be default
+
+Very few will be low
+
+NOT “5 critical at once”
+
+6️⃣ Timeline example (visual in words)
+
+Assume concurrency = 3
+Queues all have jobs
+
+Time 0s:
+Thread 1 → critical
+Thread 2 → critical
+Thread 3 → default
+
+Time 1s:
+Thread 1 → critical
+Thread 2 → low
+Thread 3 → critical
+
+
+This is statistical fairness, not fixed slots.
+
+7️⃣ What happens WITHOUT weights?
+sidekiq -q critical -q default -q low
+
+
+This becomes strict priority:
+
+Always try critical
+
+Only go to default if critical is empty
+
+low may starve forever ❌
+
+Weights help avoid starvation.
+
+8️⃣ Interview-grade explanation (memorize this)
+
+Queue weights in Sidekiq control how often jobs are pulled from each queue, not how many jobs run concurrently.
+
+9️⃣ One-line golden rule
+
+Concurrency controls “how many”, weights control “from where”.

@@ -1,0 +1,74 @@
+🔹 member routes
+👉 Used when the action works on a single record
+
+➡ Requires :id
+
+✅ Syntax
+resources :users do
+  member do
+    get :profile
+    patch :activate
+  end
+end
+
+✅ Routes Generated
+GET    /users/:id/profile   → users#profile
+PATCH  /users/:id/activate  → users#activate
+
+🧠 Key Point
+
+URL contains :id
+
+Acts on one user
+
+🔹 collection routes
+👉 Used when the action works on the entire collection
+
+➡ No :id
+
+✅ Syntax
+resources :users do
+  collection do
+    get :search
+    delete :bulk_delete
+  end
+end
+
+✅ Routes Generated
+GET     /users/search        → users#search
+DELETE  /users/bulk_delete   → users#bulk_delete
+
+🧠 Key Point
+
+URL does not include :id
+
+Acts on multiple or all records
+
+🔁 Shortcut Syntax (Very Common)
+Member
+resources :users do
+  get :profile, on: :member
+end
+
+Collection
+resources :users do
+  get :search, on: :collection
+end
+
+📊 Quick Comparison Table
+Feature	member	collection
+Includes :id	✅ Yes	❌ No
+Operates on	Single record	Entire collection
+Example URL	/users/1/profile	/users/search
+Typical use	Activate, Suspend	Search, Export
+🔥 Interview One-Liner
+
+"member routes operate on a single resource and include an ID, while collection routes operate on the entire resource collection and do not include an ID."
+
+⭐ Bonus Tip (Pro Level)
+
+If your custom action:
+
+Needs params[:id] → use member
+
+Does NOT need params[:id] → use collection
