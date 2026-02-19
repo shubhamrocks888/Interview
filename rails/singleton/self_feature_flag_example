@@ -1,0 +1,173 @@
+Let’s break down what a Feature Flag Manager is and why Singleton fits perfectly.
+
+🚩 What Is a Feature Flag?
+
+A feature flag (feature toggle) lets you:
+
+Enable/disable features without deploying
+
+Roll out features gradually
+
+Enable features for specific users
+
+Turn off broken features instantly
+
+Example:
+
+if FeatureFlagManager.instance.enabled?(:new_checkout)
+  show_new_checkout
+else
+  show_old_checkout
+end
+
+🧠 Why Not Just Use ENV or DB Directly?
+
+If you do this everywhere:
+
+FeatureFlag.find_by(name: "new_checkout").enabled?
+
+
+Problems:
+
+❌ DB hit on every request
+
+❌ Slower performance
+
+❌ Repeated logic everywhere
+
+We want:
+
+Load once
+
+Cache in memory
+
+Reuse globally
+
+That’s where Singleton comes in.
+
+🏗 Why Singleton Is Perfect Here
+
+Because:
+
+There should be only one flag manager
+
+It maintains shared in-memory state
+
+All threads should use the same configuration
+
+It represents application-level state
+
+This fits Singleton philosophy exactly.
+
+🧩 Example Implementation
+require 'singleton'
+
+class FeatureFlagManager
+  include Singleton
+
+  def initialize
+    load_flags
+  end
+
+  def enabled?(flag_name)
+    @flags[flag_name.to_sym] == true
+  end
+
+  def reload!
+    load_flags
+  end
+
+  private
+
+  def load_flags
+    # In real app: load from DB or Redis
+    @flags = {
+      new_checkout: true,
+      beta_dashboard: false
+    }
+  end
+end
+
+🔎 How It Works
+
+When app boots:
+
+FeatureFlagManager.instance
+
+
+Loads flags once
+
+Stores in memory (@flags)
+
+All requests use same object
+
+🚀 Usage in Rails Controller
+class OrdersController < ApplicationController
+  def create
+    if FeatureFlagManager.instance.enabled?(:new_checkout)
+      # new logic
+    else
+      # old logic
+    end
+  end
+end
+
+
+No DB calls per request. Fast ⚡
+
+🔥 Production-Level Version
+
+In real apps, flags may come from:
+
+Database
+
+Redis
+
+YAML config
+
+External service (like LaunchDarkly)
+
+Many companies use:
+
+LaunchDarkly
+
+Flipper
+
+Flipper is very popular in Rails apps.
+
+Example:
+
+Flipper.enabled?(:new_checkout)
+
+
+Internally, it behaves like a centralized manager.
+
+⚠️ Important Considerations
+
+If using Singleton for feature flags:
+
+1️⃣ Thread Safety
+
+If flags can be reloaded at runtime → use Mutex.
+
+2️⃣ Multi-Process Servers
+
+If using Puma with multiple workers:
+
+👉 Each process has its own Singleton instance.
+
+So in-memory cache is per process, not global across machines.
+
+For distributed apps → use Redis.
+
+🎯 Interview-Ready Answer
+
+If interviewer asks:
+
+“Explain Feature Flag Manager using Singleton.”
+
+You say:
+
+“A Feature Flag Manager is a centralized service that controls feature toggles across the application. Since flags represent global application state and should be loaded once and shared across requests, Singleton ensures only one instance manages the in-memory flag store. It improves performance by avoiding repeated DB calls and provides a clean interface like enabled?(flag_name).”
+
+That’s a strong answer.

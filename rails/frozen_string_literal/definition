@@ -1,0 +1,86 @@
+What is Frozen String Literal in Ruby?
+
+In Ruby, strings are mutable by default:
+
+str = "hello"
+str << " world"
+# => "hello world"
+
+
+But when you use:
+
+# frozen_string_literal: true
+
+
+at the top of a Ruby file, all string literals in that file become immutable (frozen).
+
+🔹 What does “frozen” mean?
+
+A frozen object cannot be modified.
+
+Example:
+
+# frozen_string_literal: true
+
+str = "hello"
+str << " world"
+# => raises FrozenError
+
+
+Ruby will raise:
+
+FrozenError: can't modify frozen String
+
+🔹 Why was this introduced?
+
+Mainly for:
+
+1️⃣ Performance improvement
+
+Without freezing:
+
+100.times { "hello" }
+
+
+Ruby creates 100 different string objects.
+
+With frozen string literal enabled, Ruby can reuse the same object, reducing memory allocation.
+
+2️⃣ Memory optimization
+
+Especially useful in large apps (like Rails apps), where many identical string literals exist.
+
+🔹 Before vs After Example
+
+Without freezing:
+
+"hello".object_id == "hello".object_id
+# => false
+
+
+With # frozen_string_literal: true:
+
+"hello".object_id == "hello".object_id
+# => true
+
+
+Same object reused ✔️
+
+🔹 Can we freeze manually?
+
+Yes:
+
+str = "hello".freeze
+
+
+But the magic comment freezes all string literals in that file automatically.
+
+🔹 When was this added?
+
+It was introduced in Ruby 2.3 and became common practice in modern Ruby projects.
+
+🔹 Interview-Ready Answer (Short Version)
+
+You can say:
+
+Yes. In Ruby, strings are mutable by default. Using # frozen_string_literal: true at the top of a file makes all string literals immutable. This improves performance and reduces memory usage because Ruby reuses the same string object instead of creating new ones. It also prevents accidental modification of literals.

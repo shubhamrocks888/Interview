@@ -1,0 +1,46 @@
+require 'thread'
+
+class Logger
+   @mutex = Mutex.new
+   private_class_method :new
+   
+   def log(msg)
+   	p msg
+   end
+
+   def self.instance
+   	 return instance if @instance
+
+   	 @mutex.synchronize do
+   	  @instance ||= new
+   	 end
+   end
+
+
+
+end
+
+
+
+#######
+
+⚠️ The Missing Mutex (Why It Matters)
+
+Your version works perfectly in:
+
+Single-threaded Ruby
+
+Console apps
+
+Simple scripts
+
+But in a multi-threaded environment (like Rails running on Puma):
+
+Two threads could do this at the same time:
+
+Thread A checks → @instance is nil
+Thread B checks → @instance is nil
+Both create new object
+Now you have 2 instances ❌
+
+That’s why Ruby’s built-in Singleton uses a Mutex.

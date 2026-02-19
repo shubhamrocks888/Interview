@@ -1,0 +1,40 @@
+class Logger
+  @instance = new
+
+  private_class_method :new
+
+  def self.instance
+    @instance
+  end
+end
+
+
+
+###
+
+✅ Method 2: Manual Singleton (Interview Favorite)
+
+
+class Logger
+  @instance = nil
+
+  def self.instance
+    @instance ||= new
+  end
+
+  private_class_method :new
+end
+
+logger1 = Logger.instance
+logger2 = Logger.instance
+
+puts logger1 == logger2  # true
+
+
+🔎 What we did:
+
+Made new private
+
+Controlled object creation via self.instance
+
+Used ||= to create only once

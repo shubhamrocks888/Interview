@@ -1,0 +1,195 @@
+Yes, Rails uses a set of default Rack middleware internally.
+
+Let’s break this clearly and practically.
+
+Rails (built on Rack) builds a middleware stack automatically when your
+Ruby on Rails app boots.
+
+✅ 1️⃣ How To See Default Middleware Stack
+
+Run:
+
+rails middleware
+
+
+This prints middleware in execution order (top → bottom).
+
+Example (Rails 7 typical stack):
+
+use Rack::Sendfile
+use ActionDispatch::Static
+use ActionDispatch::Executor
+use ActiveSupport::Cache::Strategy::LocalCache
+use Rack::Runtime
+use Rails::Rack::Logger
+use ActionDispatch::RequestId
+use ActionDispatch::RemoteIp
+use Rack::MethodOverride
+use ActionDispatch::Cookies
+use ActionDispatch::Session::CookieStore
+use ActionDispatch::Flash
+use ActionDispatch::ContentSecurityPolicy::Middleware
+use Rack::Head
+use Rack::ConditionalGet
+use Rack::ETag
+run MyApp::Application.routes
+
+
+⚠️ Exact list varies by:
+
+Rails version
+
+API-only vs full-stack
+
+Environment
+
+✅ 2️⃣ Important Default Middleware Explained
+
+Let’s understand the most important ones 👇
+
+🔹 Rack::Sendfile
+
+Handles file sending via web server (X-Sendfile / X-Accel-Redirect).
+
+🔹 ActionDispatch::Static
+
+Serves static files from /public.
+
+Only in production when enabled.
+
+🔹 ActionDispatch::Executor
+
+Manages thread safety & code reloading.
+
+🔹 Rack::Runtime
+
+Adds header:
+
+X-Runtime
+
+
+Shows request time.
+
+🔹 Rails::Rack::Logger
+
+Logs incoming request details.
+
+🔹 ActionDispatch::RequestId
+
+Adds unique request ID.
+Accessible via:
+
+request.request_id
+
+🔹 ActionDispatch::RemoteIp
+
+Determines real client IP (important behind proxies).
+
+🔹 Rack::MethodOverride
+
+Allows:
+
+POST with _method=DELETE
+
+
+Used for RESTful forms.
+
+🔹 ActionDispatch::Cookies
+
+Parses and manages cookies.
+
+🔹 ActionDispatch::Session::CookieStore
+
+Manages session storage in cookies.
+
+🔹 ActionDispatch::Flash
+
+Handles flash messages.
+
+🔹 Rack::Head
+
+Converts HEAD request properly.
+
+🔹 Rack::ETag
+
+Adds ETag header for caching.
+
+✅ 3️⃣ Order Matters — Why?
+
+Because request flows top → down.
+
+Example:
+
+If ActionDispatch::Cookies runs AFTER your middleware,
+then session won’t be available.
+
+If RemoteIp runs after your rate limiter,
+then IP detection may be wrong behind proxy.
+
+That’s why placement matters.
+
+✅ 4️⃣ Where Are These Defined?
+
+You asked:
+
+How are they defined in application.rb?
+
+They are NOT directly written inside your application.rb.
+
+Internally Rails defines them inside:
+
+railties/lib/rails/application/default_middleware_stack.rb
+
+
+Rails builds the stack automatically during boot.
+
+Your application.rb just provides hooks like:
+
+config.middleware.use MyMiddleware
+config.middleware.insert_before X, MyMiddleware
+config.middleware.insert_after X, MyMiddleware
+config.middleware.delete X
+
+✅ 5️⃣ How Rails Builds Middleware Stack
+
+During boot:
+
+Rails initializes configuration
+
+Rails builds middleware stack
+
+It inserts default middleware
+
+It applies your custom additions
+
+It finalizes stack
+
+So effectively:
+
+Default Middleware
++ Your Custom Middleware
+= Final Stack
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+What are default Rails middleware?
+
+You say:
+
+Rails builds a default middleware stack on top of Rack which includes components like Rack::Runtime, Rails::Rack::Logger, ActionDispatch::RequestId, ActionDispatch::RemoteIp, cookies, sessions, and caching-related middleware. The exact stack depends on environment and whether the app is API-only. We can inspect it using rails middleware, and Rails internally defines it in the default middleware stack configuration.
+
+That’s a very solid answer.
+
+🔥 Bonus Advanced Insight
+
+API-only Rails apps exclude:
+
+Flash
+
+Cookies (optional)
+
+Some browser-related middleware
+
+Because APIs don’t need them.

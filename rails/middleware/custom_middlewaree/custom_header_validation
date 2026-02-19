@@ -1,0 +1,188 @@
+This is a very strong interview example because it shows:
+
+Security awareness
+
+Proper layering
+
+Clean architecture
+
+Early request rejection
+
+Let’s build production-ready custom header validation middleware properly.
+
+🎯 Use Case
+
+We have an API.
+
+Every request must include:
+
+X-API-KEY: some_secret_key
+
+
+If:
+
+Header missing → return 401
+
+Header invalid → return 401
+
+Valid → allow request to continue
+
+✅ Why Middleware (Important for Interview)
+
+We use middleware because:
+
+It applies to all API routes
+
+It blocks request before hitting controllers
+
+Saves DB queries
+
+Keeps controllers clean
+
+Works at the Rack layer (before Rails controller)
+
+Rails middleware works on top of
+Rack,
+which is used internally by
+Ruby on Rails.
+
+✅ Production-Ready Middleware Code
+
+Create:
+
+app/middleware/api_key_validator.rb
+
+🔥 Code
+# app/middleware/api_key_validator.rb
+
+class ApiKeyValidator
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    request = ActionDispatch::Request.new(env)
+
+    return unauthorized_response("Missing API Key") unless api_key_present?(request)
+    return unauthorized_response("Invalid API Key") unless valid_api_key?(request)
+
+    @app.call(env)
+  end
+
+  private
+
+  def api_key_present?(request)
+    request.headers["X-API-KEY"].present?
+  end
+
+  def valid_api_key?(request)
+    provided_key = request.headers["X-API-KEY"]
+    secure_compare(provided_key, expected_api_key)
+  end
+
+  def expected_api_key
+    ENV.fetch("API_KEY")
+  end
+
+  # Prevents timing attacks
+  def secure_compare(a, b)
+    ActiveSupport::SecurityUtils.secure_compare(a.to_s, b.to_s)
+  end
+
+  def unauthorized_response(message)
+    body = { error: message }.to_json
+
+    [
+      401,
+      { "Content-Type" => "application/json" },
+      [body]
+    ]
+  end
+end
+
+✅ Register Middleware
+
+In:
+
+config/application.rb
+
+config.middleware.insert_before 0, ApiKeyValidator
+
+
+Or only for APIs:
+
+config.middleware.use ApiKeyValidator
+
+🔥 Why This Is Production-Ready
+1️⃣ Uses ENV for Secret
+ENV.fetch("API_KEY")
+
+
+Never hardcode secrets.
+
+In production:
+
+API_KEY=super_secret_key
+
+2️⃣ Uses Secure Compare
+ActiveSupport::SecurityUtils.secure_compare
+
+
+Why?
+
+Prevents timing attacks.
+
+Normal == comparison is vulnerable.
+
+Interviewers LOVE this point.
+
+3️⃣ Early Return Pattern
+return unauthorized_response unless ...
+
+
+Clean.
+Readable.
+Efficient.
+
+4️⃣ Proper Rack Response Format
+
+Middleware must return:
+
+[status, headers, body]
+
+
+Body must be an array.
+
+If you forget array → app crashes.
+
+🎯 How You Explain In Interview (Polished Version)
+
+You can say:
+
+In one API-based project, we needed every request to include a custom X-API-KEY header. Instead of validating it inside each controller, I implemented a custom middleware that checks the header at the Rack level. If the key is missing or invalid, it immediately returns a 401 JSON response. I also used ActiveSupport’s secure_compare to prevent timing attacks and stored the expected key in environment variables for security.
+
+That sounds very professional.
+
+⚡ If Interviewer Asks: Why Not Use before_action?
+
+Answer:
+
+before_action only runs inside controllers, but middleware runs before the request reaches Rails controllers, so it prevents unnecessary database calls and improves performance.
+
+🚀 Senior-Level Upgrade
+
+If you want to sound more advanced, say:
+
+We scoped the middleware only to API routes using constraints or by adding it conditionally in specific environments.
+
+If you want next level, I can show:
+
+🔥 Version that supports multiple API keys
+
+🔥 DB-backed API keys
+
+🔥 JWT validation middleware
+
+🔥 Middleware spec (RSpec test)
+
+Tell me your target interview level 😄

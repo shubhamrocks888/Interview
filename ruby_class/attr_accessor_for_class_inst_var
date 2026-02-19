@@ -1,0 +1,26 @@
+class User
+  class << self
+    attr_accessor :count
+  end
+
+  @count = 10
+end
+
+puts User.count      # 10
+User.count = 20
+puts User.count      # 20
+
+
+###manual
+
+class Count
+    @count = 0
+    
+    def self.count
+        @count
+    end
+    
+    def self.count=(value)
+        @count = value
+    end
+end

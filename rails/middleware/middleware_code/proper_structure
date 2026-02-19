@@ -1,0 +1,148 @@
+You said:
+
+When we throw error in middleware we return [status, headers, body].
+What happens when it’s successful?
+
+Let’s clarify clearly.
+
+✅ In Middleware There Are Only Two Possibilities
+1️⃣ You Handle The Request (Block It)
+
+Then you MUST return:
+
+[status, headers, body]
+
+
+Example:
+
+return [401, { "Content-Type" => "application/json" }, [{ error: "Unauthorized" }.to_json]]
+
+
+Here:
+
+You stop the chain
+
+Controller will NOT execute
+
+Request ends here
+
+2️⃣ You Allow The Request (Success Case)
+
+Then you simply forward the request:
+
+@app.call(env)
+
+
+This returns:
+
+[status, headers, body]
+
+
+But this time:
+
+The response comes from controller
+
+Or next middleware
+
+Or Rails app
+
+So success case also returns [status, headers, body]
+—but you don’t manually build it.
+
+You just pass it along.
+
+🎯 Important Concept
+
+Middleware must ALWAYS return:
+
+[status, headers, body]
+
+
+Either:
+
+You build it yourself (error case)
+
+Or you forward and return what next layer gives
+
+🔥 Advanced: Modifying Successful Response
+
+You can also do this:
+
+def call(env)
+  status, headers, response = @app.call(env)
+
+  headers["X-Request-Processed-By"] = "RateLimiter"
+
+  [status, headers, response]
+end
+
+
+Here:
+
+Request succeeded
+
+You modified response headers
+
+Then returned modified response
+
+This shows deeper understanding.
+
+⚡ Very Important: What If You Raise Exception?
+
+If you do:
+
+raise "Something went wrong"
+
+
+Then:
+
+Rails exception middleware handles it
+
+It converts it into 500 response
+
+But that depends on middleware order.
+
+In production, better to:
+
+rescue => e
+  return [500, {...}, [{ error: "Internal Server Error" }.to_json]]
+end
+
+
+If you're writing defensive middleware.
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+What happens in success case?
+
+You answer:
+
+In the success case, the middleware simply calls @app.call(env) and returns whatever response the downstream middleware or Rails application produces. Since middleware follows the Rack interface, the response must always be a three-element array of status, headers, and body.
+
+Clean. Precise. Confident.
+
+🚀 Quick Visual Understanding
+Error Case:
+Request
+  ↓
+RateLimiter (blocks)
+  ↓
+Returns 429
+
+Success Case:
+Request
+  ↓
+RateLimiter (passes)
+  ↓
+Controller
+  ↓
+Response
+  ↓
+RateLimiter (can modify response)
+  ↓
+Return final response
+
+
+You’re now understanding middleware at framework depth 🔥

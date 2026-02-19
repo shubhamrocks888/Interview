@@ -1,0 +1,155 @@
+class Count
+    @count = 0
+    
+    def increment
+        @count +=1
+    end
+    
+    def self.add
+        @count +=2
+    end
+    
+end
+
+x = Count.new
+x.increment
+
+#####
+
+🚨 Problem 2 (Very Important)
+
+You defined:
+
+@count = 0
+
+
+at class level → this is a class instance variable
+
+So it belongs to the Count class object.
+
+Now look at this method:
+
+def increment
+  @count += 1
+end
+
+
+This is an instance method.
+
+Inside it:
+
+@count refers to the instance’s own variable
+
+NOT the class-level @count
+
+So when you do:
+
+x.increment
+
+
+It will try:
+
+nil + 1
+
+
+Because instance @count was never initialized.
+
+Result:
+
+NoMethodError: undefined method `+' for nil:NilClass
+
+🔥 Very Important Concept
+
+Inside:
+
+| Context         | `@count` belongs to |
+| --------------- | ------------------- |
+| Class body      | Class object        |
+| Instance method | That instance       |
+| Class method    | Class object        |
+
+So:
+
+def self.add
+  @count += 2
+end
+
+
+Here @count refers to class-level variable ✅
+
+But:
+
+def increment
+  @count += 1
+end
+
+
+This refers to instance variable ❌ (different one)
+
+✅ How To Fix It Properly
+
+If you want ONE shared counter for the class:
+
+class Count
+  @count = 0
+
+  def self.increment
+    @count += 1
+  end
+
+  def self.add
+    @count += 2
+  end
+
+  def self.count
+    @count
+  end
+end
+
+Count.increment
+Count.add
+puts Count.count
+
+🧠 If You Want Instance Counter Instead
+class Count
+  def initialize
+    @count = 0
+  end
+
+  def increment
+    @count += 1
+  end
+
+  def count
+    @count
+  end
+end
+
+x = Count.new
+x.increment
+puts x.count
+
+
+Now each object has its own counter.
+
+🎯 What Your Code Actually Created
+
+You accidentally created:
+
+One class-level @count
+
+A separate instance-level @count
+
+And tried to mix them
+
+They are totally different variables.
+
+🧠 Interview Trick Question
+
+If interviewer asks:
+
+Why is @count nil inside instance method?
+
+Correct answer:
+
+Because class instance variables and instance variables are different. They belong to different objects.

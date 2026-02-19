@@ -1,0 +1,99 @@
+✅ How To Answer: “Have you used custom middleware?”
+Step 1: Say YES confidently
+
+Yes, I have used custom middleware in Rails.
+
+Step 2: Explain the Requirement (Important)
+
+Explain a cross-cutting concern — something that applies to all requests.
+
+Middleware is used when:
+
+Logic must run before controller
+
+Applies globally
+
+Is request/response level concern
+
+🎯 Strong Real-World Example Answers
+1️⃣ Request Logging / Performance Tracking
+
+In one project, we needed to log request duration and user metadata for every incoming request. Instead of putting it in controllers, I created a custom middleware so it runs globally for all routes.
+
+Why middleware?
+
+Applies to all requests
+
+Cleaner than controller before_action
+
+Runs even for static assets or API endpoints
+
+2️⃣ Custom Header Validation (Very Strong Interview Answer)
+
+We had an API where every request had to include a custom header like X-API-KEY. Instead of checking it in every controller, I created a middleware that validates the header before the request reaches the controller. If invalid, it returns 401 immediately.
+
+Why middleware?
+
+Authentication at request level
+
+Stops request early
+
+Keeps controllers clean
+
+3️⃣ Rate Limiting (Very Impressive)
+
+We implemented simple rate limiting using Rails.cache in middleware. It checked how many requests came from an IP within a time window and blocked excessive traffic before hitting application logic.
+
+Why middleware?
+
+Protects app from heavy load
+
+Prevents unnecessary DB queries
+
+4️⃣ Multi-Tenant App (Advanced Level Answer)
+
+In a multi-tenant application, we identified the tenant based on subdomain inside middleware and set current tenant before request reached controllers.
+
+This is 🔥 senior-level answer.
+
+❗ Important: When NOT to Use Middleware
+
+If logic:
+
+Is specific to one controller
+
+Depends heavily on session or controller state
+
+Is business logic
+
+Then use:
+
+before_action
+
+service objects
+
+concerns
+
+Interviewers LOVE when you say this.
+
+🎯 Perfect Interview Answer (Polished Version)
+
+You can say:
+
+Yes, I have implemented custom middleware in Rails when we needed request-level logic that applied globally. For example, I created middleware to validate custom API headers and reject unauthorized requests before they reached controllers. I used middleware because it keeps controllers clean and is ideal for cross-cutting concerns like authentication, logging, or rate limiting.
+
+🧠 Bonus: If They Ask How It Works Internally
+
+You can say:
+
+Rails middleware works on top of Rack. Each middleware responds to call(env) and returns [status, headers, body]. It acts like a chain where each middleware wraps the next one.
+
+Mentioning Rack shows deeper understanding.
+
+🚀 Want To Practice?
+
+I can:
+
+Conduct a rapid mock interview on middleware
+
+Or give you a tricky follow-up question interviewers ask after this 😄

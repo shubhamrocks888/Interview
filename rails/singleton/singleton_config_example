@@ -1,0 +1,193 @@
+You’re building an app and you want a global configuration object that:
+
+Is initialized once
+
+Is accessible anywhere
+
+Holds shared state
+
+Cannot have multiple instances
+
+That’s a classic Singleton use case.
+
+🔥 Example: Rails App Configuration Singleton
+
+Let’s say we want to manage app-level settings like:
+
+API keys
+
+Feature flags
+
+Timeout settings
+
+Environment-specific behavior
+
+Step 1: Create a Singleton Config Class
+# app/services/app_config.rb
+require 'singleton'
+
+class AppConfig
+  include Singleton
+
+  attr_accessor :api_key, :timeout, :feature_enabled
+
+  def initialize
+    @api_key = ENV["PAYMENT_API_KEY"]
+    @timeout = 30
+    @feature_enabled = false
+  end
+end
+
+Step 2: Use It Anywhere in Rails
+In a Controller
+class PaymentsController < ApplicationController
+  def create
+    config = AppConfig.instance
+
+    if config.feature_enabled
+      render json: { status: "Feature active" }
+    else
+      render json: { status: "Feature disabled" }
+    end
+  end
+end
+
+In a Service Object
+class PaymentService
+  def call
+    api_key = AppConfig.instance.api_key
+    timeout = AppConfig.instance.timeout
+
+    # Use API key and timeout
+  end
+end
+
+🎯 Why Singleton Here?
+
+Because:
+
+We only want one configuration object
+
+It should be shared across:
+
+Controllers
+
+Jobs
+
+Services
+
+Mailers
+
+It may hold runtime state
+
+🔥 Real-World Rails Example (Internal Singleton)
+
+Rails itself uses singletons internally.
+
+Example:
+
+Rails.application
+Rails.application
+
+
+Rails.application returns a single instance of your app.
+
+That object is created from:
+
+Ruby on Rails
+
+It behaves like a singleton because:
+
+There is only one application instance
+
+It stores configuration
+
+It manages middleware, routes, etc.
+
+🔥 Advanced Production-Style Version
+
+Instead of using ENV inside initialize, you can load from credentials:
+
+def initialize
+  @api_key = Rails.application.credentials.dig(:payment, :api_key)
+  @timeout = 30
+  @feature_enabled = Rails.env.production?
+end
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+Why not just use class methods?
+
+Strong answer:
+
+Singleton gives a real object
+
+Can hold mutable state
+
+Easier to test (can stub instance)
+
+Cleaner than global variables
+
+Avoids spreading configuration logic
+
+⚠️ Important Note (Senior-Level Thinking)
+
+In Rails, you often don’t need custom Singleton for configuration because:
+
+Rails already provides:
+
+Rails.configuration
+
+Rails.application.config
+
+Rails.cache
+
+Rails.logger
+
+These are effectively global shared instances.
+
+🚀 Even More Real Example (Logger Singleton)
+
+Instead of:
+
+class CustomLogger
+  def self.log(msg)
+    puts msg
+  end
+end
+
+
+You can do:
+
+class CustomLogger
+  include Singleton
+
+  def log(msg)
+    Rails.logger.info(msg)
+  end
+end
+
+
+Ensures one logger instance.
+
+🏆 Interview Follow-Up They Might Ask
+
+How would you reset Singleton in test?
+
+Is Singleton thread-safe?
+
+What are drawbacks?
+
+When should you NOT use Singleton?
+
+If you want, I can next give you:
+
+🔥 A multi-threaded Rails gotcha with Singleton
+
+🔥 How to test Singleton in RSpec
+
+🔥 When Singleton becomes a bad design
+
+You’re at a level now where these questions will definitely come.

@@ -1,0 +1,148 @@
+You’re asking about this line:
+
+current_window = (Time.now.to_i / WINDOW.to_i)
+
+
+Let’s break it clearly.
+
+1️⃣ What is Time.now.to_i?
+
+It returns current time in seconds since Unix epoch.
+
+Example:
+
+Time.now.to_i
+# => 1708329605
+
+2️⃣ What is WINDOW.to_i?
+
+You defined:
+
+WINDOW = 1.minute
+
+
+In Rails:
+
+1.minute.to_i
+# => 60
+
+
+So:
+
+WINDOW.to_i # => 60 seconds
+
+3️⃣ What does this division do?
+Time.now.to_i / WINDOW.to_i
+
+
+That means:
+
+current_time_in_seconds / 60
+
+
+Since both are integers → Ruby performs integer division.
+
+Example:
+
+1708329605 / 60
+= 28472160
+
+
+This number changes every 60 seconds.
+
+🎯 PURPOSE
+
+It creates a time bucket (window).
+
+Instead of storing exact timestamp, we group requests into:
+
+1-minute windows
+
+🔥 Why we need this?
+
+Without it, your key would be:
+
+rate_limit:192.168.1.1
+
+
+And the counter would never reset properly.
+
+But with window:
+
+rate_limit:192.168.1.1:28472160
+
+
+After 1 minute:
+
+rate_limit:192.168.1.1:28472161
+
+
+👉 New key
+👉 New counter
+👉 Old key expires automatically
+
+📦 What This Achieves
+
+For each IP:
+
+Allow 100 requests per 1-minute bucket
+
+
+After 60 seconds:
+
+New bucket number
+
+Counter resets automatically
+
+No manual cleanup needed
+
+🧠 Visual Timeline
+
+Let’s say WINDOW = 60 seconds.
+
+| Time (seconds) | Division Result | Window   |
+| -------------- | --------------- | -------- |
+| 0–59           | 0               | Window 0 |
+| 60–119         | 1               | Window 1 |
+| 120–179        | 2               | Window 2 |
+
+So every 60 seconds → new window.
+
+🚀 Why Not Just Use expires_in Alone?
+
+Good thinking 😄
+
+You are using:
+
+expires_in: WINDOW
+
+
+But that only sets TTL.
+
+The division logic:
+
+✔ Ensures fixed time buckets
+✔ Makes rate limiting predictable
+✔ Prevents sliding window behavior
+
+🧩 If You Removed This
+
+If you used:
+
+"rate_limit:#{ip}"
+
+
+Then:
+
+First request at 10:00:05
+
+Expires at 10:01:05
+
+That’s a sliding window
+
+Current implementation = fixed window rate limiting
+
+🏆 Interview Answer (Short & Clean)
+
+We divide current time by the window size to create a fixed time bucket.
+This ensures requests are grouped into 1-minute windows, and the counter automatically resets when the window changes.

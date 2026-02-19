@@ -495,3 +495,27 @@ ruby -c your_file.rb
 ## custom middleware withexample
 
 ## kamal orkamla
+
+### custom exception
+
+### git commands
+
+###  Are you comfortable managing and optimizing Ruby application servers such as Passenger or Thin?Are you comfortable managing and optimizing Ruby application servers such as Passenger or Thin? 
+
+###
+
+Have you designed or optimized high-performance Ruby systems handling millions of requests per day, with a focus on memory profiling, thread/process tuning, and ActiveRecord performance?Have you designed or optimized high-performance Ruby systems handling millions of requests per day, with a focus on memory profiling, thread/process tuning, and ActiveRecord performance? 
+
+
+######
+
+But real backend engineering is about decisions under scale.
+
+• Do you denormalize now or wait for read load?
+• Sync vs async jobs — what can fail without blocking users?
+• Caching layer today or optimize queries first?
+• How will this feature behave with 10 users vs 1 lakh?
+
+
+###
+Difference between Rack middleware and Rails middleware

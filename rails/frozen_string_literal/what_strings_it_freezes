@@ -1,0 +1,180 @@
+1️⃣ Huge number of string literals
+
+In a Rails app, strings are everywhere:
+
+Model names
+
+Table names
+
+Route paths
+
+Controller action names
+
+Validation messages
+
+JSON keys
+
+SQL fragments
+
+View templates
+
+Example:
+
+validates :email, presence: true
+
+
+Internally Rails uses strings like:
+
+"email"
+"presence"
+"can't be blank"
+
+
+In a large production Rails app:
+
+Thousands of files
+
+Each file has dozens of string literals
+
+Many of them repeated
+
+Without frozen string literal:
+
+1000.times { "users" }
+
+
+Ruby creates 1000 separate string objects.
+
+With frozen string literal:
+
+Ruby reuses the same object
+
+Only one object in memory
+
+👉 That’s massive memory savings in big apps.
+
+2️⃣ Lots of constant strings (SQL fragments, routes, JSON keys)
+
+Rails apps constantly reuse identical strings.
+
+Example: SQL fragments
+User.where("email = ?", email)
+
+
+The string "email = ?" may be used hundreds of times.
+
+If not frozen:
+
+Each call may allocate a new string
+
+More memory churn
+
+If frozen:
+
+Ruby reuses same object
+
+No new allocation
+
+Example: Routes
+get "/users"
+post "/users"
+
+
+The string "/users" appears multiple times.
+
+Example: JSON APIs
+render json: { status: "success", message: "User created" }
+
+
+Keys like:
+
+"status"
+
+"message"
+
+"success"
+
+Are reused everywhere.
+
+Frozen string literal makes them shared.
+
+3️⃣ Reduces GC (Garbage Collector) pressure
+
+This is the most important technical point.
+
+Ruby’s GC runs when many objects are created.
+
+Without freezing:
+
+100_000.times { "hello" }
+
+
+Ruby creates 100,000 string objects.
+
+All those temporary objects:
+
+Increase memory usage
+
+Force GC to run more often
+
+Slow down app
+
+With frozen string literal:
+
+Ruby reuses one object
+
+Fewer allocations
+
+GC runs less frequently
+
+👉 Less GC = better performance.
+
+In high-traffic Rails apps, this matters a lot.
+
+4️⃣ Improves boot performance
+
+Rails boot process loads:
+
+All models
+
+All controllers
+
+All initializers
+
+All routes
+
+All gems
+
+During boot:
+
+Thousands of string literals are parsed
+
+Objects are allocated
+
+If strings are frozen:
+
+Ruby reuses objects
+
+Fewer allocations
+
+Faster boot time
+
+This especially matters for:
+
+Large monolith apps
+
+CI pipelines
+
+Server restart time
+
+Console startup
+
+Even small improvements multiply at scale.
+
+🧠 How to Explain This in Interview (Senior-Level Answer)
+
+You can say:
+
+In Rails apps, there are thousands of repeated string literals like SQL fragments, route paths, and JSON keys. Without frozen string literals, Ruby creates new string objects every time, increasing memory allocation and GC pressure. Freezing allows Ruby to reuse the same object, which reduces memory usage, improves GC efficiency, and speeds up application boot time.
+
+That answer sounds very solid.

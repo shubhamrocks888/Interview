@@ -1,0 +1,104 @@
+Yes — in modern Rails apps, it’s generally safe and recommended.
+But let’s break it down properly so you can answer confidently in an interview.
+
+We’re talking about Ruby on Rails running on Ruby.
+
+✅ Why It’s Safe in Modern Rails Apps
+1️⃣ Rails already expects it
+
+New Rails apps (Rails 6+ and especially 7+) generate files with:
+
+# frozen_string_literal: true
+
+
+So the ecosystem assumes immutability of string literals.
+
+2️⃣ Most string literals are constants anyway
+
+In Rails, strings like:
+
+"users"
+
+"email"
+
+"status"
+
+"created_at"
+
+are meant to be constants, not mutated.
+
+Freezing prevents accidental bugs like:
+
+STATUS = "success"
+STATUS << "!"
+
+
+That would silently modify a constant without freezing.
+
+3️⃣ Performance benefits
+
+As we discussed:
+
+Fewer string allocations
+
+Lower GC pressure
+
+Faster boot
+
+In production systems, that matters.
+
+⚠️ When It Can Break Things
+
+This is what interviewers want to hear.
+
+If legacy code mutates string literals:
+
+str = "hello"
+str << " world"
+
+
+With frozen string literal enabled:
+
+FrozenError
+
+
+So older codebases that rely on mutating literals may break.
+
+But the fix is simple:
+
+str = "hello".dup
+
+🧠 Important Subtle Point
+
+Frozen string literal only freezes literals:
+
+"hello"
+
+
+It does NOT freeze:
+
+String.new("hello")
+"hello #{name}"
+params[:name]
+
+
+So it doesn’t make your entire app immutable.
+
+🎯 Real-World Recommendation
+
+For:
+
+✅ New Rails apps → Yes, always enable it
+✅ Modern Rails apps → Safe and recommended
+⚠️ Very old legacy apps → Test before enabling globally
+💬 Interview-Level Answer
+
+If asked:
+
+Is it safer to add # frozen_string_literal: true in every Rails file?
+
+You can say:
+
+Yes, in modern Rails applications it’s recommended because most string literals are meant to be immutable. It improves memory efficiency and prevents accidental mutation. However, in legacy applications that rely on mutating string literals, enabling it may raise FrozenError and require refactoring.
+
+That answer shows maturity.

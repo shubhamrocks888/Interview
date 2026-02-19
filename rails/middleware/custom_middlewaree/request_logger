@@ -1,0 +1,156 @@
+I’ll give you production-style middleware code + explain every part like you would in an interview.
+
+We’ll build:
+
+✅ Request duration logging
+✅ Request ID
+✅ User ID (if logged in)
+✅ IP address
+✅ Safe production logging
+✅ No controller dependency
+
+🎯 Goal
+
+Log something like this in production logs:
+
+method=GET path=/api/courses status=200 duration=45.23ms user_id=12 ip=49.36.xx.xx request_id=abc123
+
+✅ 1️⃣ Create Middleware
+
+Create file:
+
+app/middleware/request_logger.rb
+
+✅ Production-Ready Middleware Code
+# app/middleware/request_logger.rb
+
+class RequestLogger
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    request = ActionDispatch::Request.new(env)
+
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    status, headers, response = @app.call(env)
+
+    duration = calculate_duration(start_time)
+
+    log_request(request, status, duration)
+
+    [status, headers, response]
+  end
+
+  private
+
+  def calculate_duration(start_time)
+    finish_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    ((finish_time - start_time) * 1000).round(2) # in ms
+  end
+
+  def log_request(request, status, duration)
+    Rails.logger.info(
+      {
+        message: "HTTP Request",
+        method: request.request_method,
+        path: request.fullpath,
+        status: status,
+        duration_ms: duration,
+        ip: request.ip,
+        user_id: extract_user_id(request),
+        request_id: request.request_id
+      }.to_json
+    )
+  end
+
+  # Safe extraction (does not crash if user not present)
+  def extract_user_id(request)
+    request.session[:user_id] rescue nil
+  end
+end
+
+✅ 2️⃣ Register Middleware
+
+In:
+
+config/application.rb
+
+
+Add:
+
+config.middleware.insert_after Rails::Rack::Logger, RequestLogger
+
+
+Now it runs for every request.
+
+Rails middleware runs on top of Rack, which is the underlying interface used by Ruby on Rails.
+
+🔥 Why This Is Production-Ready
+1️⃣ Uses Process.clock_gettime
+
+Better than Time.now
+
+Not affected by system clock changes
+
+High precision
+
+Recommended for performance measurement
+
+Interview bonus point 🎯
+
+2️⃣ Uses JSON structured logging
+
+Instead of plain strings:
+
+Rails.logger.info("Request took 40ms")
+
+
+We use structured logging:
+
+{ method: "GET", path: "/users" }.to_json
+
+
+Why?
+
+Easier for log aggregation tools
+
+Works well with ELK / Datadog / Splunk
+
+Searchable logs
+
+3️⃣ Does NOT depend on Controller
+
+No current_user
+
+Middleware runs before controllers, so we safely extract from session.
+
+4️⃣ Does Not Break Request Flow
+
+Always returns:
+
+[status, headers, response]
+
+
+If you forget this → app crashes.
+
+🎯 How You Explain This In Interview
+
+Say this confidently:
+
+We needed global request logging with performance tracking and user metadata. Since this logic applies to all incoming HTTP requests and not specific to controllers, I implemented it as a custom middleware. It calculates request duration using a monotonic clock, logs structured JSON including user_id, IP, and request_id, and runs for all routes including APIs. This keeps controllers clean and centralizes cross-cutting concerns.
+
+That answer sounds senior-level.
+
+⚠️ When Interviewer Tries To Trap You
+
+They might ask:
+
+❓ Why not use before_action?
+
+You say:
+
+before_action runs only in controllers, but middleware runs at the Rack layer, so it covers everything including static files, mounted engines, and even errors before controller execution.
+
+That’s a strong answer.

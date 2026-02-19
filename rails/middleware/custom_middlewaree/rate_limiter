@@ -1,0 +1,211 @@
+Rate limiting at middleware level shows:
+
+Performance awareness
+
+Security awareness
+
+Architecture understanding
+
+Let’s build production-grade IP-based rate limiting middleware properly.
+
+🎯 Requirement
+
+Limit: 100 requests per minute per IP
+
+If limit exceeded → return 429 Too Many Requests
+
+Use Rails.cache
+
+Block before controller logic
+
+Safe for production
+
+Rails middleware runs at the Rack layer inside
+Ruby on Rails.
+
+✅ Production-Ready Middleware
+
+Create:
+
+app/middleware/rate_limiter.rb
+
+🔥 Code
+# app/middleware/rate_limiter.rb
+
+class RateLimiter
+  LIMIT = 100
+  WINDOW = 1.minute
+
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    request = ActionDispatch::Request.new(env)
+    ip = request.ip
+
+    if rate_limited?(ip)
+      return too_many_requests_response
+    end
+
+    @app.call(env)
+  end
+
+  private
+
+  def rate_limited?(ip)
+    key = cache_key(ip)
+
+    current_count = Rails.cache.read(key).to_i
+
+    if current_count >= LIMIT
+      true
+    else
+      Rails.cache.write(key, current_count + 1, expires_in: WINDOW)
+      false
+    end
+  end
+
+  def cache_key(ip)
+    current_window = (Time.now.to_i / WINDOW.to_i)
+    "rate_limit:#{ip}:#{current_window}"
+  end
+
+  def too_many_requests_response
+    body = {
+      error: "Rate limit exceeded. Try again later."
+    }.to_json
+
+    [
+      429,
+      { "Content-Type" => "application/json" },
+      [body]
+    ]
+  end
+end
+
+✅ Register Middleware
+
+In:
+
+config/application.rb
+
+config.middleware.insert_before 0, RateLimiter
+
+
+Placing it early ensures:
+
+Request blocked ASAP
+
+No DB calls
+
+No controller execution
+
+🔥 Why This Is Production-Ready
+1️⃣ Uses Time Window Partitioning
+current_window = (Time.now.to_i / WINDOW.to_i)
+
+
+This creates keys like:
+
+rate_limit:49.36.10.12:28934789
+
+
+Each minute gets a new key automatically.
+
+Clean.
+No manual cleanup required.
+
+2️⃣ Uses Cache Expiry
+expires_in: WINDOW
+
+
+Ensures:
+
+Keys auto-expire
+
+No memory leak
+
+In production, use:
+
+Redis
+
+Memcached
+
+Never use memory store in multi-server setup.
+
+3️⃣ Uses Proper HTTP Status Code
+429 Too Many Requests
+
+
+Correct standard for rate limiting.
+
+⚠️ Important Production Note (Very Senior Answer)
+
+This implementation is good but:
+
+It is NOT atomic.
+
+Two simultaneous requests could bypass limit.
+
+For real production systems, use:
+
+Rails.cache.increment(key, 1, expires_in: WINDOW)
+
+
+OR Redis atomic INCR.
+
+🔥 Improved Atomic Version (Better)
+
+Replace rate_limited? with:
+
+def rate_limited?(ip)
+  key = cache_key(ip)
+
+  count = Rails.cache.increment(key, 1, expires_in: WINDOW)
+
+  count > LIMIT
+end
+
+
+This is:
+
+Thread-safe
+
+Atomic (if Redis)
+
+Production-grade
+
+Interview gold ⭐
+
+🎯 How You Explain This In Interview
+
+Say:
+
+We implemented IP-based rate limiting as custom middleware to protect the application from abuse and high traffic. It runs at the Rack layer before hitting controllers, preventing unnecessary database load. We used Rails.cache with an atomic increment operation and a time-based window to limit requests per IP. If the limit is exceeded, it returns a 429 response immediately.
+
+That sounds strong and confident.
+
+❓ If Interviewer Asks: Why Not Use Rack::Attack?
+
+You can say:
+
+For more complex use cases, I would use Rack::Attack, but for simple per-IP rate limiting, I implemented a lightweight custom middleware for better control and understanding.
+
+Very impressive answer.
+
+🚀 If You Want Next Level
+
+I can show you:
+
+🔥 User-based rate limiting instead of IP
+
+🔥 Distributed multi-server safe version
+
+🔥 Sliding window algorithm
+
+🔥 Token bucket algorithm (advanced)
+
+🔥 RSpec test for middleware
+
+Tell me your target level 😄

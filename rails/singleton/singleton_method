@@ -1,0 +1,16 @@
+🧠 Advanced: What is a Singleton Method in Ruby?
+
+Ruby also has something called a singleton method, which is different.
+
+It is a method defined on one specific object only.
+
+str = "hello"
+
+def str.shout
+  upcase + "!"
+end
+
+puts str.shout  # HELLO!
+
+
+That method exists only for that str object — not for all strings.

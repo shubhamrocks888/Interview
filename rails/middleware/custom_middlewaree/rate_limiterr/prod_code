@@ -1,0 +1,95 @@
+### app/middleware/rate_limiter.rb
+
+class RateLimiter
+	LIMIT = 100
+	WINDOW = 1.minute
+	
+	def initialize(app)
+		@app = app
+	end
+
+	def call(env)
+		request = ActionDispatch::Request.new(env)
+		ip = request.ip
+
+		if rate_limited?
+		 	return too_many_requests_response
+		end
+
+		@app.call(env)
+	end
+
+	private
+
+	def rate_limited?
+		count = Rails.cache.increment(cache_key,1, expires_in: WINDOW)
+
+		count > LIMIT
+	end
+
+	def cache_key(ip)
+		current_window = (Time.now.to_i/WINDOW.to_i)
+		"rate_limit:#{ip}:#{current_window}" 
+	end
+
+	def too_many_requests_response
+		body = {
+			error: "Rate Limit Exceeded...Try Again Later"
+		}.to_json
+
+		[429,
+		{ "Content-Type" => "application/json"},
+		[body]
+	end
+end
+
+
+### config/application.rb
+
+config.middleware.insert_before 0, RateLimiter
+
+
+######
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+What does insert_before 0 mean?
+
+You answer:
+
+It inserts the middleware at the top of the stack, before the first middleware. That ensures it runs first in the request lifecycle.
+
+If they ask:
+
+Why would you place rate limiter there?
+
+You say:
+
+To block abusive traffic as early as possible before hitting Rails internals or database logic.
+
+Very strong answer.
+
+🔄 Quick Visual
+Without RateLimiter:
+Request
+ → Rack::Sendfile
+ → ActionDispatch::Static
+ → ...
+ → Controller
+
+With insert_before 0:
+Request
+ → RateLimiter  🔥 (first)
+ → Rack::Sendfile
+ → ...
+ → Controller
+
+🚀 Final Summary
+
+| Code               | Meaning                      |
+| ------------------ | ---------------------------- |
+| `insert_before 0`  | Put middleware at top        |
+| Why use it         | Early request interception   |
+| Better alternative | Insert before specific class |

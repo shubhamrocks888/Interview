@@ -1,0 +1,164 @@
+You’re absolutely right that MRI Ruby (the default Ruby implementation) has a GIL:
+
+👉 Global Interpreter Lock
+
+But the key misunderstanding is this:
+
+GIL ≠ Your code is automatically thread-safe
+
+Let’s break it properly.
+
+🧠 What GIL Actually Does
+
+In MRI Ruby:
+
+Only one thread executes Ruby bytecode at a time
+
+But threads can switch between operations
+
+Context switching can happen between instructions
+
+So even with GIL, race conditions are still possible.
+
+🔎 Why @instance ||= new Is NOT Safe Without Mutex
+
+This line:
+
+@instance ||= new
+
+
+Is NOT atomic.
+
+It expands roughly to:
+
+if @instance.nil?
+  @instance = new
+end
+
+
+Now imagine two threads:
+
+Timeline without Mutex
+
+Thread A:
+
+Checks @instance → nil
+
+Gets paused
+
+Thread B:
+
+Checks @instance → nil
+
+Creates new object
+
+Assigns to @instance
+
+Thread A resumes:
+
+Still thinks @instance was nil
+
+Creates another new object
+
+Assigns again
+
+Now you created two instances ❌
+
+GIL did NOT protect you because:
+
+It only ensures one instruction at a time
+
+It does NOT make multi-step logic atomic
+
+🔥 Important: GIL Allows Context Switching
+
+Even though only one thread runs at a time:
+
+Ruby can switch threads between:
+
+Method calls
+
+IO operations
+
+Blocking operations
+
+Internal VM checkpoints
+
+So this sequence:
+
+check → create → assign
+
+
+can be interrupted in between.
+
+🛡 Why Mutex Fixes It
+
+A Mutex makes the whole block atomic:
+
+@mutex.synchronize do
+  @instance ||= new
+end
+
+
+Now:
+
+Thread A enters
+
+Thread B waits
+
+Only one can execute the critical section
+
+This guarantees only one object is created.
+
+⚠️ Important: GIL Is Not Universal
+
+Ruby implementations like:
+
+JRuby
+
+TruffleRuby
+
+DO NOT use GIL.
+
+They allow true parallel threads.
+
+If you skip Mutex, your singleton will break immediately there.
+
+🎯 Real-World Rails Context
+
+Rails apps usually run on:
+
+👉 Puma
+
+Puma is multi-threaded.
+
+So even in MRI:
+
+Multiple threads serve requests
+
+Race conditions are possible
+
+You must use Mutex for shared state
+
+💡 Simple Rule
+
+GIL protects:
+
+✔ Memory corruption
+❌ Logical race conditions
+
+Mutex protects:
+
+✔ Logical critical sections
+
+🔥 Interview-Level One-Liner
+
+If asked:
+
+“Why use Mutex if Ruby has GIL?”
+
+Answer:
+
+"Because GIL prevents parallel execution of Ruby bytecode, but it does not make compound operations atomic. Singleton initialization requires atomic check-and-set, which needs a Mutex."
+
+That’s a strong senior-level answer.

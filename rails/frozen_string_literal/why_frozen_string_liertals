@@ -1,0 +1,166 @@
+🔥 1️⃣ “If frozen string literal is enabled, can I still modify strings?”
+
+✅ Yes — but not literals directly.
+
+# frozen_string_literal: true
+
+str = "hello"
+str << " world"   # ❌ FrozenError
+
+
+But you can do:
+
+str = "hello".dup
+str << " world"   # ✅ works
+
+
+💡 Interview tip:
+
+String literals are frozen, but dynamically created strings are not.
+
+🔥 2️⃣ “What about string interpolation?”
+
+This is tricky.
+
+# frozen_string_literal: true
+
+name = "Shubham"
+greeting = "Hello #{name}"
+
+
+👉 "Hello #{name}" creates a new string at runtime.
+It is NOT frozen automatically.
+
+Check:
+
+greeting.frozen?  # => false
+
+
+💡 Interview insight:
+
+Interpolated strings are created at runtime, so they are not frozen by the magic comment.
+
+🔥 3️⃣ “Does this freeze ALL strings?”
+
+❌ No.
+
+It only freezes string literals written directly in code.
+
+These are frozen:
+
+"hello"
+"world"
+
+
+These are NOT frozen:
+
+String.new("hello")
+"hello #{name}"
+params[:name]   # from Rails
+
+🔥 4️⃣ “What happens to object_id?”
+
+Without freezing:
+
+"hello".object_id == "hello".object_id
+# => false
+
+
+With freezing enabled:
+
+"hello".object_id == "hello".object_id
+# => true
+
+
+💡 Why?
+Because Ruby reuses the same object instead of allocating new memory.
+
+Interviewers love this one.
+
+🔥 5️⃣ “Difference between .freeze, .dup, and .clone?”
+.freeze
+
+Makes object immutable.
+
+.dup
+
+Creates a copy — NOT frozen (even if original is frozen).
+
+.clone
+
+Copies object and preserves frozen state.
+
+Example:
+
+str = "hello".freeze
+
+str.dup.frozen?    # => false
+str.clone.frozen?  # => true
+
+
+💡 This is a very strong interview answer.
+
+🔥 6️⃣ “Why does Rails enable frozen string literal by default?”
+
+In modern Ruby on Rails apps:
+
+Huge number of string literals
+
+Lots of constant strings (SQL fragments, routes, JSON keys)
+
+Reduces GC pressure
+
+Improves boot performance
+
+It’s mainly a memory optimization + safety feature.
+
+🔥 7️⃣ “Can frozen strings improve thread safety?”
+
+Interesting one.
+
+Since frozen objects cannot be modified:
+
+They are inherently safer in multi-threaded environments.
+
+No risk of accidental mutation.
+
+💡 Not full thread safety — but safer for shared constants.
+
+🔥 8️⃣ “What happens if you modify a constant string?”
+MY_STRING = "hello"
+
+MY_STRING << " world"
+
+
+Without freezing — this modifies the constant value (dangerous).
+
+With freezing — raises error.
+
+This prevents subtle production bugs.
+
+🔥 9️⃣ “Is frozen string literal enabled globally in Ruby?”
+
+No.
+
+It must be:
+
+Added per file (# frozen_string_literal: true)
+
+Or enabled via Ruby flag (less common)
+
+It is not automatic across all Ruby versions.
+
+🔥 10️⃣ Advanced Question: “Why doesn’t Ruby just freeze strings by default?”
+
+Because Ruby historically allowed mutable strings.
+Changing default behavior would break old code.
+
+That’s why it was introduced gradually.
+
+🧠 Pro-Level Answer (What Impresses Interviewers)
+
+If they push deeper, say:
+
+Frozen string literals reduce object allocations and GC pressure because Ruby can reuse the same string object. However, interpolated strings and dynamically created strings are still mutable. Also, dup removes frozen state while clone preserves it.
+
+That sounds senior-level.

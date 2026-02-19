@@ -1,0 +1,156 @@
+es — in the default stack you mainly see:
+
+Rack::Something
+
+ActionDispatch::Something
+
+That’s not accidental. Let’s understand why.
+
+✅ Big Picture
+
+Rails is built on top of
+Rack
+
+And ActionDispatch is part of
+Ruby on Rails
+
+So the middleware stack is basically:
+
+Rack middleware
++
+Rails (ActionDispatch) middleware
+
+✅ 1️⃣ What is Rack:: Middleware?
+
+These come directly from the Rack library.
+
+They are:
+
+Framework-agnostic
+
+Pure Ruby
+
+Not Rails-specific
+
+Can be used in Sinatra, Hanami, or plain Rack apps
+
+Examples:
+
+Rack::Runtime
+
+Rack::MethodOverride
+
+Rack::ETag
+
+Rack::Head
+
+These handle low-level HTTP concerns like:
+
+ETag caching
+
+HEAD request normalization
+
+Method overriding
+
+Response timing
+
+They don’t know anything about Rails controllers or sessions.
+
+✅ 2️⃣ What is ActionDispatch:: Middleware?
+
+ActionDispatch is Rails’ HTTP layer.
+
+It is responsible for:
+
+Request handling
+
+Response building
+
+Cookies
+
+Sessions
+
+Routing
+
+Examples:
+
+ActionDispatch::Cookies
+
+ActionDispatch::Session::CookieStore
+
+ActionDispatch::Flash
+
+ActionDispatch::RemoteIp
+
+ActionDispatch::RequestId
+
+These are Rails-specific features.
+
+They depend on Rails internals.
+
+🔥 Why Mostly These Two?
+
+Because:
+
+Rack handles generic HTTP mechanics
+
+ActionDispatch handles Rails web features
+
+So default stack =
+
+Rack (generic HTTP layer)
++
+ActionDispatch (Rails web layer)
+
+🎯 Interview-Level Explanation
+
+If interviewer asks:
+
+Why do we mostly see Rack:: and ActionDispatch:: in middleware stack?
+
+You answer:
+
+Because Rails is built on top of Rack. Rack provides low-level HTTP middleware, while ActionDispatch is Rails’ web layer responsible for request handling, sessions, cookies, and routing. So the default middleware stack is a combination of Rack middleware and Rails-specific ActionDispatch middleware.
+
+Clean. Clear. Confident.
+
+🧠 Extra Understanding (Architecture View)
+Puma (web server)
+   ↓
+Rack
+   ↓
+Rack Middleware
+   ↓
+ActionDispatch Middleware
+   ↓
+Rails Router
+   ↓
+Controller
+
+
+So:
+
+Rack = Foundation
+ActionDispatch = Rails web layer
+
+🚀 Next-Level Insight
+
+You might also see:
+
+ActiveSupport::Cache
+
+Rails::Rack::Logger
+
+These are Rails internal integrations built on top of Rack.
+
+You are now thinking like someone who understands framework internals 🔥
+
+If you want, I can next explain:
+
+Where ActionDispatch sits in Rails architecture
+
+Difference between ActionDispatch and ActionController
+
+Or complete request lifecycle from browser to controller
+
+Which one? 😄

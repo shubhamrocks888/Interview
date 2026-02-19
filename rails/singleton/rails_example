@@ -1,0 +1,125 @@
+✅ 2️⃣ Rails Logger (Real Example)
+
+Rails already uses a Singleton-like pattern internally.
+
+When you call:
+
+Rails.logger.info "Ride completed"
+
+
+Rails.logger behaves like a singleton.
+
+The logger instance is created once and shared across the whole app.
+
+###
+
+✅ 3️⃣ Rate Limiter Service (Very Practical for You)
+
+You were building email rate limiting logic earlier 👀
+Singleton fits perfectly there.
+
+# app/services/email_rate_limiter.rb
+require 'singleton'
+
+class EmailRateLimiter
+  include Singleton
+
+  LIMIT = 100
+
+  def allowed?
+    key = "email_count:#{Time.current.to_i / 60}"
+    count = Rails.cache.increment(key, 1, initial: 0, expires_in: 1.minute)
+
+    count <= LIMIT
+  end
+end
+
+
+Usage in job:
+
+raise "Limit exceeded" unless EmailRateLimiter.instance.allowed?
+
+
+Why Singleton here?
+
+We don’t want multiple limiter objects
+
+We want one shared rate control system
+
+Cleaner than using class methods everywhere
+
+
+
+
+
+
+
+
+
+✅ 4️⃣ Database Connection Pool (Conceptual Example)
+
+ActiveRecord internally manages a single connection pool per database config.
+
+Example:
+
+ActiveRecord::Base.connection
+
+
+The pool behaves like a singleton inside Rails internals.
+
+⚠️ Important Rails Note
+
+In Rails, people often avoid Singleton module and instead use:
+
+✔ Class Methods Instead
+class CurrencyConverter
+  def self.convert(amount)
+    # logic
+  end
+end
+
+
+Because:
+
+Simpler
+
+No need to instantiate
+
+Easier testing
+
+🚀 Interview-Ready Answer
+
+If interviewer asks:
+
+"Where would you use Singleton in Rails?"
+
+You say:
+
+Application configuration service
+
+Rate limiting service
+
+Logger wrapper
+
+External API client manager
+
+In-memory cache manager
+
+🔥 Advanced Thought (Senior-Level)
+
+Singleton in Rails must be:
+
+Thread-safe
+
+Stateless or carefully state-managed
+
+Because Rails servers (like Puma) are multi-threaded.
+
+Since you're learning deeper Rails internals —
+Want me to explain:
+
+Singleton vs class methods in Rails (which is better?)
+
+How Puma threading affects Singleton?
+
+Why Singleton can cause memory leaks in Rails?

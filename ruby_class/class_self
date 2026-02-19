@@ -1,0 +1,133 @@
+🎯 class << self — What Does It Mean?
+
+It opens the singleton class (eigenclass) of the object.
+
+Inside a class body:
+
+class User
+  class << self
+  end
+end
+
+
+Here, self = User
+
+So this means:
+
+Open the singleton class of User
+
+And that is where class methods live.
+
+🧠 Simple Translation
+
+This:
+
+class << self
+  def hello
+    "Hi"
+  end
+end
+
+
+Is exactly the same as:
+
+def self.hello
+  "Hi"
+end
+
+
+Both define class methods.
+
+✅ Example
+class User
+  class << self
+    def greet
+      "Hello"
+    end
+  end
+end
+
+User.greet
+
+
+Works perfectly.
+
+💎 Why Do We Use It?
+
+Because it allows grouping multiple class methods neatly.
+
+Instead of:
+
+class User
+  def self.a; end
+  def self.b; end
+  def self.c; end
+end
+
+
+You can write:
+
+class User
+  class << self
+    def a; end
+    def b; end
+    def c; end
+  end
+end
+
+
+Cleaner and professional.
+
+🔥 Real Power Example (Rails Style)
+class User
+  class << self
+    attr_accessor :count
+  end
+end
+
+
+This creates:
+
+User.count
+
+User.count=
+
+These are class-level getters/setters.
+
+🧠 What Is a Singleton Class?
+
+Every object in Ruby has a hidden special class.
+
+Example:
+
+obj = "hello"
+
+def obj.shout
+  upcase
+end
+
+
+That method lives in obj’s singleton class.
+
+Same concept.
+
+🎯 Mental Model
+
+| Syntax            | Meaning                       |
+| ----------------- | ----------------------------- |
+| `def self.method` | Define one class method       |
+| `class << self`   | Open class’s singleton class  |
+| Inside it         | Define multiple class methods |
+
+
+🚀 Interview-Level Answer
+
+If asked:
+
+What does class << self do?
+
+You say:
+
+It opens the singleton class of the current object, allowing us to define class-level methods.
+
+That’s a strong answer.

@@ -1,0 +1,138 @@
+When you write:
+
+include Singleton
+
+
+you’re pulling in Ruby’s built-in module:
+
+👉 Singleton
+
+Let’s break down what actually happens behind the scenes.
+
+🔍 What include Singleton Really Does
+
+When you include Singleton, Ruby does three major things:
+
+1️⃣ Makes .new Private
+
+It prevents direct instantiation:
+
+Logger.new   # ❌ NoMethodError
+
+
+Internally it does something like:
+
+private_class_method :new
+
+
+So users cannot create new instances manually.
+
+2️⃣ Defines .instance Class Method
+
+It adds a class method:
+
+def self.instance
+  @instance ||= new
+end
+
+
+This ensures:
+
+First call → creates object
+
+Later calls → returns same object
+
+So this works:
+
+Logger.instance
+Logger.instance
+
+
+Both return the same object.
+
+3️⃣ Makes It Thread-Safe
+
+This is the important part most people miss.
+
+The real implementation uses a Mutex to prevent race conditions:
+
+def self.instance
+  return @instance if @instance
+
+  @mutex.synchronize do
+    @instance ||= new
+  end
+
+  @instance
+end
+
+
+Without this, in multi-threaded apps (like Rails), two threads could create two objects simultaneously.
+
+📦 Simplified Version of What Singleton Actually Looks Like
+
+Here’s a simplified approximation of the real Ruby source:
+
+module Singleton
+  def self.included(base)
+    base.extend(ClassMethods)
+    base.private_class_method :new
+  end
+
+  module ClassMethods
+    def instance
+      @__instance__ ||= new
+    end
+  end
+end
+
+
+The real version in Ruby's stdlib is more complex and thread-safe.
+
+🧠 What include Actually Does in Ruby
+
+When you write:
+
+include Singleton
+
+
+Ruby:
+
+Inserts Singleton into the class's ancestor chain
+
+Calls Singleton.included(self) if defined
+
+Adds instance methods
+
+Extends class with class methods
+
+You can even check:
+
+Logger.ancestors
+
+
+You’ll see Singleton in the chain.
+
+🚀 Bonus: Where Is This Code Located?
+
+It comes from Ruby’s standard library:
+
+require 'singleton'
+
+
+File location (internally):
+
+lib/singleton.rb
+
+
+It is not Rails code — it’s pure Ruby stdlib.
+
+🔥 Interview-Level Summary
+
+When you include Singleton:
+
+✔ Makes .new private
+✔ Adds .instance method
+✔ Ensures only one object is created
+✔ Uses Mutex for thread safety
+✔ Stores instance in class-level variable

@@ -1,0 +1,129 @@
+our example:
+
+class Logger
+  @instance = nil
+
+  def self.instance
+    @instance ||= new
+  end
+
+  def log(msg)
+  end
+
+  private_class_method :new
+end
+
+
+This just ensures:
+
+Only one object can exist
+
+That object is accessed via Logger.instance
+
+But inside the class, you can define:
+
+✅ Multiple instance methods
+
+✅ Multiple class methods
+
+✅ Constants
+
+✅ Private / protected methods
+
+🔹 Example With Multiple Methods
+class Logger
+  @instance = nil
+
+  def self.instance
+    @instance ||= new
+  end
+
+  # ----- Instance methods -----
+  def log(msg)
+    puts "[LOG] #{msg}"
+  end
+
+  def warn(msg)
+    puts "[WARN] #{msg}"
+  end
+
+  def error(msg)
+    puts "[ERROR] #{msg}"
+  end
+
+  # ----- Class methods -----
+  def self.version
+    "1.0"
+  end
+
+  def self.reset!
+    @instance = nil
+  end
+
+  private_class_method :new
+end
+
+🔎 How You Use It
+Instance methods (through singleton object)
+logger = Logger.instance
+logger.log("Hello")
+logger.warn("Be careful")
+
+Class methods (directly on class)
+Logger.version
+Logger.reset!
+
+🧠 Important Concept
+
+Singleton pattern means:
+
+“Only one instance of this class can exist.”
+
+It does NOT mean:
+
+“Only one method is allowed.”
+
+You still design the class like any normal Ruby class.
+
+🔥 Conceptual Difference
+
+Think of it like:
+
+A normal class → Many objects, each has these methods
+
+A singleton class → One object, but that object can do many things
+
+So your singleton object can behave like a service object with multiple behaviors.
+
+🎯 Real Rails Example
+
+Rails itself exposes singleton-like global objects:
+
+Rails.logger
+
+Rails.cache
+
+Rails.application
+
+These objects have MANY methods, but only one instance exists.
+
+For example:
+
+Rails.logger.info("Hi")
+Rails.logger.error("Something failed")
+
+
+Those are multiple instance methods on a singleton object.
+
+🏁 Final Answer
+
+Yes ✔
+You can add:
+
+Multiple instance methods
+
+Multiple class methods
+
+Multiple private methods
+
+Singleton only restricts object creation — not functionality.

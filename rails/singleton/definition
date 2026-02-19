@@ -1,0 +1,77 @@
+Singleton pattern ensures a class has only one instance and provides a global access point to it.
+In Ruby, we usually implement it using include Singleton.
+
+
+####
+
+In Ruby, a Singleton is a design pattern that ensures:
+
+Only one instance of a class can exist
+
+That instance is globally accessible
+
+🔹 Why Use Singleton?
+
+You use Singleton when you want:
+
+  A single configuration object
+  A single logger
+  A single cache
+  A single connection manager
+
+Example: You don’t want 10 different loggers writing differently — just one shared logger.
+
+###
+
+✅ Method 1: Using Ruby's Built-in Singleton Module (Recommended)
+
+require 'singleton'
+
+class Logger
+  include Singleton
+
+  def log(message)
+    puts message
+  end
+end
+
+logger1 = Logger.instance
+logger2 = Logger.instance
+
+puts logger1 == logger2  # true
+
+
+🔎 What happens here?
+
+  new becomes private
+
+  You cannot do Logger.new
+
+  You must use Logger.instance
+
+  Only one object is created
+
+###
+
+
+
+#######
+
+⚠️ Important Interview Point
+
+Singleton ensures:
+
+Single object
+
+Controlled access
+
+Global point of access
+
+But beware:
+
+Can behave like a global variable
+
+Harder to test
+
+Can create tight coupling
+

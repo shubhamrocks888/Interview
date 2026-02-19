@@ -1,0 +1,216 @@
+✅ 1️⃣ Why Do All Middlewares Have initialize(app) and call(env)?
+
+Yes — this is not random.
+
+This is the Rack Interface Contract.
+
+Rails middleware follows the specification defined by:
+
+👉 Rack
+
+And Rails itself is built on top of:
+
+👉 Ruby on Rails
+
+🎯 Is This a Design Pattern?
+
+Yes.
+
+It is based on:
+
+🧩 Chain of Responsibility Pattern
+
+Each middleware:
+
+Receives a request
+
+Can process it
+
+Can stop it
+
+Or passes it to the next middleware
+
+Like this:
+
+Request
+ → Middleware A
+   → Middleware B
+     → Middleware C
+       → Rails App
+
+
+Each one wraps the next.
+
+So yes — it follows a formal design pattern.
+
+Interview bonus point ⭐
+
+✅ 2️⃣ What is app?
+
+In:
+
+def initialize(app)
+  @app = app
+end
+
+
+app is:
+
+👉 The next middleware in the stack
+OR
+👉 The final Rails application
+
+Think of it as:
+
+"Call the next thing in the chain"
+
+
+When you do:
+
+@app.call(env)
+
+
+You are saying:
+
+I’m done processing, now pass request forward.
+
+If your middleware is last, @app is the Rails application itself.
+
+So yes — indirectly it becomes your Rails app.
+
+But technically:
+
+It’s “next Rack application”.
+
+✅ 3️⃣ What is env?
+
+This is VERY important.
+
+env is:
+
+👉 The Rack Environment Hash
+
+It is just a Ruby Hash containing request data.
+
+Example keys inside env:
+
+env["REQUEST_METHOD"]
+env["PATH_INFO"]
+env["QUERY_STRING"]
+env["REMOTE_ADDR"]
+env["rack.input"]
+
+
+It contains:
+
+HTTP method
+
+Headers
+
+IP address
+
+Body
+
+Cookies
+
+Session
+
+Everything about request
+
+Rails wraps this into:
+
+ActionDispatch::Request.new(env)
+
+
+So you don’t deal with raw hash.
+
+🎯 Very Important Concept
+
+A Rack app must respond to:
+
+call(env)
+
+
+And must return:
+
+[status, headers, body]
+
+
+This is the Rack contract.
+
+Not optional.
+Not Rails magic.
+It’s a standard.
+
+🔥 So Why Always Same Structure?
+
+Because Rack defines:
+
+class AnyRackApp
+  def call(env)
+    [status, headers, body]
+  end
+end
+
+
+Middleware is just:
+
+class Middleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    # before
+    result = @app.call(env)
+    # after
+    result
+  end
+end
+
+
+That’s it.
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+Why does middleware require initialize(app) and call(env)?
+
+You answer:
+
+Because Rails middleware follows the Rack interface specification. Rack requires any application or middleware to respond to call(env) and return a [status, headers, body] tuple. The initialize(app) method allows each middleware to wrap the next application in the chain, implementing the Chain of Responsibility pattern.
+
+That answer is senior-level.
+
+⚡ Bonus Deep Understanding
+
+env flows down the chain.
+
+response flows back up the chain.
+
+Like this:
+
+Request ↓
+M1
+  M2
+    Rails App
+  M2
+M1
+Response ↑
+
+
+That’s why middleware can modify:
+
+Request before controller
+
+Response after controller
+
+🚀 Final Summary
+
+| Term    | Meaning                        |
+| ------- | ------------------------------ |
+| `app`   | Next middleware or Rails app   |
+| `env`   | Rack environment hash          |
+| `call`  | Required Rack interface method |
+| Pattern | Chain of Responsibility        |
