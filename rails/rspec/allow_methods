@@ -1,0 +1,196 @@
+In RSpec, allow itself does NOT have many methods.
+
+This part:
+
+allow(object).to receive(:method)
+
+allow returns a message expectation object, and that object supports many chaining methods.
+
+So what you’re really asking is:
+
+“What methods can I chain after allow(...).to receive(...)?”
+
+Let’s categorize them properly.
+
+🧠 1️⃣ Basic Stubbing
+Basic allow
+allow(object).to receive(:method)
+
+Just allows the method. Returns nil by default.
+
+and_return
+allow(object).to receive(:method).and_return(value)
+
+Multiple returns:
+
+allow(object).to receive(:method).and_return(1, 2, 3)
+
+Each call returns next value.
+
+🧠 2️⃣ and_raise
+allow(object).to receive(:method).and_raise(StandardError)
+
+Raise specific error:
+
+allow(object).to receive(:method)
+  .and_raise(ArgumentError, "invalid")
+🧠 3️⃣ and_throw
+allow(object).to receive(:method).and_throw(:done)
+🧠 4️⃣ and_call_original
+
+Very important.
+
+allow(object).to receive(:method).and_call_original
+
+Stubs method
+
+But still calls real implementation
+
+Used in partial doubles.
+
+🧠 5️⃣ and_wrap_original
+
+Wrap original method:
+
+allow(object).to receive(:method).and_wrap_original do |original, *args|
+  result = original.call(*args)
+  result.upcase
+end
+
+Useful for modifying behavior.
+
+🧠 6️⃣ with (Argument Matching)
+allow(object).to receive(:method).with(1, 2).and_return(3)
+
+Different returns for different args:
+
+allow(object).to receive(:method).with(1).and_return("one")
+allow(object).to receive(:method).with(2).and_return("two")
+🧠 7️⃣ Argument Matchers
+
+Used with with.
+
+with(anything)
+with(any_args)
+with(no_args)
+with(kind_of(String))
+with(instance_of(User))
+with(hash_including(name: "Shubham"))
+with(array_including(1,2))
+🧠 8️⃣ allow_any_instance_of (Special Case)
+allow_any_instance_of(User)
+  .to receive(:admin?)
+  .and_return(true)
+
+Dangerous (we discussed earlier).
+
+🧠 9️⃣ stub_const
+
+Not directly chained to allow, but related to stubbing.
+
+stub_const("PaymentGateway", fake_class)
+
+Used to replace constants.
+
+🧠 🔟 receive_messages
+
+Stub multiple methods at once:
+
+allow(object).to receive_messages(
+  name: "Shubham",
+  age: 25
+)
+🧠 1️⃣1️⃣ receive_message_chain (⚠️ Discouraged)
+allow(object)
+  .to receive_message_chain(:a, :b, :c)
+  .and_return(1)
+
+Avoid — considered code smell.
+
+🧠 1️⃣2️⃣ once / twice / exactly (Less common with allow)
+
+Mostly used with expect, but technically possible:
+
+allow(object).to receive(:method).once
+
+However, frequency constraints are normally for expect.
+
+🧠 1️⃣3️⃣ ordered
+
+Mostly used with expect, but available.
+
+allow(object).to receive(:method).ordered
+🚀 Clean Categorized Summary
+Core Stubbing
+
+receive
+
+and_return
+
+and_raise
+
+and_throw
+
+and_call_original
+
+and_wrap_original
+
+Argument Control
+
+with
+
+anything
+
+any_args
+
+no_args
+
+kind_of
+
+instance_of
+
+hash_including
+
+array_including
+
+Advanced
+
+receive_messages
+
+receive_message_chain
+
+allow_any_instance_of
+
+stub_const
+
+🎯 What Interviewers Actually Expect You To Know
+
+You don’t need ALL of them memorized.
+
+You should confidently know:
+
+allow(...).to receive
+
+and_return
+
+and_raise
+
+with
+
+and_call_original
+
+receive_messages
+
+allow_any_instance_of (and why it's bad)
+
+That’s enough to look strong.
+
+If you want next, we can:
+
+Compare allow vs expect deeply
+
+Explain argument matchers in depth
+
+Or build a real service object test using proper stubbing
+
+Tell me what you want 🔥

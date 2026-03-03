@@ -1,0 +1,98 @@
+Good question 👍 — this is small but very important in Ruby interviews.
+
+1️⃣ puts
+puts "hello"
+What it does:
+
+Prints the string as-is
+
+Adds a newline automatically
+
+Calls to_s internally
+
+Output:
+hello
+
+No quotes.
+
+2️⃣ p
+p "hello"
+What it does:
+
+Prints the object’s raw representation
+
+Calls inspect internally
+
+Mainly used for debugging
+
+Also returns the object
+
+Output:
+"hello"
+
+Notice the quotes 👆
+
+🔎 Key Difference
+Method	Internally Calls	Output Format	Used For
+puts	to_s	Clean / user-friendly	Display
+p	inspect	Debug format (with quotes, symbols, etc.)	Debugging
+Example with Array
+arr = [1,2,3]
+
+puts arr
+
+Output:
+
+1
+2
+3
+
+Because puts prints each element on new line.
+
+Now:
+
+p arr
+
+Output:
+
+[1, 2, 3]
+
+Much clearer for debugging.
+
+Example with nil
+puts nil
+
+Prints nothing (just blank line)
+
+p nil
+
+Output:
+
+nil
+
+Very helpful for debugging.
+
+🔥 Interview Trick Question
+
+p returns the object, but puts returns nil.
+
+a = p "hello"
+# prints "hello"
+# a => "hello"
+
+b = puts "hello"
+# prints hello
+# b => nil
+🎯 When to Use What?
+
+Use puts → When printing user-facing output
+
+Use p → When debugging
+
+If you want, I can also explain:
+
+print vs puts
+
+pp (pretty print)
+
+Why puts prints arrays differently internally

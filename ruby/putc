@@ -1,0 +1,107 @@
+Good question 👍
+Most Ruby developers almost never use putc, so it’s good you're asking why it even exists.
+
+🔹 What putc Does
+putc "hello"
+putc "world"
+
+Output:
+
+hw
+
+Why?
+
+Because:
+
+putc prints only one character
+
+It prints the first character of the argument
+
+It does NOT add a newline
+
+So:
+
+putc "hello"   # prints "h"
+putc "world"   # prints "w"
+🔥 So What Is The Use?
+
+putc is a low-level character output method.
+
+It is useful when you want to:
+
+1️⃣ Print character-by-character
+
+Example:
+
+str = "hello"
+
+str.each_char do |ch|
+  putc ch
+end
+
+Output:
+
+hello
+2️⃣ Work with ASCII / byte-level output
+putc 65
+
+Output:
+
+A
+
+Because 65 is ASCII for 'A'.
+
+This is useful when:
+
+Generating binary data
+
+Working with file streams
+
+Building low-level output formats
+
+Custom encoders
+
+3️⃣ Writing to a specific IO stream
+
+You can use it with $stdout, files, etc.
+
+File.open("test.txt", "w") do |f|
+  f.putc "A"
+end
+
+This writes a single character to a file.
+
+🔹 Why Not Just Use print?
+
+Because:
+
+print prints the entire string
+
+putc prints exactly one character
+
+putc works directly with bytes
+
+It gives more control.
+
+🔹 Real-world usage frequency
+
+| Method  | Usage Frequency          |
+| ------- | ------------------------ |
+| `puts`  | 🔥 Very common           |
+| `print` | Common                   |
+| `p`     | Very common (debugging)  |
+| `putc`  | Rare (low-level IO work) |
+
+Most Rails developers never use putc.
+
+🎯 Simple Interview Answer
+
+putc prints a single character (or ASCII value) to the output stream without adding a newline. It is mainly used for low-level, character-by-character output or byte-level operations.
+
+If you want, I can also explain:
+
+How putc works internally with IO
+
+Difference between putc and write
+
+When working with binary files in Ruby 🚀

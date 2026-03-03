@@ -1,0 +1,90 @@
+🔟 Full Flow Summary
+Step 1:
+
+User hits /saml/login
+
+Step 2:
+
+Rails builds SAML AuthRequest → redirects to ADFS
+
+Step 3:
+
+User logs in at ADFS
+
+Step 4:
+
+ADFS sends signed SAMLResponse to /saml/consume
+
+Step 5:
+
+Rails verifies signature using ADFS public certificate
+
+Step 6:
+
+Extract attributes
+
+Step 7:
+
+Map groups → roles
+
+Step 8:
+
+Login user
+
+
+
+#############
+
+🔐 Where Security Actually Happens
+
+Security critical lines:
+
+response.is_valid?
+
+and
+
+SAML_SETTINGS.idp_cert = ...
+
+Without these, anyone could fake login.
+
+
+
+##########
+
+
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+Where does SAML logic happen in Rails?
+
+You say:
+
+Configuration in initializer (IdP cert, endpoints)
+
+AuthRequest generated in login controller
+
+SAMLResponse validated in consume action
+
+Signature verified using IdP public cert
+
+Attributes extracted and mapped to roles
+
+That sounds senior-level.
+
+If you want next:
+
+We can now go deeper into:
+
+Debugging failed SAML responses
+
+Certificate rotation handling
+
+Replay attack prevention
+
+Multiple IdP support
+
+Using metadata URL dynamically
+
+Tell me which direction 🚀

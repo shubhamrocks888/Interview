@@ -1,0 +1,99 @@
+3️⃣ Error Handling Strategy (Professional API Design)
+
+Now comes the part many candidates fail.
+
+Goal of Error Handling
+
+Consistent format
+
+Proper HTTP status codes
+
+Clear error messages
+
+No sensitive info leakage
+
+Standard Error JSON Format
+
+Example:
+
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Email is required",
+    "details": {
+      "email": ["can't be blank"]
+    }
+  }
+}
+Types of Errors
+🔹 1. Validation Errors
+
+Return:
+
+422 Unprocessable Entity
+
+Example:
+
+Email missing
+
+Password too short
+
+🔹 2. Authentication Errors
+401 Unauthorized
+
+Example:
+
+Invalid token
+
+Expired token
+
+🔹 3. Authorization Errors
+403 Forbidden
+
+Example:
+
+User not allowed to delete course
+
+🔹 4. Not Found
+404 Not Found
+🔹 5. Server Errors
+500 Internal Server Error
+
+But:
+
+❌ Never expose stack traces in production.
+
+Rails Best Practice (If Asked)
+
+In Rails:
+
+Use rescue_from in ApplicationController
+
+Create custom exceptions
+
+Return consistent JSON
+
+Example:
+
+rescue_from ActiveRecord::RecordNotFound do
+  render json: { error: "Not Found" }, status: :not_found
+end
+What Interviewer Wants to Hear
+
+Say this clearly:
+
+My error handling strategy focuses on consistency, proper HTTP status codes, structured JSON responses, and centralized exception handling using middleware or ApplicationController. I ensure no sensitive information is leaked in production.
+
+🎯 Final Interview Summary (You Can Memorize This)
+
+If interviewer says:
+
+"Explain REST principles, JWT flow and error handling"
+
+You can say:
+
+REST APIs are resource-based, use proper HTTP methods, return meaningful HTTP status codes, and must be stateless. Stateless means the server does not store client session state, and each request contains authentication information like a JWT token.
+
+For authentication, I use JWT with access and refresh tokens. Access tokens are short-lived and sent in the Authorization header. Refresh tokens are long-lived and used to generate new access tokens without re-login.
+
+For error handling, I follow a consistent JSON structure, use proper HTTP status codes like 401, 403, 422, and centralize exception handling in Rails using rescue_from to avoid code duplication and prevent sensitive data exposure.

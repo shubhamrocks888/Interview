@@ -1,0 +1,8 @@
+🧩 1️⃣ Add Gem
+Gemfile
+gem 'ruby-saml'
+
+Then:
+
+bundle install
+

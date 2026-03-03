@@ -1,0 +1,9 @@
+What is REST?
+
+REST stands for Representational State Transfer.
+
+It is an architectural style for designing APIs over HTTP.
+
+In simple words:
+
+REST means designing APIs around resources using standard HTTP methods.

@@ -1,0 +1,77 @@
+Almost correct 👍 — but small correction needed.
+
+❌ p is NOT the inspect method.
+✅ p calls inspect internally.
+
+🔎 What actually happens
+
+When you write:
+
+p obj
+
+Ruby internally does something like:
+
+puts obj.inspect
+
+So:
+
+p is a method
+
+inspect is another method
+
+p uses inspect
+
+🔥 Proof with Example
+str = "hello"
+
+str.inspect
+# => "\"hello\""
+
+p str
+# prints: "hello"
+# returns: "hello"
+
+Notice:
+
+p prints what inspect returns
+
+But p also returns the original object
+
+🔹 Important Difference
+a = p "hello"
+
+Output:
+
+"hello"
+
+Now:
+
+a
+# => "hello"
+
+Because p returns the object itself.
+
+But:
+
+b = puts "hello"
+b
+# => nil
+
+So:
+
+M| Method | Prints Using | Returns       |
+| ------ | ------------ | ------------- |
+| `puts` | `to_s`       | nil           |
+| `p`    | `inspect`    | object itself |
+
+🎯 Interview Answer
+
+p is a Kernel method that prints an object using its inspect method and returns the object.
+
+If you want deeper understanding, I can show you:
+
+Where p is defined (Kernel module)
+
+How IRB automatically uses inspect
+
+How overriding inspect changes p behavior 🚀

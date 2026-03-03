@@ -1,0 +1,196 @@
+Great question 🔥 — this shows you’re thinking deeply.
+
+First important clarification:
+
+In RSpec, expect itself does NOT have many methods.
+
+expect returns an ExpectationTarget, and the methods like:
+
+eq
+
+eql
+
+be
+
+receive
+
+change
+
+are called matchers.
+
+So what you’re really asking is:
+
+“What matchers are available in RSpec?”
+
+Now — RSpec has MANY matchers (dozens). I’ll give you a structured, categorized list of the most important and commonly used ones (the ones interviewers expect you to know).
+
+🧠 1️⃣ Equality Matchers
+eq
+
+Uses ==
+
+expect(5).to eq(5)
+eql
+
+Uses eql? (stricter)
+
+expect(5).to eql(5)
+equal
+
+Checks object identity (same object in memory)
+
+expect(obj1).to equal(obj2)
+🧠 2️⃣ Comparison Matchers
+expect(10).to be > 5
+expect(10).to be >= 10
+expect(5).to be < 10
+expect(5).to be <= 5
+expect(5).to be_between(1, 10)
+🧠 3️⃣ Truthiness / Boolean
+expect(value).to be_truthy
+expect(value).to be_falsey
+expect(value).to be true
+expect(value).to be false
+expect(value).to be_nil
+🧠 4️⃣ Collection Matchers
+expect([1,2,3]).to include(2)
+expect([1,2,3]).to contain_exactly(1,2,3)
+expect([1,2,3]).to match_array([3,2,1])
+expect([1,2,3]).to start_with(1)
+expect([1,2,3]).to end_with(3)
+🧠 5️⃣ String Matchers
+expect("hello").to match(/ell/)
+expect("hello").to start_with("he")
+expect("hello").to end_with("lo")
+🧠 6️⃣ Predicate Matchers
+
+RSpec automatically supports Ruby predicate methods.
+
+If object has:
+
+user.valid?
+
+You can write:
+
+expect(user).to be_valid
+
+Other examples:
+
+expect(user).to be_admin
+expect(order).to be_paid
+
+It calls admin?, paid?.
+
+🧠 7️⃣ Change Matcher (Very Important)
+
+Used for side effects.
+
+expect {
+  user.increment!(:balance)
+}.to change { user.balance }.by(1)
+
+Other forms:
+
+.to change(Model, :count).by(1)
+.to change { something }.from(0).to(1)
+🧠 8️⃣ Raise Error
+expect {
+  some_method
+}.to raise_error
+
+More specific:
+
+expect {
+  some_method
+}.to raise_error(ArgumentError)
+🧠 9️⃣ Respond To
+expect(user).to respond_to(:name)
+🧠 🔟 Type Matchers
+expect(user).to be_a(User)
+expect(user).to be_an_instance_of(User)
+expect(user).to be_kind_of(Object)
+🧠 1️⃣1️⃣ Yield Matchers
+
+For blocks:
+
+expect { |b| method(&b) }.to yield_control
+expect { |b| method(&b) }.to yield_with_args(1,2)
+🧠 1️⃣2️⃣ Output Matcher
+expect {
+  puts "hello"
+}.to output("hello\n").to_stdout
+🧠 1️⃣3️⃣ Throw Symbol
+expect {
+  throw :done
+}.to throw_symbol(:done)
+🧠 1️⃣4️⃣ Interaction Matchers (Mocks)
+expect(object).to receive(:method)
+expect(object).to have_received(:method)
+
+With extras:
+
+.receive(:method).with(arg)
+.receive(:method).once
+.receive(:method).twice
+.receive(:method).exactly(3).times
+🧠 1️⃣5️⃣ Compound Matchers
+expect(user).to be_valid.and have_attributes(name: "Shubham")
+
+Or:
+
+expect(number).to be > 5.and be < 20
+🧠 1️⃣6️⃣ Satisfy (Custom Condition)
+expect(10).to satisfy { |n| n.even? }
+🧠 1️⃣7️⃣ Have Attributes
+expect(user).to have_attributes(name: "Shubham", age: 25)
+🚀 Most Important Matchers (Focus For Interviews)
+
+If you master these, you’re solid:
+
+eq
+
+be
+
+be_nil
+
+include
+
+change
+
+raise_error
+
+respond_to
+
+receive
+
+have_received
+
+be_a / be_instance_of
+
+🎯 Final Important Note
+
+RSpec also allows:
+
+expect(value).not_to eq(5)
+
+So every matcher works with not_to.
+
+⚠️ Important Reality
+
+There are MANY more matchers and custom ones.
+
+You can also create your own matcher using:
+
+RSpec::Matchers.define
+
+But for interviews and daily Rails work, the list above is what really matters.
+
+If you want next, we can:
+
+Deep dive into change (very powerful matcher)
+
+Or explain difference between eq vs eql vs equal properly
+
+Or build your own custom matcher from scratch
+
+Tell me what you want to master next 🔥

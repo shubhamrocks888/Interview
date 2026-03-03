@@ -17,4 +17,64 @@ else
 end
 
 
-###
+### for remember me
+
+Logout:
+
+cookies.delete(:remember_user_token)
+
+
+Password change:
+
+auth_salt changes → existing session invalid
+
+
+Remember-me cookie is invalidated too (because Devise validates auth_salt on auto-login)
+
+evise also creates a remember-me token:
+
+signed_cookie_value = remember_me_token(user)
+cookies.signed[:remember_user_token] = {
+  value: signed_cookie_value,
+  expires: 2.weeks.from_now
+}
+
+
+Updates DB:
+
+user.update!(remember_created_at: Time.current)
+
+“Remember-me allows persistent login across browser restarts. Devise stores a separate signed cookie with a remember token and remember_created_at. On each visit, Devise validates the cookie, fetches the user, and recreates the session, making current_user available even after the session expired.”
+
+
+####  for recoverable
+
+t.string   :reset_password_token
+t.datetime :reset_password_sent_at
+
+Forgot Password Request
+          ↓
+Generate raw token → hash → save reset_password_token & reset_password_sent_at
+          ↓
+Send raw token via email link
+          ↓
+User clicks link → Devise hashes token → compare with DB
+          ↓
+Token valid & not expired?
+  ↓               ↓
+Yes → show reset form  No → error / expired
+          ↓
+User submits new password
+          ↓
+Update encrypted_password, clear reset_password_token & reset_password_sent_at
+          ↓
+Optionally log in user, invalidate old sessions (auth_salt)
+
+###  Login
+
+
+rails generate devise User
+
+Core password-related fields
+t.string :email,              null: false, default: ""
+t.string :encrypted_password, null: false, default: ""

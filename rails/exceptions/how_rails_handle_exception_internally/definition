@@ -1,0 +1,229 @@
+You’re asking:
+
+How does Rails handle exceptions internally via middleware?
+
+Let’s break it down step by step.
+
+🧠 1️⃣ First Understand the Request Flow
+
+In Ruby on Rails, every request goes through:
+
+Rack Middleware Stack
+        ↓
+Rails Router
+        ↓
+Controller
+        ↓
+Action
+
+
+If ANY error happens anywhere in this flow…
+
+👉 The exception bubbles up the middleware stack.
+
+🧩 2️⃣ The Two Important Middlewares for Exceptions
+
+Rails uses two important middlewares:
+
+1️⃣ ActionDispatch::ShowExceptions
+2️⃣ ActionDispatch::DebugExceptions
+
+These are part of the default middleware stack.
+
+🏗 What They Do
+✅ ActionDispatch::DebugExceptions
+
+Used in development.
+
+Shows the detailed error page
+
+Stack trace
+
+Source code
+
+Params
+
+Request info
+
+That beautiful Rails error screen you see?
+
+That’s handled here.
+
+✅ ActionDispatch::ShowExceptions
+
+Used in production.
+
+Catches unhandled exceptions
+
+Converts them into HTTP responses
+
+Renders 404 / 500 pages
+
+Instead of crashing the server, it returns a proper response.
+
+🔥 3️⃣ What Actually Happens Internally
+
+Let’s simulate.
+
+Inside a controller:
+
+def show
+  raise "Something broke"
+end
+
+
+Flow:
+
+1️⃣ Controller raises exception
+2️⃣ Exception bubbles up
+3️⃣ DebugExceptions catches it (development mode)
+4️⃣ Renders error page
+
+In production:
+
+1️⃣ Exception bubbles up
+2️⃣ ShowExceptions catches it
+3️⃣ Maps exception to HTTP status
+4️⃣ Renders /public/500.html
+
+🧠 4️⃣ How Rails Decides 404 vs 500
+
+Rails maps exceptions to status codes.
+
+Example:
+
+ActiveRecord::RecordNotFound → 404
+
+ActionController::RoutingError → 404
+
+Any unknown exception → 500
+
+These mappings live inside:
+
+config.action_dispatch.rescue_responses
+
+
+You can even customize them.
+
+🏗 5️⃣ Middleware Stack Example
+
+If you run:
+
+rails middleware
+
+
+You’ll see something like:
+
+ActionDispatch::HostAuthorization
+Rack::Sendfile
+ActionDispatch::Static
+ActionDispatch::Executor
+ActionDispatch::DebugExceptions
+ActionDispatch::ShowExceptions
+...
+
+
+Notice:
+
+👉 Exception middlewares are high in the stack
+👉 They wrap the entire app
+
+Think of them like a safety net.
+
+🎯 6️⃣ Production Mode Flow
+
+In production:
+
+config.consider_all_requests_local = false
+
+
+This disables debug pages.
+
+Then:
+
+ShowExceptions rescues errors
+
+Calls exceptions_app
+
+Renders error pages
+
+By default:
+
+config.exceptions_app = self.routes
+
+
+Or static /public/404.html
+
+🔥 7️⃣ What If You Disable It?
+
+If you disable:
+
+config.action_dispatch.show_exceptions = false
+
+
+Rails will NOT catch exceptions.
+
+Server will crash the request.
+
+Useful in API apps sometimes.
+
+🧠 8️⃣ Where Does rescue_from Fit?
+
+rescue_from is controller-level.
+
+It works BEFORE middleware.
+
+Flow:
+
+Controller
+  rescue_from handles?
+     YES → return response
+     NO → goes to middleware
+
+
+So:
+
+rescue_from = app-level handling
+
+Middleware = framework-level fallback
+
+🚀 Interview-Ready Explanation
+
+If interviewer asks:
+
+How does Rails handle exceptions internally?
+
+You say:
+
+Rails handles exceptions using middleware like ActionDispatch::DebugExceptions and ActionDispatch::ShowExceptions. When an exception occurs in the controller or model layer, it bubbles up the middleware stack. In development, DebugExceptions renders detailed error pages. In production, ShowExceptions maps exceptions to HTTP status codes and renders appropriate 404 or 500 responses.
+
+That’s a strong answer.
+
+🧠 Mental Architecture
+
+Think like this:
+
+[ Request ]
+     ↓
+[ Middleware Stack ]
+     ↓
+[ Controller ]
+     ↓
+( Exception happens )
+     ↑
+[ Exception Middleware catches ]
+     ↓
+[ HTTP Error Response ]
+
+
+If you want next, we can go even deeper:
+
+How custom middleware can intercept exceptions
+
+How to build centralized error JSON handler for APIs
+
+How Sentry hooks into middleware
+
+Or how exceptions affect transactions in ActiveRecord
+
+You’re now touching advanced Rails internals 🔥

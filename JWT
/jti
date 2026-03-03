@@ -1,0 +1,142 @@
+🆔 What Is jti?
+
+jti stands for:
+
+JWT ID
+
+It is a unique identifier for a token.
+
+It’s defined in the JWT standard (RFC 7519) for JSON Web Token.
+
+🧠 Why Do We Need jti?
+
+Remember:
+
+JWT is stateless.
+
+If you don’t store tokens anywhere, how do you:
+
+Revoke a specific token?
+
+Detect token reuse?
+
+Track refresh token rotation?
+
+You need a unique ID for each token.
+
+That’s what jti is for.
+
+📦 Example JWT Payload With jti
+{
+  "sub": "42",
+  "exp": 1700000000,
+  "jti": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+Here:
+
+sub → user id
+
+exp → expiration
+
+jti → unique token ID (usually UUID)
+
+Each issued token gets a new jti.
+
+🔥 Where jti Is Used in Real Systems
+✅ 1️⃣ Token Revocation (Blacklist)
+
+When issuing token:
+
+jti = SecureRandom.uuid
+
+Store in DB:
+
+Token.create!(
+  user_id: user.id,
+  jti: jti,
+  revoked: false
+)
+
+If user logs out:
+
+token.update!(revoked: true)
+
+On each request:
+
+Decode JWT
+
+Extract jti
+
+Check DB
+
+If revoked → deny access
+
+✅ 2️⃣ Refresh Token Rotation
+
+When refresh token R1 is used:
+
+Find by jti
+
+Mark revoked
+
+Create new refresh token with new jti
+
+If old jti appears again:
+
+→ Token reuse detected
+→ Possible attack
+
+✅ 3️⃣ Detecting Replay Attacks
+
+If attacker copies token and reuses it:
+
+System can detect:
+
+jti already used
+
+Without jti, you can’t track individual tokens.
+
+🎯 Important Clarification
+
+jti is:
+
+Optional in JWT spec
+
+But highly recommended for secure systems
+
+Access tokens in fully stateless systems may not use it.
+
+Refresh tokens almost always use it.
+
+🧱 Simple Analogy
+
+Think of JWT like a train ticket.
+
+sub → passenger name
+
+exp → expiry date
+
+jti → ticket number
+
+If someone reports ticket stolen:
+
+You block that ticket number.
+
+You don’t block all tickets.
+
+🏁 Final Definition
+
+jti (JWT ID) is:
+
+A unique identifier for a specific token instance, used to enable revocation, tracking, and replay detection.
+
+If you want, next I can explain:
+
+Difference between sub, aud, iss, and jti
+
+Or how to design a production-ready JWT schema
+
+Or how jti works in OAuth2 systems
+
+Tell me 🚀

@@ -1,0 +1,208 @@
+This is one of the most important JWT security questions.
+
+Interviewer favorite:
+
+Where should frontend store access and refresh tokens?
+
+Let’s break it down properly.
+
+🟢 First Understand the Core Problem
+
+Frontend must store tokens somewhere because:
+
+It needs access token for API calls
+
+It needs refresh token to renew session
+
+But…
+
+Where you store them affects security.
+
+🧠 Storage Options in Frontend
+
+There are mainly 4 places:
+
+Memory (React state / JS variable)
+
+LocalStorage
+
+SessionStorage
+
+Cookies (HttpOnly or normal)
+
+Let’s analyze each.
+
+1️⃣ LocalStorage ❌ (Common but Risky)
+
+Stored like:
+
+localStorage.setItem("access_token", token)
+✅ Pros:
+
+Easy
+
+Persists after refresh
+
+Survives browser restart
+
+❌ Cons:
+
+Vulnerable to XSS attacks
+
+Any malicious JS can read it
+
+If attacker injects script:
+
+localStorage.getItem("access_token")
+
+Token stolen.
+
+⚠️ This is the biggest risk.
+
+2️⃣ SessionStorage ⚠️
+
+Similar to localStorage but:
+
+Cleared when tab closes
+
+Still vulnerable to XSS
+
+So still risky.
+
+3️⃣ Memory (Recommended for Access Token)
+
+Store access token in:
+
+React state
+
+Redux store
+
+In-memory variable
+
+✅ Pros:
+
+Not accessible after page refresh
+
+Harder to steal
+
+Safer than localStorage
+
+❌ Cons:
+
+Lost on refresh
+
+Need refresh token to regenerate
+
+But that’s okay — refresh token solves that.
+
+4️⃣ HttpOnly Cookies (Best for Refresh Token)
+
+This is most secure.
+
+Refresh token stored in:
+
+HttpOnly Secure SameSite cookie
+
+Important flags:
+
+HttpOnly → JS cannot access
+
+Secure → sent only over HTTPS
+
+SameSite → prevents CSRF
+
+🟢 Recommended Secure Architecture
+
+Modern secure approach:
+
+Token	Storage Location
+Access Token	Memory
+Refresh Token	HttpOnly Cookie
+🟢 How It Works in Practice
+Login Response
+
+Server sends:
+
+{
+  "access_token": "..."
+}
+
+AND sets cookie:
+
+Set-Cookie: refresh_token=xyz; HttpOnly; Secure; SameSite=Strict
+
+Frontend:
+
+Stores access token in memory
+
+Cannot read refresh token (browser handles it automatically)
+
+When Access Token Expires
+
+Frontend calls:
+
+POST /refresh
+
+Browser automatically sends refresh cookie.
+
+Server verifies cookie and returns new access token.
+
+Frontend updates memory.
+
+User never notices.
+
+🔥 Why NOT Store Refresh Token in LocalStorage?
+
+Because:
+
+Refresh token is long-lived.
+
+If stolen:
+
+Attacker can generate new access tokens forever.
+
+So it must be protected from JS access.
+
+🧠 Interview-Level Answer
+
+If interviewer asks:
+
+Where should tokens be stored on frontend?
+
+You say:
+
+Access tokens are typically stored in memory because they are short-lived and should not persist unnecessarily. Refresh tokens should be stored in HttpOnly, Secure cookies to prevent access via JavaScript and reduce XSS risk. Storing tokens in localStorage is discouraged due to XSS vulnerabilities.
+
+That sounds senior-level.
+
+🚨 Common Mistake Candidates Say
+
+❌ "We store both in localStorage."
+
+This is common but insecure.
+
+🔐 Important: XSS vs CSRF
+
+They might ask next:
+
+If using cookies → what about CSRF?
+
+Answer:
+
+Use SameSite=Strict
+
+Or CSRF tokens
+
+Or double submit cookie pattern
+
+You’re now entering advanced security territory 🔥
+
+Next logical questions:
+
+How to protect against XSS?
+
+How to prevent refresh token reuse (rotation)?
+
+What is token rotation?
+
+How to implement this properly in Rails API mode?

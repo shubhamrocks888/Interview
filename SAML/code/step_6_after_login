@@ -1,0 +1,71 @@
+🧩 6️⃣ After Login — Response Handling
+
+ADFS authenticates user
+Then POSTs SAMLResponse to:
+
+/saml/consume
+
+
+🔹 Step 2: Consume Action
+
+  def consume
+
+      response = OneLogin::RubySaml::Response.new(
+      params[:SAMLResponse],
+      settings: SAML_SETTINGS
+    )
+    end
+
+This:
+
+	Decodes Base64
+
+	Parses XML
+
+	Prepares for validation
+
+🔹 Step 3: Validate Response
+
+	  unless response.is_valid?
+      raise "Invalid SAML Response"
+    end
+
+This checks:
+
+	Signature
+
+	Expiry
+
+	Audience
+
+	Issuer
+
+	Certificate
+
+	Replay attack
+
+	VERY CRITICAL LINE.
+
+🔹 Step 4: Extract User Info
+
+
+
+    email = response.nameid
+
+Usually email is inside NameID.
+
+
+attributes = response.attributes
+
+This contains:
+
+	email
+
+	groups
+
+	department
+
+	etc.
+
+groups = attributes['groups'] || []
+

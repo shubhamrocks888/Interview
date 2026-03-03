@@ -1,0 +1,104 @@
+YES ✅ — exactly.
+
+Whenever you see:
+
+NoMethodError
+
+It ultimately comes from Ruby’s default method_missing implementation.
+
+Now let’s understand this very clearly.
+
+🔍 What Actually Happens Internally
+
+When you call:
+
+obj.some_method
+
+Ruby does this:
+
+Search in object's class
+
+Search in included modules
+
+Search in superclass
+
+Keep going up the ancestor chain
+
+If still not found…
+
+👉 Ruby calls:
+
+method_missing(:some_method)
+🧠 Where Does NoMethodError Come From?
+
+Ruby has a built-in method_missing defined in BasicObject.
+
+If you do NOT override it, that default version does:
+
+raise NoMethodError
+
+So yes:
+
+NoMethodError is raised by Ruby’s default method_missing.
+
+🧪 Example
+class A
+end
+
+A.new.hello
+
+Ruby internally does:
+
+A.new.method_missing(:hello)
+
+Since you didn’t define method_missing,
+Ruby uses the default one → raises NoMethodError.
+
+⚠️ Important Twist
+
+If YOU override method_missing and don’t call super,
+then NoMethodError may never happen.
+
+Example:
+
+class A
+  def method_missing(name, *args)
+    "I handled it"
+  end
+end
+
+A.new.hello
+
+Now:
+
+✔ No error
+✔ Because you intercepted it
+
+But if you write:
+
+class A
+  def method_missing(name, *args)
+    super
+  end
+end
+
+Now Ruby goes to parent’s method_missing
+and that raises NoMethodError.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+“Where does NoMethodError come from?”
+
+Correct answer:
+
+When Ruby cannot find a method in the method lookup chain, it invokes method_missing. If method_missing is not overridden, Ruby’s default implementation raises NoMethodError.
+
+That’s a strong answer.
+
+You’re now understanding Ruby at internal level 👏
+
+If you want, next we can go even deeper and see:
+
+👉 Exactly how Ruby walks the ancestor chain step by step.

@@ -1,0 +1,91 @@
+Yes, we use ADFS as the IdP because:
+
+It supports SAML 2.0
+
+It can issue SAML assertions
+
+It integrates with Active Directory
+
+It is commonly used in enterprise environments
+
+But Important Clarification
+
+We are not using ADFS only because it supports SAML.
+
+We are using it because:
+
+The organization already uses Microsoft Active Directory.
+
+ADFS is the federation layer on top of AD.
+
+It can authenticate users and generate trusted SAML assertions.
+
+It integrates easily with enterprise security policies (MFA, group policies, etc.).
+
+🎯 How You Should Say It in Interview
+
+Instead of saying:
+
+We use ADFS because it supports SAML.
+
+Say:
+
+In our architecture, ADFS acts as the Identity Provider. Since the organization uses Active Directory for user management, ADFS provides a federation layer that supports SAML 2.0. Our Rails application acts as the Service Provider and trusts the SAML assertions issued by ADFS after successful authentication.
+
+🔥 That sounds enterprise-level.
+
+🧠 Why ADFS Specifically?
+
+Because:
+
+It is tightly integrated with Windows Active Directory.
+
+It can map AD groups → SAML claims.
+
+It supports:
+
+SAML 2.0
+
+OAuth
+
+OpenID Connect
+
+It handles MFA, password policies, lockout policies centrally.
+
+🔐 Important Concept
+
+ADFS does 2 jobs:
+
+1️⃣ Authenticate user (via Active Directory)
+2️⃣ Issue a signed SAML assertion
+
+Your Rails app never checks password.
+
+It only checks:
+
+Is the SAML response valid?
+
+Is the XML signature valid?
+
+Is it signed by ADFS certificate?
+
+🏗 Architecture Visualization
+
+User → Rails (SP) → Redirect → ADFS (IdP)
+ADFS → Authenticates via AD
+ADFS → Sends signed SAML assertion
+Rails → Validates signature → Creates session
+
+Now we are reaching the most critical part:
+
+👉 How does Rails know the SAML response really came from ADFS?
+
+That’s where:
+
+XML Signature
+
+X.509 Certificates
+
+Public/Private keys
+
+come in.

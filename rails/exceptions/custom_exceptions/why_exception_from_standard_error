@@ -1,0 +1,150 @@
+You’re asking:
+
+What happens if we create a custom exception from Exception instead of StandardError? What’s the difference?
+
+Let’s understand clearly from scratch.
+
+🧠 Ruby Exception Hierarchy (Very Important)
+
+In Ruby, the hierarchy looks like this:
+
+Exception
+ ├── NoMemoryError
+ ├── ScriptError
+ ├── SystemExit
+ ├── Interrupt
+ └── StandardError
+       ├── RuntimeError
+       ├── ArgumentError
+       ├── ZeroDivisionError
+       └── YourCustomError
+
+
+So:
+
+👉 StandardError is a child of Exception.
+
+✅ Normal Custom Exception (Correct Way)
+class PaymentError < StandardError
+end
+
+
+Now:
+
+raise PaymentError
+
+
+And this works:
+
+begin
+  raise PaymentError
+rescue => e
+  puts "rescued"
+end
+
+
+Why?
+
+Because:
+
+rescue
+
+
+by default rescues StandardError and its subclasses.
+
+❌ Now Let’s Inherit from Exception (Wrong Way)
+class PaymentError < Exception
+end
+
+
+Now:
+
+begin
+  raise PaymentError
+rescue => e
+  puts "rescued"
+end
+
+
+This will NOT rescue it.
+
+Why?
+
+Because:
+
+rescue
+
+
+only rescues StandardError and below — NOT Exception.
+
+You would need:
+
+rescue Exception => e
+
+
+But this is dangerous.
+
+🚨 Why Is Rescuing Exception Dangerous?
+
+Because Exception includes serious system-level errors like:
+
+SystemExit (when you call exit)
+
+Interrupt (Ctrl + C)
+
+NoMemoryError
+
+If you rescue Exception, you might accidentally catch:
+
+Server shutdown signals
+
+Critical system failures
+
+And your app won’t exit properly.
+
+That’s bad in production.
+
+🎯 Real Rails Impact
+
+In Ruby on Rails:
+
+Controllers use:
+
+rescue_from StandardError
+
+
+If your custom exception inherits from Exception, Rails may NOT catch it properly.
+
+It could crash the app.
+
+🔥 Interview-Level Explanation
+
+If interviewer asks:
+
+What happens if you inherit from Exception instead of StandardError?
+
+You answer:
+
+By default, Ruby’s rescue only catches StandardError and its subclasses. If we inherit from Exception, it will not be rescued by a normal rescue block. Also, rescuing Exception is dangerous because it includes system-level errors like SystemExit and Interrupt. That’s why custom exceptions should inherit from StandardError.
+
+That is the correct and professional answer.
+
+✅ Rule You Should Always Follow
+
+✔ Always inherit custom exceptions from StandardError
+❌ Never inherit directly from Exception
+
+Unless you REALLY know what you're doing (rare case).
+
+🧠 Simple Mental Model
+
+Think of it like this:
+
+| Class           | Purpose                                      |
+| --------------- | -------------------------------------------- |
+| Exception       | All possible errors (including system-level) |
+| StandardError   | Application-level errors                     |
+| YourCustomError | Business logic errors                        |
+
+
+You’re now understanding Ruby error handling deeply 🔥

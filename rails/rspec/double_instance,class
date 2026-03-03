@@ -1,0 +1,209 @@
+🧠 First: What is a Double?
+
+A double is a fake object.
+
+It’s used when:
+
+You don’t want to use a real object, but you need something that behaves like it.
+
+Think of it like a stand-in actor in a movie.
+
+1️⃣ Basic double
+Definition
+
+A double is a completely fake object.
+
+It does NOT check whether methods actually exist on real classes.
+
+Example
+payment_gateway = double("PaymentGateway")
+
+Now this is just a fake object.
+
+It doesn’t know anything.
+
+You can define behavior:
+
+allow(payment_gateway).to receive(:charge).and_return("Success")
+
+Now:
+
+payment_gateway.charge(100)
+
+returns "Success".
+
+Even if the real PaymentGateway class doesn’t have charge.
+
+⚠️ That’s important.
+
+🚨 Problem with normal double
+
+If you write:
+
+allow(payment_gateway).to receive(:wrong_method)
+
+RSpec will allow it.
+
+Even if the real class doesn’t have that method.
+
+This can hide bugs.
+
+2️⃣ instance_double
+
+Now we level up.
+
+Definition
+
+instance_double verifies against a real class.
+
+It checks:
+
+Does this method actually exist on instances of this class?
+
+Example
+
+Suppose you have:
+
+class PaymentGateway
+  def charge(amount)
+    "Charged #{amount}"
+  end
+end
+
+Now:
+
+gateway = instance_double(PaymentGateway)
+
+Now this double knows:
+
+It represents an instance of PaymentGateway.
+
+If you write:
+
+allow(gateway).to receive(:charge).and_return("Success")
+
+✅ Works (because method exists).
+
+If you write:
+
+allow(gateway).to receive(:refund)
+
+❌ Fails immediately.
+
+Because refund does not exist on real class.
+
+🔥 Why This Is Powerful
+
+It prevents:
+
+Typos
+
+Refactoring bugs
+
+Calling non-existing methods
+
+This is called a verifying double.
+
+3️⃣ class_double
+
+Now instead of faking an instance…
+
+We fake the class itself.
+
+Definition
+
+class_double verifies class methods.
+
+Example:
+
+class PaymentGateway
+  def self.charge(amount)
+    "Charged #{amount}"
+  end
+end
+
+Now:
+
+gateway_class = class_double(PaymentGateway)
+
+If you write:
+
+allow(gateway_class).to receive(:charge).and_return("Success")
+
+✅ Works.
+
+If you write:
+
+allow(gateway_class).to receive(:wrong_method)
+
+❌ Fails.
+
+Because class doesn’t have that method.
+
+🧠 Clean Comparison Table
+
+| Type            | What it fakes     | Verifies real methods? |
+| --------------- | ----------------- | ---------------------- |
+| double          | Anything          | ❌ No                   |
+| instance_double | Instance of class | ✅ Yes                  |
+| class_double    | Class methods     | ✅ Yes                  |
+
+🔥 Real-World Example (Service Object)
+
+Suppose:
+
+class PaymentProcessor
+  def call(amount)
+    PaymentGateway.charge(amount)
+  end
+end
+
+Test:
+
+gateway = class_double(PaymentGateway)
+allow(gateway).to receive(:charge).and_return("Success")
+
+stub_const("PaymentGateway", gateway)
+
+PaymentProcessor.new.call(100)
+
+Now:
+
+No real API
+
+Verified method existence
+
+Safe and clean
+
+🎯 Interview-Ready Definitions
+Double
+
+A fake object with no verification against a real class.
+
+Instance Double
+
+A verifying double that ensures stubbed methods exist on instances of a real class.
+
+Class Double
+
+A verifying double that ensures stubbed methods exist as class methods on a real class.
+
+🔥 What Interviewers Really Want
+
+They want to hear:
+
+I prefer using instance_double or class_double instead of plain double because they prevent false positives during refactoring.
+
+That shows senior-level understanding.
+
+If you want next, I can explain:
+
+What is stub_const
+
+What is verifying partial double
+
+Why allow_any_instance_of is dangerous
+
+Or show a real Rails service object test using instance_double properly
+
+Let’s go deeper 🔥

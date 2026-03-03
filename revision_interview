@@ -1,0 +1,20 @@
+###
+sidkeiq
+rate_limiter
+idempotent jobs
+fair scheduling
+
+exceptions
+middleware
+cache using Rails.cache
+singleton
+
+rails s
+
+pros and cons of ruby & rails
+ 
+how to optimize app performance
+
+seps to rails migrate version
+
+payment_integration

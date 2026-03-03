@@ -58,6 +58,9 @@ Gradual slowing
 51–80 req → slower
 81+ req → very slow / blocked
 
+######
+Rate limiting restricts the number of requests in a fixed time window and rejects excess requests with 429 errors, while throttling controls the rate of request processing by slowing down excess traffic instead of rejecting it.
+
 
 📌 Many people use the terms interchangeably — that’s okay in interviews unless they ask deeply.
 

@@ -1,0 +1,11 @@
+ROLE_MAPPING = {
+      "LMS_Admins" => "admin",
+      "LMS_Instructors" => "instructor"
+    }
+
+mapped_roles = groups.map { |g| ROLE_MAPPING[g] }.compact
+
+user.roles = mapped_roles
+user.save!
+
+Now roles sync with AD.

@@ -1,0 +1,174 @@
+🔄 What Is Token Rotation in JWT?
+
+Token rotation (more precisely refresh token rotation) means:
+
+Every time a refresh token is used to get a new access token, the server also issues a new refresh token and invalidates the old one.
+
+So refresh tokens are one-time use.
+
+🧠 Why Rotation Is Needed
+
+With plain JWT setup:
+
+Access token → short-lived (e.g., 15 min)
+
+Refresh token → long-lived (e.g., 7 days)
+
+If attacker steals refresh token:
+
+Attacker can keep generating new access tokens
+until refresh token expires.
+
+That’s dangerous.
+
+Rotation solves this.
+
+🚀 How Token Rotation Works (Step-by-Step)
+
+Let’s use JSON Web Token conceptually.
+
+🟢 Step 1 — Login
+
+Server issues:
+
+Access Token A1 (15 min)
+Refresh Token R1 (7 days)
+
+Server stores R1 in database.
+
+🟢 Step 2 — Access Token Expires
+
+Client sends:
+
+POST /refresh
+refresh_token = R1
+
+Server checks:
+
+Is R1 valid?
+
+Is it revoked?
+
+Is it expired?
+
+If valid:
+
+Server responds with:
+
+Access Token A2
+Refresh Token R2
+
+And then:
+
+R1 → marked as revoked
+R2 → stored in DB
+
+Now R1 can never be used again.
+
+🔥 What Happens If Token Is Stolen?
+
+Imagine attacker stole R1.
+
+Two possibilities:
+
+Case 1️⃣ Legit user refreshes first
+
+User uses R1 → gets R2
+R1 is revoked.
+
+Attacker tries using R1:
+
+❌ Server sees R1 already used
+❌ Detects token reuse
+❌ Can revoke all sessions
+❌ Force re-login
+
+Attack stopped.
+
+Case 2️⃣ Attacker uses R1 first
+
+Attacker gets R2
+R1 revoked.
+
+Later, real user tries R1:
+
+❌ Reuse detected
+❌ System knows something is wrong
+❌ Revoke entire session
+
+Again — breach detected.
+
+🎯 That’s the Key Benefit
+
+Rotation turns refresh token theft from:
+
+Silent long-term compromise
+
+into:
+
+Detectable security event
+
+🧱 Why This Adds State
+
+Access tokens → stateless
+Refresh tokens → stored in DB
+
+Rotation requires storing:
+
+Token ID (jti)
+
+Expiry
+
+Revoked status
+
+Parent token (optional)
+
+So refresh tokens are usually:
+
+Stored hashed in DB
+
+Not purely stateless
+
+🏗 Visual Flow
+
+Without rotation:
+
+R1 → R1 → R1 → R1 (reusable)
+
+With rotation:
+
+R1 → R2 → R3 → R4
+(each one invalidates previous)
+
+Chain-based trust model.
+
+⚠️ Important Detail
+
+Many secure systems also implement:
+
+Refresh Token Reuse Detection
+
+If a revoked token is used again:
+
+→ Immediately revoke entire session chain.
+
+Very powerful protection.
+
+🏁 Final Definition
+
+Token rotation means:
+
+Every refresh token can be used only once.
+Using it issues a new refresh token and invalidates the old one.
+
+It prevents silent long-term session hijacking.
+
+If you want, I can next explain:
+
+How to implement refresh rotation in Rails
+
+Why refresh tokens are often opaque (not JWT)
+
+Or how OAuth2 does this internally
+
+Tell me 🚀

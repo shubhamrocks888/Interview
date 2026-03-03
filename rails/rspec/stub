@@ -7,6 +7,10 @@ You don’t care about how it works internally.
 
 You just want it to return what you want during the test.
 
+Or
+
+A stub replaces a real method implementation with a fake one, so the original method does NOT run.
+
 Example
 class User
   def admin?
@@ -38,3 +42,20 @@ Only replace the method return value
 Don’t check if method was called (optional)
 
 Example use: simulate API response, DB call, or external service
+
+
+######
+
+Why Do We Stub?
+
+Main reasons:
+
+Avoid external API calls
+
+Avoid database hits
+
+Avoid slow operations
+
+Control return values
+
+Isolate unit under test

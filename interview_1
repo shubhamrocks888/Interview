@@ -42,4 +42,8 @@ order
 
 distinct
 
-then behavior can change depending on what you're doing.	
+then behavior can change depending on what you're doing.
+
+### sso
+### okta, oauth
+## session handling for internal and external authentication users	

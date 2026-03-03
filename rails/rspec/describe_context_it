@@ -1,0 +1,40 @@
+3️⃣ describe, context, it
+🔹 describe
+
+Used to group tests for a class or method.
+
+RSpec.describe User do
+
+Means: “We are writing tests for User”.
+
+🔹 context
+
+Used to describe a scenario.
+
+context "when name is present" do
+
+Think of it as:
+
+Under this condition...
+
+🔹 it
+
+Defines a test case.
+
+it "is valid" do
+
+Means:
+
+It should behave like this.
+
+So structure becomes:
+
+RSpec.describe User do
+  context "when name is present" do
+    it "is valid" do
+      ...
+    end
+  end
+end
+
+Very readable — almost English.

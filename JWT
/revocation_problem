@@ -1,0 +1,40 @@
+🚨 Now the Revocation Problem
+
+Imagine this situation:
+
+User logs in → gets JWT valid for 1 hour.
+
+After 5 minutes:
+
+User logs out
+OR
+
+User account is banned
+OR
+
+Password is changed
+OR
+
+Token is stolen
+
+But the token is still cryptographically valid.
+
+Since services only check:
+
+Signature
+
+Expiry
+
+The token continues working until it expires.
+
+That is what:
+
+"JWT cannot be easily revoked"
+
+means.
+
+There is no central place where you can say:
+
+Invalidate this specific token immediately
+
+Because no one is storing it.

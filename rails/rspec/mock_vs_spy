@@ -1,0 +1,141 @@
+🧠 Big Picture First
+
+Both mock and spy are used to test:
+
+Was a method called?
+
+But the timing of expectation is different.
+
+That’s the key difference.
+
+1️⃣ Mock (Expectation Before Execution)
+
+With a mock, you set the expectation before the code runs.
+
+Example
+expect(NotificationService).to receive(:send_email).with(user)
+
+PaymentProcessor.new.call(user)
+
+Here:
+
+You tell RSpec:
+👉 “I EXPECT this method to be called.”
+
+Then you run the code.
+
+If method is not called → test fails.
+
+So mock = pre-defined expectation.
+
+2️⃣ Spy (Verify After Execution)
+
+A spy records what happened, and you verify after execution.
+
+Example
+allow(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+
+expect(NotificationService).to have_received(:send_email).with(user)
+
+Here:
+
+You allow the method (so it can be tracked).
+
+Run the code.
+
+Then check if it was called.
+
+Spy = post-verification.
+
+🔥 Core Difference
+
+| Mock                            | Spy                            |
+| ------------------------------- | ------------------------------ |
+| `expect(...).to receive`        | `expect(...).to have_received` |
+| Expectation before execution    | Verification after execution   |
+| Fails immediately if not called | Fails at verification step     |
+| Strict                          | More flexible                  |
+
+3️⃣ Simple Mental Model
+
+Mock says:
+
+“This must happen.”
+
+Spy says:
+
+“Let’s see what happened.”
+
+4️⃣ Real-World Comparison
+
+Imagine this service:
+
+class PaymentProcessor
+  def call(user)
+    NotificationService.send_email(user)
+  end
+end
+Using Mock
+expect(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+
+You’re declaring expectation upfront.
+
+Using Spy
+allow(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+
+expect(NotificationService).to have_received(:send_email)
+
+You observe behavior after.
+
+5️⃣ When to Use What?
+🔹 Use Mock when:
+
+Interaction is critical
+
+You want strict behavior testing
+
+In pure interaction-driven design
+
+🔹 Use Spy when:
+
+You want more natural test flow
+
+Following Arrange → Act → Assert style
+
+Cleaner readability
+
+Many developers prefer spy style because it feels more structured:
+
+Arrange
+Act
+Assert
+
+🎯 Interview-Ready Answer
+
+If interviewer asks:
+
+“What is difference between mock and spy in RSpec?”
+
+You say:
+
+A mock sets an expectation before execution using expect(...).to receive, while a spy verifies interaction after execution using have_received. Both test method calls, but spies follow an Arrange-Act-Assert pattern and are generally more flexible.
+
+That’s a strong answer.
+
+If you want next, we can go deeper into:
+
+Why over-mocking is dangerous
+
+How instance_double works
+
+Verifying partial doubles
+
+Real-world service object test using spy properly
+
+Tell me what you want to master next 🔥

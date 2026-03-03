@@ -1,0 +1,101 @@
+Short answer:
+
+✅ Yes — whenever you use expect, you are making an assertion.
+❗ But not every expect is mocking.
+
+Let’s make this crystal clear.
+
+1️⃣ What is an Assertion?
+
+An assertion means:
+
+You are verifying something should be true.
+
+In RSpec, every expect is an assertion.
+
+Example:
+
+expect(5).to eq(5)
+
+You are asserting that 5 equals 5.
+
+2️⃣ Types of Assertions in RSpec
+
+There are two kinds of assertions:
+
+✅ A) State Assertions (Most Common)
+
+You check values or state.
+
+expect(user.name).to eq("Shubham")
+expect(user).to be_valid
+expect(response.status).to eq(200)
+
+These verify data or state change.
+
+✅ B) Interaction Assertions (Mocking)
+
+You check that a method was called.
+
+expect(User).to receive(:find)
+
+This is still an assertion.
+
+But instead of checking state, you're checking behavior (interaction).
+
+3️⃣ So What Is Mocking Then?
+
+Mocking is just a special type of assertion.
+
+When you do:
+
+expect(object).to receive(:method)
+
+You are asserting:
+
+This method must be called.
+
+If it’s not called → test fails.
+
+So:
+
+All mocks are assertions
+But not all assertions are mocks
+
+4️⃣ Clean Mental Model
+
+Think like this:
+
+expect = assertion keyword.
+
+What comes after .to decides the type:
+
+| Pattern     | Type                         |
+| ----------- | ---------------------------- |
+| to eq       | State assertion              |
+| to be_valid | State assertion              |
+| to change   | State assertion              |
+| to receive  | Interaction assertion (Mock) |
+
+
+5️⃣ Interview-Ready Answer
+
+If interviewer asks:
+
+“Is every expect mocking?”
+
+You say:
+
+No. Every expect is an assertion, but mocking specifically happens when we use expect(...).to receive(...), which asserts that a method must be called.
+
+That answer shows deep understanding.
+
+If you want next, I can explain:
+
+Why allow is not an assertion
+
+Or difference between mock vs spy
+
+Or why over-mocking is dangerous in service object tests
+
+Let’s level up 🔥

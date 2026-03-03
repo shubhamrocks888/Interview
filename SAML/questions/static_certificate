@@ -1,0 +1,88 @@
+If Rails is using static hardcoded certificate (not metadata-based), and ADFS rotates certificate at midnight…
+
+What must your team do immediately to avoid outage?
+
+(Think operationally.)
+
+🔐 Scenario
+
+Rails is using static hardcoded IdP certificate
+
+Active Directory Federation Services rotates to a new signing certificate at midnight
+
+ADFS starts signing SAML responses with the NEW certificate
+
+Rails still trusts only the OLD certificate
+
+What happens?
+
+❌ Signature verification fails
+❌ All SSO logins break
+
+🚨 What Must Be Done Immediately?
+
+You must:
+
+1️⃣ Get the NEW signing certificate from ADFS
+
+From federation metadata URL
+
+Or from IT team
+
+2️⃣ Update Rails configuration:
+
+idp_cert: NEW_CERT
+
+3️⃣ Deploy the change
+
+4️⃣ Restart application
+
+Then logins work again.
+
+❌ Why “Generate New Certificate” Is Incorrect
+
+Because:
+
+The signing certificate belongs to ADFS (IdP)
+
+Rails (SP) does NOT control IdP signing keys
+
+Rails only trusts/verifies
+
+Only the IdP generates signing certificates.
+
+🧠 Correct Operational Thinking
+
+If static certificate setup is used:
+
+When IdP rotates:
+
+👉 App team must update trusted certificate immediately
+👉 Redeploy
+👉 Clear incident
+
+This is why static cert configuration is risky.
+
+🏗 What A Senior Engineer Would Say
+
+If we are using a statically configured IdP certificate and ADFS rotates its signing certificate, we must immediately update the trusted certificate in our Rails configuration and redeploy. To avoid this operational risk, it's better to consume IdP metadata dynamically and support multiple signing certificates.
+
+🔥 That shows architecture maturity + operational awareness.
+
+💎 Even More Senior Insight
+
+In production, teams usually:
+
+Monitor certificate expiration dates
+
+Schedule update before expiration
+
+Avoid emergency midnight outages
+
+Now let’s go one level deeper.
+
+If Rails receives a SAML response signed with NEW certificate, but Rails still has only OLD certificate configured…
+
+Will Rails even attempt to verify using the certificate included in the response? Or will it reject immediately?
+
+Think carefully about trust model.

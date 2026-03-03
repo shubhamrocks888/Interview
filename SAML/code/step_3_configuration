@@ -1,0 +1,51 @@
+📌 config/initializers/saml_settings.rb
+
+This is where SP trusts ADFS.
+
+require 'onelogin/ruby-saml'
+
+This loads ruby-saml classes.
+
+## Define SAML Settings
+SAML_SETTINGS = OneLogin::RubySaml::Settings.new
+
+Creates configuration object.
+
+🔹 SP Configuration (Your Rails App)
+SAML_SETTINGS.assertion_consumer_service_url = "http://localhost:3000/saml/consume"
+
+➡ This is where ADFS will POST SAML Response.
+
+SAML_SETTINGS.issuer = "http://localhost:3000"
+
+➡ Unique ID of your Rails SP.
+
+ADFS will expect this value.
+
+
+##  IdP Configuration (ADFS Details)
+SAML_SETTINGS.idp_sso_target_url = "https://adfs.company.com/adfs/ls/"
+
+➡ Where Rails redirects user for login.
+
+SAML_SETTINGS.idp_cert = File.read(
+  Rails.root.join("config", "adfs_cert.pem")
+)
+
+➡ This is ADFS public certificate
+➡ Used to verify SAML signature
+
+VERY IMPORTANT:
+This is what prevents forged SAML responses.
+
+### Security Settings
+
+SAML_SETTINGS.name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+
+SAML_SETTINGS.authn_context ="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+
+SAML_SETTINGS.security[:want_assertions_signed] = true
+
+➡ Ensures ADFS signs assertions
+➡ Prevents tampering
+

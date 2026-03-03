@@ -1,0 +1,133 @@
+Your question:
+
+Is it true that for every request browser automatically sends refresh token?
+
+Short answer:
+
+👉 Not for every request. Only for requests that match cookie rules.
+
+Let’s break this properly.
+
+🧠 When Does Browser Send a Cookie?
+
+Browser automatically sends a cookie only if:
+
+The request URL matches the cookie’s domain
+
+The request path matches the cookie’s path
+
+It satisfies SameSite rules
+
+It’s HTTPS if Secure is set
+
+🟢 Example Setup
+
+Server sets cookie:
+
+Set-Cookie: refresh_token=xyz;
+HttpOnly;
+Secure;
+SameSite=Strict;
+Path=/refresh;
+Domain=api.example.com
+
+Now browser stores it.
+
+🔎 Will It Be Sent With Every Request?
+✅ It WILL be sent when:
+
+Request matches:
+
+https://api.example.com/refresh
+
+Because:
+
+Domain matches
+
+Path matches
+
+HTTPS
+
+SameSite rules satisfied
+
+❌ It will NOT be sent when:
+
+Request is:
+
+https://api.example.com/courses
+
+Because cookie Path is /refresh
+
+So Path matters.
+
+🟢 If Path is "/"
+
+If server sets:
+
+Path=/
+
+Then cookie is sent to all endpoints under that domain.
+
+Example:
+
+/courses
+/profile
+/orders
+/anything
+
+So yes — in that case, it is sent with every request to that domain.
+
+🔐 Now Let’s Talk SameSite=Strict
+
+If SameSite=Strict:
+
+Browser will NOT send cookie if request originates from another site.
+
+Example:
+
+User is on:
+
+evil.com
+
+And evil.com tries to call:
+
+https://api.example.com/refresh
+
+Browser will NOT send the cookie.
+
+So CSRF protection kicks in.
+
+🎯 Real-World Best Practice
+
+Usually refresh token cookie is configured like:
+
+HttpOnly
+Secure
+SameSite=Strict
+Path=/refresh
+
+So it is sent ONLY to /refresh endpoint.
+
+Not to every API call.
+
+That limits exposure.
+
+🧠 So Final Answer
+
+If interviewer asks:
+
+Does browser send refresh token with every request?
+
+You say:
+
+The browser automatically sends the refresh token cookie only when the request matches the cookie's domain, path, and security rules. If the cookie Path is set to /, it will be sent with all requests to that domain. However, in secure implementations, the Path is often restricted to /refresh so it is only sent when renewing tokens.
+
+That’s a strong answer.
+
+🔥 Now Next-Level Thinking
+
+If refresh cookie is only sent to /refresh…
+
+Can attacker trigger /refresh using CSRF and force new access token generation?
+
+This is where deep backend understanding starts 😄

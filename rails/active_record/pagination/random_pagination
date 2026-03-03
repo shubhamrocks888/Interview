@@ -1,0 +1,160 @@
+🎯 Short Answer First
+
+👉 Cursor pagination does NOT support random page jumping like page 79.
+
+That’s not a bug.
+That’s by design.
+
+🧠 Why Offset Can Jump to Page 79
+
+With offset pagination (like with will_paginate):
+
+User.limit(10).offset((79 - 1) * 10)
+
+We can calculate:
+
+OFFSET = 780
+
+Database skips 780 rows and gives next 10.
+
+It works because offset pagination is based on row position math.
+
+🚨 Why Cursor Pagination Cannot Do That
+
+Cursor pagination works like this:
+
+Give me 10 records after id = 54231
+
+It does NOT understand:
+
+page numbers
+
+total pages
+
+row positions
+
+It only understands:
+
+“after this record”
+
+“before this record”
+
+So if user says:
+
+Give me page 79
+
+Backend says:
+
+I don’t know what page 79 means.
+
+Because cursor pagination is sequential.
+
+🎯 So What Happens in Real Systems?
+
+In real-world systems (feeds, APIs, large datasets):
+
+👉 We do not allow random page jumps.
+
+Instead we use:
+
+Next
+
+Previous
+
+Infinite scroll
+
+Examples:
+
+Instagram feed
+
+Twitter feed
+
+LinkedIn feed
+
+GitHub issues
+
+They don’t show “Go to page 79”.
+
+🧠 Deep Explanation (Interview Level)
+
+Offset pagination is:
+
+Positional navigation
+
+Cursor pagination is:
+
+Sequential navigation
+
+Offset = book page number
+Cursor = bookmark
+
+If you use a bookmark system, you cannot jump to page 79 unless you flip through pages one by one.
+
+🚀 If Interviewer Pushes Further
+
+They may ask:
+
+But what if business REQUIREMENT says jump to page 79?
+
+Correct answer:
+
+Option 1️⃣
+
+Use offset pagination.
+
+Cursor pagination is not suitable.
+
+Option 2️⃣ (Advanced Hybrid Approach)
+
+You can simulate page 79 by:
+
+Calculating offset internally
+
+Fetching the cursor value at that offset
+
+Then using cursor pagination
+
+Example:
+
+cursor_record = User.order(:id).offset(780).limit(1).pluck(:id).first
+
+Then:
+
+User.where("id > ?", cursor_record).limit(10)
+
+⚠️ But this defeats the performance benefit.
+
+Because you still used OFFSET internally.
+
+So this is rarely used.
+
+🎯 Real Architectural Decision
+
+Use:
+
+| Use Case                      | Use    |
+| ----------------------------- | ------ |
+| Admin panel with page numbers | Offset |
+| Public API                    | Cursor |
+| Infinite scroll               | Cursor |
+| Large 10M+ table              | Cursor |
+| Jump to page 50 needed        | Offset |
+
+
+🎤 Interview-Ready Answer
+
+You say:
+
+Cursor pagination does not support random page jumps like page 79 because it is based on sequential navigation using a reference value, not row positions. If random access is required, offset pagination is more appropriate. In large-scale systems, cursor pagination is typically used for APIs and infinite scrolling where sequential navigation is sufficient.
+
+🔥 That answer sounds architect-level.
+
+🚀 Now Let Me Make It Harder
+
+If interviewer asks:
+
+Can we implement cursor pagination AND still show page numbers in UI?
+
+That’s a very tricky question.
+
+Want to try answering that first? 😎

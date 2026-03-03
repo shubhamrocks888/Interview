@@ -1,0 +1,26 @@
+1. Use array
+2. Use hash
+3. Use set
+4. Use two pointers
+5. use left and right
+6. check sorted in question
+7. if like return array something like [1,2,3,,] --> it means arr[write] = arr[read]
+8. if retrun array like [1,2,3,0,0] --> it means swapping arr[read],arr[write] = arr[write], arr[read]
+9. in string problem use this in loop --> arr[index...index+k]
+10. when you have to return cts sum or check cts sometihing in array go like this --> arr[index...index+k]
+
+
+
+
+
+
+
+
+
+
+######### Use Methods
+1.  x.abs
+2.  Set.new(['a','i','e','o','u'])
+3. each_with_index do |value, index|
+4. x.round(2) 
+5. str1.chars.tally == str2.chars.tally

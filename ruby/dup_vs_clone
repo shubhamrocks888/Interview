@@ -1,0 +1,106 @@
+In Ruby, both dup and clone are used to create a copy of an object — but they are not exactly the same.
+
+Let’s understand from scratch.
+
+1️⃣ Basic Difference
+Feature	dup	clone
+Copies object	✅ Yes	✅ Yes
+Copies singleton methods	❌ No	✅ Yes
+Copies frozen state	❌ No	✅ Yes
+Copies tainted/trusted state	❌ No	✅ Yes
+2️⃣ Main Concept
+👉 dup
+
+Makes a shallow copy
+
+Does NOT copy singleton methods
+
+Does NOT preserve frozen state
+
+👉 clone
+
+Makes a shallow copy
+
+Copies everything
+
+Preserves:
+
+Singleton methods
+
+Frozen state
+
+Tainted state
+
+3️⃣ Example 1 — Frozen Object
+str = "hello"
+str.freeze
+
+a = str.dup
+b = str.clone
+
+puts a.frozen?   # false
+puts b.frozen?   # true
+Why?
+
+dup → removes frozen state
+
+clone → keeps frozen state
+
+4️⃣ Example 2 — Singleton Method
+obj = "hello"
+
+def obj.greet
+  "hi!"
+end
+
+a = obj.dup
+b = obj.clone
+
+a.greet   # ❌ NoMethodError
+b.greet   # ✅ "hi!"
+Why?
+
+dup does NOT copy singleton methods
+
+clone copies them
+
+5️⃣ Important: Both Are Shallow Copies
+
+They do NOT deeply copy nested objects.
+
+arr1 = [[1,2]]
+arr2 = arr1.dup
+
+arr2[0] << 3
+
+p arr1  # [[1,2,3]]
+
+Inner array is shared.
+
+6️⃣ When To Use What?
+✅ Use dup (Most Common)
+
+When you just want a copy
+
+When you don’t care about frozen state
+
+Normal object duplication
+
+✅ Use clone
+
+When you want exact replica
+
+When frozen state matters
+
+When singleton methods must be preserved
+
+7️⃣ Real-World Rule
+
+👉 95% of the time, use dup
+👉 Use clone only when you specifically need to preserve object state exactly.
+
+🎯 Simple Memory Trick
+
+dup = duplicate basic
+
+clone = clone exact

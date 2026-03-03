@@ -1,0 +1,173 @@
+📘 What is Pagination in Rails?
+
+Pagination means splitting a large set of records into smaller chunks (pages) instead of loading everything at once.
+
+For example:
+If you have 10,000 users, you don’t want to load all of them on one page. Instead:
+
+Page 1 → 20 users
+
+Page 2 → next 20 users
+
+Page 3 → next 20 users
+and so on…
+
+This improves:
+
+✅ Performance
+
+✅ Memory usage
+
+✅ User experience
+
+🔹 How Pagination Works Internally
+
+At database level, pagination uses:
+
+LIMIT 20 OFFSET 40;
+
+Meaning:
+
+LIMIT → how many records
+
+OFFSET → how many to skip
+
+In Rails (ActiveRecord), this becomes:
+
+User.limit(20).offset(40)
+🔹 Pagination in Rails
+
+Rails does not provide built-in pagination UI helpers, so we use gems.
+
+The two most popular gems:
+
+Kaminari
+
+will_paginate
+
+🔹 Using Kaminari (Most Common Today)
+1️⃣ Add gem
+gem 'kaminari'
+bundle install
+2️⃣ Controller
+def index
+  @users = User.page(params[:page]).per(10)
+end
+
+Explanation:
+
+.page(params[:page]) → which page number
+
+.per(10) → records per page
+
+3️⃣ View
+<%= paginate @users %>
+
+This automatically generates:
+
+Previous button
+
+Next button
+
+Page numbers
+
+🔹 Example Flow
+
+URL:
+
+/users?page=3
+
+Controller:
+
+@users = User.page(3).per(10)
+
+SQL generated:
+
+SELECT * FROM users LIMIT 10 OFFSET 20;
+
+Because:
+
+OFFSET = (page - 1) * per_page
+OFFSET = (3 - 1) * 10 = 20
+🔹 Using will_paginate
+
+Controller:
+
+@users = User.paginate(page: params[:page], per_page: 10)
+
+View:
+
+<%= will_paginate @users %>
+🔹 When To Use Pagination?
+
+In your Learn Module app (courses, programs, users, enrollments):
+
+Users listing page
+
+Courses catalog
+
+Admin dashboard
+
+Logs
+
+Search results
+
+🔹 Important Interview Points
+
+If interviewer asks:
+
+💡 Why pagination?
+
+Reduces DB load
+
+Prevents large memory allocation
+
+Faster page response
+
+💡 What problem with large OFFSET?
+
+For very large tables:
+
+OFFSET 100000 becomes slow
+
+Database scans many rows
+
+Solution:
+
+Cursor-based pagination
+
+Use indexed columns (like id)
+
+Example:
+
+User.where("id > ?", last_seen_id).limit(10)
+
+This is faster for large datasets.
+
+🔹 Types of Pagination
+
+| Type            | When Used            |
+| --------------- | -------------------- |
+| Offset-based    | Normal UI pagination |
+| Cursor-based    | APIs, large datasets |
+| Infinite Scroll | Modern frontend apps |
+
+
+🔹 Quick Interview 30-sec Answer
+
+Pagination in Rails is used to divide large datasets into smaller pages to improve performance and user experience. It’s usually implemented using gems like Kaminari or will_paginate, which internally use LIMIT and OFFSET in SQL. For large datasets, cursor-based pagination is preferred for better performance.
+
+If you want, I can now explain:
+
+🔥 How to build custom pagination without gems
+
+🔥 How pagination works in APIs (JSON response)
+
+🔥 How to implement infinite scroll in Rails
+
+
+########
+
+######
+
+Offset-based pagination can lead to inconsistent results if records are inserted or deleted between requests. For high-consistency systems, cursor-based pagination is preferred.

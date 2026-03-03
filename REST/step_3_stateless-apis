@@ -1,0 +1,43 @@
+✅ 3. Stateless APIs (VERY IMPORTANT)
+
+This is the most important REST rule.
+
+Each request must contain all information needed to process it.
+
+Server does NOT store client session state.
+
+
+🔎 What does Stateless mean practically?
+
+❌ No server-side sessions
+❌ No memory of previous request
+❌ No stored login session
+
+Each request must carry authentication info (like JWT token).
+
+Example:
+
+Client logs in → gets token.
+
+After that, every request:
+
+GET /courses
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6...
+
+Server validates token.
+Server does NOT remember user from previous request.
+
+
+Why Stateless is Good?
+
+Scalable (works well with load balancers)
+
+No session storage needed
+
+Easy horizontal scaling
+
+Microservices friendly
+
+In interview say:
+
+In stateless APIs, the server does not maintain client session state. Each request must carry authentication details like JWT token. This makes APIs scalable and suitable for distributed systems.

@@ -1,0 +1,181 @@
+Step 1: What is a Normal Method?
+class Dog
+  def bark
+    "woof"
+  end
+end
+
+Now:
+
+dog = Dog.new
+dog.bark
+
+Ruby:
+
+Looks inside Dog
+
+Finds bark
+
+Runs it
+
+Simple.
+
+Step 2: What If Method Does NOT Exist?
+dog.run
+
+There is no run.
+
+Ruby says:
+
+NoMethodError
+
+But before raising error…
+
+Ruby secretly checks:
+
+“Does this class have something called method_missing?”
+
+That’s it.
+
+That’s the whole entry point.
+
+Step 3: What is method_missing?
+
+It is just a normal method with a special name.
+
+class Dog
+  def method_missing(name, *args)
+    puts "You tried to call #{name}"
+  end
+end
+
+Now:
+
+dog = Dog.new
+dog.run
+
+Output:
+
+You tried to call run
+
+That’s it.
+
+Nothing magical.
+
+So What Is Happening?
+
+When Ruby cannot find a method:
+
+Instead of directly throwing error,
+
+It calls:
+
+method_missing(method_name, arguments)
+
+You can decide what to do.
+
+That’s all.
+
+Why Would Anyone Use This?
+
+Imagine:
+
+You want this:
+
+user.find_by_name
+user.find_by_email
+user.find_by_age
+
+You don’t want to manually write:
+
+def find_by_name; end
+def find_by_email; end
+def find_by_age; end
+
+Instead you say:
+
+“If method starts with find_by_, handle it.”
+
+That’s where method_missing is useful.
+
+Now define_method (Even Simpler)
+
+Forget everything.
+
+Look at this:
+
+class Cat
+end
+
+Now later I do:
+
+Cat.define_method(:meow) do
+  "meowww"
+end
+
+Now:
+
+cat = Cat.new
+cat.meow
+
+It works.
+
+We created method at runtime.
+
+That’s it.
+
+Difference in Very Simple Words
+
+method_missing:
+👉 Waits until method is called
+👉 Then handles it
+
+define_method:
+👉 Creates method in advance
+👉 Then Ruby finds it normally
+
+Real Life Analogy
+
+method_missing:
+
+You go to shop.
+Item not on shelf.
+Shopkeeper says: “Tell me what you want, I’ll try to arrange.”
+
+define_method:
+
+Shopkeeper already prepared the items and placed them properly.
+
+Why Interviewer Asks?
+
+They want to check:
+
+Do you understand how Ruby finds methods?
+
+Do you know Ruby is dynamic?
+
+Have you worked with Rails deeply?
+
+Do you understand performance difference?
+
+They are NOT checking if you memorize syntax.
+
+They are checking if you understand how Ruby behaves internally.
+
+Let Me Ask You One Small Question
+
+If this code runs:
+
+class A
+  def method_missing(name)
+    puts name
+  end
+end
+
+A.new.hello
+
+What will it print?
+
+If you answer this, you understood method_missing.
+
+Take your time 🙂

@@ -1,0 +1,123 @@
+In cursor pagination, the WHERE clause does NOT have to use a unique column.
+But the ORDER BY must be uniquely deterministic.
+
+That’s the real rule.
+
+🧠 Why Your Statement Is Not Fully Correct
+
+You said:
+
+where clause should use unique column
+
+Not necessarily.
+
+We can paginate using created_at (which is not unique).
+That’s completely valid.
+
+The real requirement is:
+
+The combination of ORDER BY columns must uniquely determine row order.
+
+🎯 The Real Rule
+
+Cursor pagination needs:
+
+✅ Deterministic ordering
+❌ Not necessarily a unique single column
+
+🚨 Why Using Only Non-Unique Column Fails
+
+If we do:
+
+ORDER BY created_at DESC
+WHERE created_at < '2026-02-21 10:00:05'
+
+Problem:
+
+Multiple rows share same created_at
+
+Boundary is unclear
+
+We either skip or duplicate
+
+This is NOT because WHERE used non-unique column.
+It’s because ordering is ambiguous.
+
+✅ Correct Pattern (Composite Cursor)
+
+We make ordering deterministic:
+
+ORDER BY created_at DESC, id DESC
+
+Now:
+
+Even if timestamps are same
+
+id makes row order unique
+
+Now WHERE clause becomes:
+
+WHERE (created_at < :cursor_time)
+   OR (created_at = :cursor_time AND id < :cursor_id)
+
+Notice:
+
+We are STILL using non-unique column (created_at)
+
+But we add unique column (id) to break ties
+
+That’s the key.
+
+🧠 Think of It Like This
+
+Ordering must answer:
+
+If two rows have same created_at, which one comes first?
+
+If DB cannot answer that deterministically,
+pagination breaks.
+
+Adding id makes order fully defined.
+
+🎯 When WHERE Must Use Unique Column
+
+If you paginate only using:
+
+WHERE id > :cursor_id
+ORDER BY id
+
+Then yes:
+
+id must be unique
+
+Because it's both ordering and cursor column
+
+But if ordering uses multiple columns,
+only the full ordering combination must be unique.
+
+📌 Important Distinction
+
+| Concept                                   | Required?       |
+| ----------------------------------------- | --------------- |
+| WHERE uses unique column                  | ❌ Not mandatory |
+| ORDER BY fully deterministic              | ✅ Mandatory     |
+| Cursor value uniquely identifies boundary | ✅ Mandatory     |
+
+🎤 Interview-Ready Explanation
+
+You can say:
+
+Cursor pagination does not require the WHERE clause to use a unique column. However, the ORDER BY clause must be deterministic. If ordering is based on a non-unique column like created_at, we must add a unique column such as id to break ties. Otherwise, pagination boundaries become ambiguous, leading to duplicates or skipped records.
+
+🔥 That is a very strong backend explanation.
+
+🚀 Even Deeper (Senior-Level Insight)
+
+Databases only guarantee stable ordering if:
+
+The ORDER BY columns uniquely determine order.
+
+If not,
+the database is free to reorder equal values differently between queries.
+
+That alone can cause duplicates.

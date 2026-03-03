@@ -1,0 +1,21 @@
+Now we’ll build SAML authentication with ADFS in Rails from scratch and understand:
+
+✅ Configuration
+
+✅ Auth request
+
+✅ Response handling
+
+✅ Signature validation
+
+✅ User creation
+
+✅ Group mapping
+
+We’ll assume:
+
+Rails App = Service Provider (SP)
+
+Active Directory Federation Services (ADFS) = Identity Provider (IdP)
+
+Using ruby-saml gem

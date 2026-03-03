@@ -1,0 +1,121 @@
+In Ruby, freeze is built-in.
+deep_freeze is not built-in in core Ruby — it’s usually custom-written (or provided by libraries like Rails).
+
+Let’s understand clearly from scratch.
+
+1️⃣ freeze in Ruby
+
+freeze makes an object immutable (cannot be modified).
+
+str = "hello"
+str.freeze
+
+str << " world"   # ❌ FrozenError
+Important:
+
+freeze only freezes the object itself, NOT nested objects.
+
+🔎 Example — Freeze is Shallow
+arr = [[1,2], [3,4]]
+arr.freeze
+
+arr << [5,6]      # ❌ Not allowed
+arr[0] << 3       # ✅ Allowed
+
+Why?
+
+arr is frozen
+
+But inner arrays are NOT frozen
+
+So freeze is shallow.
+
+2️⃣ deep_freeze
+
+Ruby does NOT provide deep_freeze by default.
+
+It means:
+
+Freeze the object AND everything inside it recursively.
+
+Example custom implementation:
+
+class Object
+  def deep_freeze
+    freeze
+  end
+end
+
+class Array
+  def deep_freeze
+    each(&:deep_freeze)
+    freeze
+  end
+end
+
+class Hash
+  def deep_freeze
+    each do |k, v|
+      k.deep_freeze
+      v.deep_freeze
+    end
+    freeze
+  end
+end
+🔎 Example — Deep Freeze
+arr = [[1,2], [3,4]]
+arr.deep_freeze
+
+arr[0] << 3   # ❌ FrozenError
+
+Now even nested objects are frozen.
+
+3️⃣ Side-by-Side Difference
+Feature	freeze	deep_freeze
+Built into Ruby?	✅ Yes	❌ No (custom/lib)
+Freezes main object	✅ Yes	✅ Yes
+Freezes nested objects	❌ No	✅ Yes
+Shallow or deep	Shallow	Deep
+4️⃣ Why Deep Freeze Is Useful
+
+Used when:
+
+Defining constants
+
+Config objects
+
+Immutable data structures
+
+Prevent accidental modification
+
+Example:
+
+CONFIG = {
+  db: { host: "localhost" }
+}.deep_freeze
+
+Now no one can accidentally change config.
+
+5️⃣ Important Note (Rails)
+
+In Rails 7+, there is:
+
+Object#deep_dup
+
+But still no built-in deep_freeze in Ruby core.
+
+🎯 Simple Summary
+
+freeze → lock only the outer box
+
+deep_freeze → lock the box and everything inside
+
+If you want next, I can explain:
+
+How immutability improves thread safety
+
+How Ruby implements freeze internally
+
+Or deep_dup vs dup difference
+
+Tell me 👍

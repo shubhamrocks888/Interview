@@ -1,0 +1,12 @@
+def nested_array(arr,result=[])
+    arr.each do |num|
+        if num.is_a? Array
+            nested_array(num,result)
+        else
+            result << num
+        end
+    end
+    result
+end
+
+p nested_array([1,2,[3,4],[5]])

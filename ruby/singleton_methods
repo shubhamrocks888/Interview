@@ -1,0 +1,94 @@
+In Ruby, a singleton method is a method defined for only one specific object, not for all instances of its class.
+
+Let’s understand using your example:
+
+obj = "hello"
+
+def obj.greet
+  p "hi!"
+end
+What happened here?
+
+obj is an instance of String
+
+Normally, methods defined in class String are available to all strings
+
+But greet is defined only for this particular object "hello"
+
+So:
+
+obj.greet   # => "hi!"
+
+But:
+
+"world".greet
+# => NoMethodError
+
+Because greet exists only on that single object.
+
+🔹 Why is it called "singleton"?
+
+Because the method belongs to a single (one) object, not to the whole class.
+
+Ruby internally creates a hidden class for that object called a:
+
+Singleton class
+
+Eigenclass
+
+Metaclass
+
+🔹 How Ruby Internally Thinks
+
+When you write:
+
+def obj.greet
+
+Ruby actually does something like this internally:
+
+class << obj
+  def greet
+    p "hi!"
+  end
+end
+
+This opens the object's singleton class and defines the method there.
+
+🔹 Real-World Example
+user1 = "Shubham"
+user2 = "Rahul"
+
+def user1.admin?
+  true
+end
+
+user1.admin?  # => true
+user2.admin?  # => NoMethodError
+
+Only user1 has that method.
+
+🔹 Important Difference
+
+| Normal Method              | Singleton Method             |
+| -------------------------- | ---------------------------- |
+| Defined inside class       | Defined on specific object   |
+| Available to all instances | Available to only one object |
+
+🔹 Why Ruby Allows This?
+
+Because Ruby is a pure object-oriented language — even classes themselves are objects.
+
+For example:
+
+class User
+end
+
+def User.info
+  "I am a class method"
+end
+
+Here User.info is actually a singleton method on the class object User.
+
+So in Ruby:
+
+Class methods are just singleton methods defined on a class object.

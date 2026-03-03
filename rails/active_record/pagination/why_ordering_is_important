@@ -1,0 +1,148 @@
+Let’s build a clear, step-by-step example showing how cursor pagination can still produce duplicates when ordering by a non-unique column.
+
+We’ll use created_at DESC (very common real-world case).
+
+🧠 Scenario Setup
+
+Assume this table:
+
+id	created_at
+10	2026-02-21 10:00:05
+9	2026-02-21 10:00:05
+8	2026-02-21 10:00:05
+7	2026-02-21 10:00:04
+6	2026-02-21 10:00:03
+
+Notice:
+
+👉 created_at is NOT unique
+👉 Three rows share the same timestamp
+
+We paginate 2 records per page.
+
+🚨 Naive Cursor Pagination (WRONG WAY)
+Page 1 Query
+SELECT * FROM users
+ORDER BY created_at DESC
+LIMIT 2;
+
+Returns:
+
+id 10  (10:00:05)
+id 9   (10:00:05)
+
+We send cursor:
+
+cursor = "2026-02-21 10:00:05"
+🚨 Page 2 Query (Naive)
+SELECT * FROM users
+WHERE created_at <= '2026-02-21 10:00:05'
+ORDER BY created_at DESC
+LIMIT 2;
+
+What happens?
+
+Database returns:
+
+id 10  (10:00:05)
+id 9   (10:00:05)
+
+💥 DUPLICATES.
+
+Because:
+
+We used <=
+
+Multiple rows have same timestamp
+
+Database does not know where page 1 ended
+
+❓ What If We Use < Instead?
+WHERE created_at < '2026-02-21 10:00:05'
+
+Now results:
+
+id 7  (10:00:04)
+id 6  (10:00:03)
+
+🚨 Problem:
+
+We completely skipped:
+
+id 8  (10:00:05)
+
+Now we have missing data.
+
+🎯 Why This Happens
+
+Because:
+
+created_at is not unique.
+
+Cursor value:
+
+10:00:05
+
+matches multiple rows.
+
+The database cannot determine:
+
+Which exact row was the last one of page 1.
+
+The ordering boundary is ambiguous.
+
+✅ Correct Way: Composite Cursor
+
+We must order by:
+
+ORDER BY created_at DESC, id DESC
+
+Now ordering becomes deterministic.
+
+Page 1
+SELECT * FROM users
+ORDER BY created_at DESC, id DESC
+LIMIT 2;
+
+Returns:
+
+id 10 (10:00:05)
+id 9  (10:00:05)
+
+Cursor becomes:
+
+{
+  created_at: '2026-02-21 10:00:05',
+  id: 9
+}
+Page 2 (Correct)
+SELECT * FROM users
+WHERE (created_at < '2026-02-21 10:00:05')
+   OR (created_at = '2026-02-21 10:00:05' AND id < 9)
+ORDER BY created_at DESC, id DESC
+LIMIT 2;
+
+Now result:
+
+id 8  (10:00:05)
+id 7  (10:00:04)
+
+✅ No duplicates
+✅ No missing records
+
+🧠 Core Principle
+
+Cursor pagination requires:
+
+Deterministic ordering.
+
+If ORDER BY column is not unique,
+the cursor boundary becomes ambiguous.
+
+🎤 Interview-Ready Answer
+
+You can say:
+
+If cursor pagination uses a non-unique column like created_at for ordering, duplicates or missing records can occur because multiple rows share the same cursor value. To prevent this, we use a composite cursor such as created_at and id together to ensure deterministic ordering.
+
+🔥 That answer shows deep DB understanding.

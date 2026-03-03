@@ -1,0 +1,5 @@
+## config/routes.rb
+
+get  '/saml/login',    to: 'saml#login'
+post '/saml/consume',  to: 'saml#consume'
+

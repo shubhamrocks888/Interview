@@ -1,0 +1,131 @@
+You’re confused about:
+
+2️⃣ Rails uses the configured trusted ADFS public certificate
+What does that actually mean?
+
+Let’s slow it down.
+
+🔐 What Is This “Configured Trusted Certificate”?
+
+When integrating with Active Directory Federation Services, the IT team gives you:
+
+Either an IdP metadata XML file
+
+Or an X.509 public certificate
+
+That certificate belongs to ADFS.
+
+It contains:
+
+-----BEGIN CERTIFICATE-----
+MIIDdzCCAl+gAwIBAgI...
+-----END CERTIFICATE-----
+
+That is ADFS’s public key certificate.
+
+🏗 Where Does Rails Put It?
+
+In your Rails app (using omniauth-saml), you configure:
+
+provider :saml,
+  idp_cert: ENV['ADFS_PUBLIC_CERT']
+
+So Rails now says:
+
+"I trust ONLY signatures verified by this certificate."
+
+That is what “configured trusted certificate” means.
+
+It is NOT dynamically fetched from the response.
+
+It is pre-configured and trusted.
+
+🧠 Think of It Like This
+
+Before any login happens:
+
+Rails already knows:
+
+Only accept signatures from THIS public key.
+
+That’s step 2.
+
+🔎 Why Is This Important?
+
+Imagine if Rails did this instead:
+
+Extract certificate from SAML response
+
+Use that certificate to verify signature
+
+🚨 That would be insecure.
+
+Because attacker could:
+
+Generate their own key pair
+
+Sign fake SAML response
+
+Include their own certificate
+
+Trick your app
+
+That’s why Rails must already have a trusted certificate configured.
+
+🔁 So Step 2 Means
+
+When SAML response arrives:
+
+Rails does NOT ask:
+
+“Which certificate should I trust?”
+
+Rails already knows.
+
+It uses the one stored in config.
+
+🔐 Full Mental Model
+
+Before runtime:
+
+Rails config:
+Trusted IdP certificate = ADFS Public Certificate
+
+At runtime:
+
+SAML response arrives
+↓
+Extract SignatureValue
+↓
+Use configured public certificate
+↓
+Verify signature
+
+That’s it.
+
+🎯 Interview-Level Explanation
+
+If interviewer asks:
+
+How does the SP know which certificate to use for verification?
+
+You say:
+
+During SAML integration, the IdP’s public X.509 certificate is configured in the Rails application. When a SAML response is received, we verify the signature using this pre-configured trusted certificate rather than trusting any certificate included in the response.
+
+🔥 That shows you understand trust boundaries.
+
+🧠 One Final Clarification
+
+Step 2 is NOT:
+
+“Rails downloads certificate every time.”
+
+It is:
+
+“Rails already trusts one specific certificate, configured during integration.”
+
+If this part is now clear, next we should cover:
+
+👉 What happens during certificate rotation in ADFS
+Because that’s a real production issue and interviewers love asking it.

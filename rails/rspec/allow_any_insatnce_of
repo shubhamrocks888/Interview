@@ -1,0 +1,163 @@
+1️⃣ What is allow_any_instance_of?
+
+It stubs a method on every instance of a class.
+
+Example:
+
+allow_any_instance_of(PaymentGateway)
+  .to receive(:charge)
+  .and_return("Success")
+
+Now:
+
+PaymentGateway.new.charge(100)
+PaymentGateway.new.charge(200)
+PaymentGateway.new.charge(500)
+
+All of them return "Success".
+
+It affects ALL instances.
+
+🚨 Why It’s Dangerous
+❌ 1. It Breaks Test Isolation
+
+You are not controlling a specific object.
+
+You are modifying the behavior of the entire class globally in that test.
+
+This can:
+
+Hide bugs
+
+Affect other expectations
+
+Make debugging harder
+
+❌ 2. It Makes Tests Less Explicit
+
+Look at this:
+
+allow_any_instance_of(User).to receive(:admin?).and_return(true)
+
+Which user?
+
+The one created in the test?
+
+The one created inside the service?
+
+Some other instance?
+
+It’s unclear.
+
+Good tests should be explicit.
+
+❌ 3. It Hides Design Problems
+
+If you need allow_any_instance_of, it often means:
+
+👉 Your object is being created inside the method
+👉 You can’t inject dependencies
+
+Example:
+
+class PaymentProcessor
+  def call(amount)
+    gateway = PaymentGateway.new
+    gateway.charge(amount)
+  end
+end
+
+Now in test, you feel forced to do:
+
+allow_any_instance_of(PaymentGateway)
+  .to receive(:charge)
+
+But better design is:
+
+class PaymentProcessor
+  def initialize(gateway = PaymentGateway.new)
+    @gateway = gateway
+  end
+
+  def call(amount)
+    @gateway.charge(amount)
+  end
+end
+
+Now test becomes clean:
+
+gateway = instance_double(PaymentGateway)
+allow(gateway).to receive(:charge).and_return("Success")
+
+processor = PaymentProcessor.new(gateway)
+processor.call(100)
+
+Much cleaner. Much safer.
+
+❌ 4. Harder to Refactor Safely
+
+If someone changes:
+
+PaymentGateway.new
+
+to:
+
+OtherGateway.new
+
+Your test may silently pass or behave strangely.
+
+Because allow_any_instance_of is broad and implicit.
+
+❌ 5. Considered Code Smell
+
+Even RSpec team discourages it.
+
+Why?
+
+Because it:
+
+Couples test too tightly to implementation
+
+Encourages poor object design
+
+Reduces clarity
+
+🧠 Clean Mental Model
+
+allow_any_instance_of = “I don’t care which instance, just fake them all.”
+
+Good testing = “I know exactly which object I am faking.”
+
+🎯 Interview-Ready Answer
+
+If interviewer asks:
+
+Why is allow_any_instance_of dangerous?
+
+You say:
+
+It globally stubs methods on all instances of a class, which reduces test clarity and isolation. It often indicates poor object design because dependencies are not injected properly. Instead, we should inject dependencies and use instance_double for safer, more explicit tests.
+
+That answer shows senior-level thinking.
+
+🔥 Quick Rule
+
+If you feel the need to use allow_any_instance_of…
+
+Ask yourself:
+
+Can I inject this dependency instead?
+
+If yes → do that.
+
+If you want next, we can go deeper into:
+
+What is verifying partial double
+
+What is stub_const
+
+How dependency injection improves testability
+
+Or design patterns for testable Rails services
+
+Let’s go 🔥

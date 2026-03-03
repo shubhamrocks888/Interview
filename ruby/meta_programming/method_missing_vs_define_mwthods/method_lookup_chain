@@ -1,0 +1,177 @@
+This is the missing piece. Once you understand method lookup chain, everything about method_missing, inheritance, modules — all becomes clear.
+
+We go from zero. No heavy words.
+
+🧠 First Question
+
+When you call:
+
+dog.bark
+
+How does Ruby know where to find bark?
+
+It must search somewhere, right?
+
+That searching process is called:
+
+Method Lookup Chain
+
+It simply means:
+
+👉 The order in which Ruby searches for a method.
+
+That’s it.
+
+🔍 Step 1: Simplest Case
+class Dog
+  def bark
+    "woof"
+  end
+end
+
+dog = Dog.new
+dog.bark
+
+Ruby search order:
+
+Look inside Dog
+
+Found bark
+
+Stop searching
+
+Easy.
+
+🔍 Step 2: Add Inheritance
+class Animal
+  def eat
+    "eating"
+  end
+end
+
+class Dog < Animal
+end
+
+Dog.new.eat
+
+Now where is eat?
+
+Not in Dog.
+
+So Ruby searches like this:
+
+Dog
+
+Animal
+
+Object
+
+Kernel
+
+BasicObject
+
+It finds eat inside Animal.
+
+So:
+
+Method lookup chain includes superclass.
+
+🔍 Step 3: Add Modules
+module Walkable
+  def walk
+    "walking"
+  end
+end
+
+class Dog
+  include Walkable
+end
+
+Dog.new.walk
+
+Now search order becomes:
+
+Dog
+
+Walkable
+
+Object
+
+Kernel
+
+BasicObject
+
+It finds walk inside Walkable.
+
+So:
+
+Included modules are inserted into the lookup chain.
+
+🧠 Full Method Lookup Chain (Important)
+
+When you call:
+
+obj.some_method
+
+Ruby searches in this order:
+
+1️⃣ Singleton class (we'll ignore for now)
+2️⃣ Class itself
+3️⃣ Included modules (last included first)
+4️⃣ Superclass
+5️⃣ Superclass modules
+6️⃣ Object
+7️⃣ Kernel
+8️⃣ BasicObject
+9️⃣ If still not found → method_missing
+
+That entire search path is called:
+
+Method Lookup Chain
+
+🧪 You Can Actually See It
+
+Try:
+
+Dog.ancestors
+
+Example output:
+
+[Dog, Walkable, Object, Kernel, BasicObject]
+
+This array shows the lookup chain.
+
+Ruby checks methods in this order.
+
+🔥 Now Everything Connects
+
+When method is not found in this chain:
+
+Ruby calls:
+
+method_missing
+
+And if that also doesn’t handle it:
+
+👉 NoMethodError
+
+Now you see how everything links?
+
+🎯 Why Interviewers Ask About This
+
+They want to know:
+
+Do you understand inheritance properly?
+
+Do you understand modules?
+
+Do you understand how Ruby finds methods?
+
+Do you understand why method_missing gets triggered?
+
+If you understand method lookup chain,
+you understand Ruby deeply.
+
+🧠 Simple One-Line Definition (Interview Style)
+
+Method lookup chain is the order in which Ruby searches for a method in a class, its modules, and its ancestors before calling method_missing.

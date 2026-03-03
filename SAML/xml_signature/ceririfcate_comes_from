@@ -1,0 +1,145 @@
+You’re asking:
+
+When SAML response comes, how does Rails verify it?
+Does Rails already have the certificate?
+Or is certificate attached to the response?
+
+Answer: Rails already has the trusted certificate configured.
+It does NOT trust whatever certificate comes in the response.
+
+Now let’s break this properly.
+
+🔐 1️⃣ Where Does the Certificate Come From?
+
+When IT configures ADFS:
+
+They give you:
+
+IdP Metadata XML (contains certificate)
+OR
+
+The public X.509 certificate file
+
+Example from ADFS metadata:
+
+<ds:X509Certificate>
+MIIDdzCCAl+gAwIBAgIEbG3...
+</ds:X509Certificate>
+
+
+You extract that certificate and configure it in Rails.
+
+🏗 2️⃣ How Rails Stores It
+
+In Rails (using omniauth-saml):
+
+provider :saml,
+  idp_cert: ENV['ADFS_PUBLIC_CERT']
+
+
+So Rails already has:
+
+👉 ADFS public certificate
+👉 Stored in config or ENV
+
+🔁 3️⃣ What Happens When Response Comes?
+
+When ADFS sends SAML response:
+
+It includes:
+
+<ds:Signature>
+   <ds:SignedInfo>...</ds:SignedInfo>
+   <ds:SignatureValue>...</ds:SignatureValue>
+   <ds:KeyInfo>
+      <ds:X509Certificate>....</ds:X509Certificate>
+   </ds:KeyInfo>
+</ds:Signature>
+
+
+Yes — sometimes the certificate is included in the response.
+
+BUT 🚨
+
+Rails does NOT blindly trust that.
+
+🔐 4️⃣ How Verification Actually Works
+
+Here is what happens internally:
+
+1️⃣ Rails extracts SignatureValue
+2️⃣ Rails uses the configured trusted ADFS public certificate
+3️⃣ Rails decrypts signature using that public key
+4️⃣ Rails compares hash
+
+If valid → accept
+If not → reject
+
+🚨 Very Important Security Principle
+
+Never trust certificate coming inside the SAML response itself.
+
+Why?
+
+Because attacker could:
+
+Generate their own certificate
+
+Sign fake assertion
+
+Attach their own certificate
+
+Try to trick your app
+
+If you trust the certificate inside response → security broken ❌
+
+🧠 Correct Mental Model
+ADFS Private Key → signs response
+Rails has ADFS Public Key → verifies signature
+
+
+Rails must already know:
+
+Which certificate is trusted
+
+Which IdP is expected
+
+🏢 In Enterprise Setup
+
+IT team does:
+
+Create Relying Party Trust in ADFS
+
+Export IdP metadata
+
+Share certificate with app team
+
+App team:
+
+Configures Rails with that certificate
+
+Uses it for verification
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+How does Rails verify SAML signature?
+
+You say:
+
+During integration, we configure the IdP’s public X.509 certificate in our Rails application. When a SAML response is received, the ruby-saml library extracts the signature and verifies it against the pre-configured trusted certificate. Even if the certificate is included in the response, we validate against the known trusted certificate to prevent spoofing attacks.
+
+🔥 That’s senior-level secure thinking.
+
+💥 Bonus: What If Certificate Expires?
+
+Then:
+
+ADFS rotates certificate
+
+Rails must update stored certificate
+
+Otherwise all logins fail with signature validation error
+
+This is called certificate rotation handling — very important in enterprise systems.

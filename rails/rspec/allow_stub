@@ -1,0 +1,75 @@
+In RSpec, stubbing is done using allow(...).to receive(...).
+
+So when you say:
+
+“Stub is like allow with some method calling”
+
+That’s mostly right — but let’s phrase it properly.
+
+🔹 What Is a Stub Exactly?
+
+A stub means:
+
+We allow a method to be called and control what it returns, without running the real implementation.
+
+And in RSpec, we create a stub using:
+
+allow(object).to receive(:method_name).and_return(value)
+
+That line is a stub.
+
+🔥 Example
+
+Without stub:
+
+PaymentGateway.new.charge(100)
+
+Real logic runs (maybe external API call).
+
+With stub:
+
+allow(PaymentGateway).to receive(:charge).and_return("Success")
+
+Now:
+
+PaymentGateway.charge(100)
+
+Will return "Success"
+Real logic does NOT execute.
+
+That is stubbing.
+
+🔹 Important Difference from Mock
+
+Stub:
+
+allow(Service).to receive(:call)
+
+✔ Allows the method
+✔ Replaces implementation
+✔ Does NOT fail if method isn't called
+
+Mock:
+
+expect(Service).to receive(:call)
+
+✔ Replaces implementation
+✔ Fails if method isn't called
+
+🧠 Clean Mental Model
+
+| Code                           | Meaning |
+| ------------------------------ | ------- |
+| `allow(...).to receive`        | Stub    |
+| `expect(...).to receive`       | Mock    |
+| `expect(...).to have_received` | Spy     |
+
+🔥 Key Point
+
+allow = “It’s okay if this method is called. If it is, return this.”
+
+expect = “This method MUST be called.”
+
+That’s the core difference.
+
+If you want, next we can test your understanding with small scenarios and you tell me whether it's stub, mock, or spy 🔥

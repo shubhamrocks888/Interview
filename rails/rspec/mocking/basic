@@ -1,0 +1,139 @@
+so mocking is expect method to be called..whenever expect method is called its mocking
+
+Good question 👌 — and very important clarification.
+
+Short answer:
+
+❌ Not every expect is mocking.
+✅ Mocking specifically means expecting a method to be called on an object.
+
+Let’s break this clearly.
+
+1️⃣ Normal expect (Assertion — NOT Mocking)
+
+Example:
+
+expect(user.name).to eq("Shubham")
+
+This is just checking state/value.
+
+No mocking happening.
+
+Another example:
+
+expect(user).to be_valid
+
+Again → just verifying result.
+
+👉 This is called state-based testing, not mocking.
+
+2️⃣ Mocking = Expecting a Method Call
+
+Mocking happens when you write:
+
+expect(User).to receive(:find).with(1)
+
+Now you are saying:
+
+I expect this method to be called.
+
+If User.find(1) is NOT called → test fails.
+
+That is mocking.
+
+3️⃣ Very Clear Rule
+🔹 This is NOT mocking:
+expect(result).to eq(10)
+🔹 This IS mocking:
+expect(SomeClass).to receive(:some_method)
+
+The keyword that indicates mocking is:
+
+receive
+
+Whenever you see:
+
+expect(object).to receive(:method_name)
+
+→ That is mock / message expectation.
+
+4️⃣ What About Stubbing?
+
+Stubbing uses:
+
+allow(object).to receive(:method).and_return(value)
+
+This does NOT fail if method is not called.
+
+So:
+
+Code	Type
+expect(x).to eq(y)	Assertion
+allow(x).to receive(:m)	Stub
+expect(x).to receive(:m)	Mock
+5️⃣ Real-World Example (Service Object)
+
+Imagine:
+
+class PaymentProcessor
+  def call(user)
+    NotificationService.send_email(user)
+  end
+end
+
+Test:
+
+expect(NotificationService).to receive(:send_email).with(user)
+PaymentProcessor.new.call(user)
+
+Now you are testing:
+
+Did this interaction happen?
+
+That is mocking.
+
+6️⃣ Interview-Ready Answer
+
+If interviewer asks:
+
+“What is mocking in RSpec?”
+
+You say:
+
+Mocking is when we set an expectation that a particular method should be called during the test execution, using expect(...).to receive(...). If that method is not called, the test fails.
+
+7️⃣ Very Important Mental Model
+
+There are two testing styles:
+
+🔹 State-based testing
+
+Check data change:
+
+expect(user.balance).to eq(50)
+🔹 Interaction-based testing (Mocking)
+
+Check method call:
+
+expect(Gateway).to receive(:charge)
+🔥 Final Answer to Your Question
+
+“Whenever expect method is called is it mocking?”
+
+No.
+
+Mocking only happens when you use:
+
+expect(object).to receive(:method)
+
+Normal expect(...).to eq(...) is just assertion.
+
+If you want next, I can:
+
+Show execution order difference between stub and mock
+
+Or show how mocking can become dangerous (over-mocking problem)
+
+Or show real interview tricky question on mocking
+
+Tell me which one 🔥

@@ -1,0 +1,137 @@
+You’re asking:
+
+Rails decrypts the signature and gets a hash…
+but compares it to WHAT?
+
+Let’s go step-by-step clearly.
+
+🔐 What Actually Happens During Signature Verification
+
+When ADFS signs the SAML response:
+
+On ADFS Side (Signing)
+
+1️⃣ Take the XML (Assertion or Response)
+2️⃣ Apply canonicalization (normalize XML format)
+3️⃣ Generate a hash (e.g., SHA-256)
+
+Let’s say:
+
+Original XML → SHA256 → HASH_A
+
+4️⃣ Encrypt HASH_A using ADFS private key
+
+Encrypted(HASH_A) = SignatureValue
+
+5️⃣ Attach SignatureValue to XML.
+
+🔎 Now On Rails Side (Verification)
+
+When Rails receives the SAML response:
+
+Step 1️⃣ Extract SignatureValue
+
+This is:
+
+Encrypted(HASH_A)
+Step 2️⃣ Decrypt SignatureValue Using ADFS Public Key
+
+Rails uses configured public certificate:
+
+Decrypt(Encrypted(HASH_A)) → HASH_A
+
+So now Rails has:
+
+👉 The original hash created by ADFS
+
+Step 3️⃣ Rails Recalculates Hash
+
+Rails now:
+
+Takes the received XML
+
+Applies same canonicalization
+
+Generates its own hash
+
+Received XML → SHA256 → HASH_B
+Step 4️⃣ Compare HASH_A vs HASH_B
+
+If:
+
+HASH_A == HASH_B
+
+✅ XML was not modified
+✅ It was signed by ADFS
+✅ Authentication is valid
+
+If:
+
+HASH_A != HASH_B
+
+❌ XML was modified OR fake signature
+❌ Reject login
+
+🎯 So The Answer To Your Question
+
+Rails compares:
+
+👉 The decrypted hash from signature
+with
+👉 The newly calculated hash of the received XML
+
+That’s the comparison.
+
+🧠 Why This Detects Tampering
+
+If someone changes even ONE character:
+
+Example:
+
+role = user
+
+changed to
+
+role = admin
+
+The recalculated hash becomes different.
+
+So:
+
+HASH_A ≠ HASH_B
+
+Signature validation fails.
+
+🔐 Visual Model
+ADFS:
+XML → HASH_A → Encrypt with Private Key → Signature
+
+Rails:
+Decrypt Signature with Public Key → HASH_A
+Recalculate Hash of XML → HASH_B
+Compare HASH_A with HASH_B
+💥 Important Clarification
+
+Rails is NOT decrypting the XML.
+
+It is decrypting the signature (which contains the hash).
+
+The XML itself is usually just base64 encoded, not encrypted (unless encryption is enabled separately).
+
+🎯 Interview-Level Explanation
+
+If interviewer asks:
+
+What is actually compared during XML signature verification?
+
+You say:
+
+The Identity Provider generates a hash of the canonicalized XML and encrypts it using its private key. On the Service Provider side, we decrypt the signature using the IdP’s public key to retrieve the original hash. We then recompute the hash of the received XML and compare the two values. If they match, integrity and authenticity are verified.
+
+🔥 That’s strong cryptography understanding.
+
+Now next deep concept:
+
+👉 What is canonicalization, and why is it needed in XML signatures?
+
+This is where most developers get stuck.

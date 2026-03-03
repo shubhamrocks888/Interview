@@ -1,0 +1,128 @@
+🔥 Excellent. Now you’re thinking at the right level.
+
+You’re right — both mock and spy check whether a method was called.
+
+So what’s the real difference?
+
+It’s not what they check.
+
+It’s when and how they set the expectation.
+
+Let’s break it cleanly.
+
+✅ Both Mock and Spy Check Method Calls
+
+Both of these verify:
+
+“Was send_email called?”
+
+Mock
+expect(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+Spy
+allow(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+
+expect(NotificationService).to have_received(:send_email)
+
+Both fail if the method wasn’t called.
+
+So yes — they are checking the same thing.
+
+🔥 The REAL Difference
+1️⃣ Mock → Expectation Before Execution
+
+You declare:
+
+“This MUST be called.”
+
+Then you run the code.
+
+RSpec is already waiting for that call.
+
+This is called pre-execution expectation.
+
+2️⃣ Spy → Verify After Execution
+
+You allow the method to be tracked.
+
+Then after execution you ask:
+
+“Did it get called?”
+
+This is called post-execution verification.
+
+🧠 Mental Model
+
+Mock =
+📢 “I demand this happens.”
+
+Spy =
+🕵️ “Let’s see what happened.”
+
+⚡ Why Spy Is Often Preferred
+
+Spy follows the clean testing structure:
+
+Arrange
+Act
+Assert
+
+Example:
+
+# Arrange
+allow(NotificationService).to receive(:send_email)
+
+# Act
+PaymentProcessor.new.call(user)
+
+# Assert
+expect(NotificationService).to have_received(:send_email)
+
+That reads naturally.
+
+Mocks mix Arrange + Assert together.
+
+🚨 Important Behavioral Difference
+
+With a mock:
+
+expect(NotificationService).to receive(:send_email)
+
+If the method is never called → test fails automatically at end.
+
+With spy:
+
+If you forget this line:
+
+expect(NotificationService).to have_received(:send_email)
+
+The test will PASS.
+
+Because allow alone does not assert anything.
+
+This is a very important difference.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+“What’s the difference between mock and spy if both check method calls?”
+
+You say:
+
+Both verify that a method was called, but mocks set the expectation before execution using expect(...).to receive, while spies verify after execution using have_received. Spies follow Arrange–Act–Assert style and are generally cleaner.
+
+That answer shows deep understanding.
+
+If you want next, we can go one level deeper:
+
+What is a verifying double?
+
+What is instance_double?
+
+What is over-mocking and why it’s bad?
+
+Let’s go 🔥

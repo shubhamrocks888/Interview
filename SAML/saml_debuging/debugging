@@ -1,0 +1,222 @@
+Now we move from theory → to real-world debugging & troubleshooting.
+
+This is where companies decide if you’re senior or not.
+
+The requirement says:
+
+Ability to debug SAML requests/responses and troubleshoot integration issues
+
+Let’s prepare you properly.
+
+🔍 Part 1 — How SAML Debugging Actually Works
+
+When debugging SAML, you must inspect:
+
+SAML Request (AuthnRequest)
+
+SAML Response
+
+Signature validation
+
+Certificate configuration
+
+Claims/attribute mapping
+
+Timestamps
+
+Audience / Issuer mismatch
+
+🛠 Tools Used for Debugging
+
+Senior engineers use:
+
+✅ Browser DevTools
+
+Network tab
+
+Inspect POST to /auth/saml/callback
+
+Copy SAMLResponse
+
+✅ SAML Tracer (Browser Extension)
+
+Very common tool for debugging SAML.
+
+✅ Base64 Decoder
+
+Because SAMLResponse is Base64 encoded.
+
+✅ XML Formatter
+
+To read decoded XML clearly.
+
+🔁 Step-by-Step Debugging Process
+
+When login fails:
+
+Step 1️⃣ Capture the SAMLResponse
+
+In browser network tab:
+
+Look at:
+
+POST /auth/saml/callback
+
+Copy value of:
+
+SAMLResponse=PHNhbWxwOlJlc3BvbnNl...
+Step 2️⃣ Decode It
+
+It’s Base64 encoded.
+
+Decode → get XML.
+
+Now you can see:
+
+Issuer
+
+Assertion
+
+Signature
+
+Attributes
+
+Timestamps
+
+🔐 Step 3️⃣ Check Signature Errors
+
+Common error:
+
+Invalid signature
+
+Possible causes:
+
+Wrong certificate configured
+
+Certificate expired
+
+IdP rotated cert
+
+Using wrong environment (dev vs prod IdP)
+
+⏰ Step 4️⃣ Check Timestamp Errors
+
+Inside assertion:
+
+<saml:Conditions
+  NotBefore="2026-02-20T10:00:00Z"
+  NotOnOrAfter="2026-02-20T10:05:00Z">
+
+Common issues:
+
+Server clock mismatch
+
+Expired assertion
+
+Clock skew not configured
+
+Fix:
+
+settings.allowed_clock_drift = 5 # seconds
+🎯 Step 5️⃣ Check Audience Restriction
+
+Inside XML:
+
+<saml:Audience>https://yourapp.com</saml:Audience>
+
+If your Rails issuer is:
+
+https://app.company.com
+
+Mismatch → validation fails.
+
+🧩 Step 6️⃣ Check Issuer
+
+If Rails expects:
+
+https://adfs.company.com/adfs/services/trust
+
+But XML has:
+
+https://login.microsoftonline.com/xyz
+
+It means:
+
+Wrong IdP.
+
+👥 Step 7️⃣ Debug Claim Mapping
+
+Common issue:
+
+User logs in but role missing.
+
+Check:
+
+<saml:Attribute Name="role">
+
+Maybe IdP is sending:
+
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+
+Instead of simple role.
+
+So in Rails:
+
+auth.extra.raw_info["http://schemas.microsoft.com/..."]
+
+Mapping mismatch is very common.
+
+🚨 Most Common Production Issues
+
+Here are the top real-world SAML issues:
+
+Problem	Root Cause
+Invalid Signature	Wrong or rotated certificate
+No user found	Email claim missing
+Expired assertion	Clock mismatch
+Audience mismatch	Wrong issuer configured
+Infinite redirect loop	Session not being set
+500 error in callback	Parsing failure
+🧠 How to Debug in Rails
+
+Enable debug logs:
+
+OneLogin::RubySaml::Logging.logger = Rails.logger
+
+Log request.env["omniauth.auth"]
+
+Check:
+
+auth = request.env["omniauth.auth"]
+Rails.logger.info auth.inspect
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+How do you debug SAML authentication issues?
+
+You say:
+
+I capture the SAML request/response using browser developer tools or SAML Tracer, decode the Base64-encoded SAMLResponse, inspect the XML for issuer, audience, timestamps, and attributes, and verify signature validation against the configured certificate. I also check for clock skew issues, certificate rotation problems, and claim mapping mismatches.
+
+🔥 That sounds like someone who has done this before.
+
+💎 Senior-Level Addition
+
+You can add:
+
+In production, I also ensure proper logging around OmniAuth callbacks and enable verbose SAML logging temporarily to diagnose signature or assertion validation failures.
+
+That shows operational maturity.
+
+🧠 Now Let’s Practice
+
+I’ll give you a scenario:
+
+User gets error:
+
+Signature validation failed. SAML Response rejected.
+
+What are the top 3 things you check first?
+
+Answer like you’re in interview.

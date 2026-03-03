@@ -1,0 +1,163 @@
+YES ✅🔥 — and actually this is the better / more Ruby-ish approach.
+
+Interview gold answer 😎
+
+Instead of handling everything inside method_missing forever (which is slow), we can:
+
+Use method_missing only the first time
+
+Dynamically define the getter & setter using define_method
+
+Next time, Ruby calls the real method directly (no method_missing)
+
+That’s how Rails internally optimizes things too.
+
+🧠 Why define_method is Better
+
+method_missing runs every time → slower
+define_method creates a real method → fast after first call
+
+✅ Clean Solution Using define_method
+class User
+  def initialize(name)
+    @name = name
+  end
+
+  def greet
+    puts "Hello #{@name}"
+  end
+
+  def method_missing(method_name, *args, &block)
+    method_name = method_name.to_s
+
+    if method_name.end_with?("=")
+      # Setter
+      attribute = method_name.chomp("=")
+
+      # Define setter method dynamically
+      self.class.define_method(method_name) do |value|
+        instance_variable_set("@#{attribute}", value)
+      end
+
+      # Define getter method dynamically
+      self.class.define_method(attribute) do
+        instance_variable_get("@#{attribute}")
+      end
+
+      # Call the newly defined setter
+      send(method_name, args.first)
+
+      nil
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    true
+  end
+end
+🔎 Test It
+x = User.new("Shubham")
+
+x.demo = "abc"
+# => nil
+
+x.demo
+# => "abc"
+
+x.demo
+# => "abc"   (Now it doesn't go to method_missing)
+
+After first call:
+
+demo=
+
+demo
+
+are REAL methods on the class.
+
+🧠 How It Works Internally
+1️⃣ x.demo = "abc"
+
+Ruby calls:
+
+method_missing(:demo=, "abc")
+2️⃣ We dynamically define:
+def demo=(value)
+  @demo = value
+end
+
+def demo
+  @demo
+end
+3️⃣ Then we call:
+send("demo=", "abc")
+
+Now real method runs.
+
+🔥 Important Detail
+
+We used:
+
+instance_variable_set("@#{attribute}", value)
+
+Because attribute name is dynamic.
+
+Same for getter:
+
+instance_variable_get("@#{attribute}")
+⚡ Performance Difference
+Approach	Performance
+Only method_missing	Slow (always dynamic lookup)
+method_missing + define_method	Fast after first call
+
+This shows senior-level thinking in interview.
+
+🎯 Even Cleaner Version (Pro Level)
+
+If interviewer allows:
+
+def method_missing(method_name, *args)
+  name = method_name.to_s
+
+  if name.end_with?("=")
+    attr = name.chomp("=")
+    self.class.attr_accessor attr
+    send(method_name, args.first)
+  else
+    super
+  end
+end
+
+That’s even more elegant 😄
+
+🚀 What Interviewer Is Testing Now
+
+They want to see if you understand:
+
+Difference between dynamic dispatch vs real method
+
+Ruby meta-programming
+
+define_method
+
+instance_variable_set
+
+Performance awareness
+
+🎉 Final Mental Model
+
+method_missing → catch
+define_method → create
+send → execute
+
+If you want next level, I can explain:
+
+Difference between define_method and def
+
+Why define_method captures closure
+
+How Rails dynamically defines attribute methods internally
+
+Which one next? 😄

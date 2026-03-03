@@ -1,0 +1,165 @@
+🔐 What is SAML 2.0?
+
+SAML 2.0 (Security Assertion Markup Language 2.0) is a standardized protocol used for:
+
+Authentication
+
+Single Sign-On (SSO)
+
+Identity federation
+
+It defines:
+
+The XML structure
+
+The authentication flow
+
+How assertions are created
+
+How they are signed
+
+How they are validated
+
+🧠 Simple Meaning
+
+SAML 2.0 is just:
+
+A rulebook that defines how one system proves a user’s identity to another system using XML.
+
+🏢 In Your Case (Rails + ADFS)
+
+ADFS uses SAML 2.0 protocol
+
+Your Rails app understands SAML 2.0
+
+They communicate using standardized XML messages
+
+Because both follow the same protocol → they can trust each other.
+
+📦 What Does SAML 2.0 Actually Define?
+
+It defines:
+
+1️⃣ Assertions
+
+What user data looks like in XML.
+
+Example:
+
+NameID
+
+Email
+
+Groups
+
+Roles
+
+Expiry time
+
+2️⃣ Protocol Messages
+
+Such as:
+
+AuthnRequest (login request)
+
+Response (authentication result)
+
+LogoutRequest
+
+LogoutResponse
+
+3️⃣ Bindings
+
+How messages are transported:
+
+HTTP Redirect
+
+HTTP POST
+
+HTTP Artifact
+
+4️⃣ Security Rules
+
+XML digital signatures
+
+Certificate validation
+
+Replay protection
+
+Expiry timestamps
+
+📜 Why “2.0”?
+
+SAML had:
+
+SAML 1.0
+
+SAML 1.1
+
+SAML 2.0 (current industry standard)
+
+SAML 2.0 was released in 2005 and is still widely used in enterprises.
+
+ADFS supports SAML 2.0.
+
+🔁 Real Flow Using SAML 2.0
+
+Rails generates SAML 2.0 AuthnRequest
+
+ADFS authenticates user
+
+ADFS returns SAML 2.0 Response
+
+Rails verifies:
+
+XML signature
+
+Certificate
+
+Expiration
+
+Audience restriction
+
+If valid → login success.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+What is SAML 2.0?
+
+You say:
+
+SAML 2.0 is an XML-based federation protocol used for authentication and Single Sign-On between a Service Provider and an Identity Provider. It defines the structure of authentication requests, responses, assertions, and the security mechanisms such as XML signatures and certificate validation. In our Rails application, we used SAML 2.0 to integrate with ADFS as the Identity Provider.
+
+🔥 Clean. Confident. Senior.
+
+🧠 Important Understanding
+
+SAML 2.0 is NOT:
+
+A gem
+
+A library
+
+A product
+
+It is a protocol specification.
+
+Just like:
+
+HTTP is a protocol
+
+OAuth is a protocol
+
+SAML 2.0 is a protocol.
+
+Next logical step:
+
+Now that you understand SAML 2.0…
+
+Do you want to go into:
+
+👉 What exactly is inside a SAML Assertion (deep breakdown)
+or
+👉 What is XML Signature and how it secures SAML? (most important for this contract) 🔐

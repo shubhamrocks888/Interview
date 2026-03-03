@@ -1,0 +1,94 @@
+1️⃣ Garbage Collection (GC) in Ruby
+🔹 What Problem Does GC Solve?
+
+In programming, when we create objects:
+
+user = User.new
+
+Memory is allocated.
+
+If we don’t free unused objects, memory keeps increasing → memory leak → crash.
+
+In C, you manually free memory.
+In Ruby, Garbage Collector automatically frees unused objects.
+
+🔹 What Is Garbage Collection?
+
+Garbage Collection is a mechanism that:
+
+Finds objects that are no longer reachable and frees their memory.
+
+🔹 What Does “Reachable” Mean?
+
+An object is reachable if something still references it.
+
+Example:
+
+user = User.new
+
+As long as user variable exists → object is reachable.
+
+If:
+
+user = nil
+
+Now the object has no references → eligible for garbage collection.
+
+🔹 How Ruby GC Works (Modern Ruby – MRI)
+
+Ruby uses:
+
+🧠 Mark and Sweep Algorithm
+Step 1 – Mark Phase
+
+Ruby scans all objects.
+
+Marks objects that are reachable.
+
+Step 2 – Sweep Phase
+
+Removes unmarked objects.
+
+Frees their memory.
+
+🔹 Generational Garbage Collection
+
+Ruby optimizes GC using Generational GC.
+
+Based on the idea:
+
+Most objects die young.
+
+Ruby divides objects into:
+
+Young Generation (new objects)
+
+Old Generation (long-living objects)
+
+If an object survives multiple GC cycles → moved to old generation.
+
+This improves performance because:
+
+Ruby doesn’t check old objects frequently.
+
+🔹 Why Interviewers Ask This?
+
+They want to know:
+
+Do you understand memory behavior?
+
+Can you debug memory leaks?
+
+Do you understand performance optimization?
+
+🔹 Practical Interview Answer
+
+If asked:
+
+Q: How does Ruby GC work?
+
+You can say:
+
+Ruby uses a Mark-and-Sweep garbage collection algorithm with generational optimization. During the mark phase, reachable objects are identified. In the sweep phase, unreachable objects are freed. Ruby assumes most objects die young, so it uses generational GC to improve performance.
+
+That’s a strong answer.

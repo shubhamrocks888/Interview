@@ -1,0 +1,159 @@
+🔹 What is inspect?
+
+inspect is a method that returns a developer-friendly string representation of an object.
+
+It is mainly used for:
+
+Debugging
+
+Console output (IRB / Rails console)
+
+p method
+
+🔎 Basic Example
+"hello".inspect
+
+Output:
+
+"\"hello\""
+
+Notice:
+
+It includes quotes
+
+It shows the real internal representation
+
+Compare with to_s:
+
+"hello".to_s
+
+Output:
+
+"hello"
+
+No extra formatting.
+
+🔹 Key Difference: to_s vs inspect
+Method	Purpose	Output Style
+to_s	User-friendly display	Clean
+inspect	Developer/debug display	Raw + detailed
+🔥 Why p Uses inspect
+
+When you write:
+
+p "hello"
+
+Ruby internally does:
+
+puts "hello".inspect
+
+That’s why you see:
+
+"hello"
+🔹 Example with Array
+arr = [1,2,3]
+puts arr
+
+Output:
+
+1
+2
+3
+
+Because puts calls to_s.
+
+Now:
+
+p arr
+
+Output:
+
+[1, 2, 3]
+
+Because p calls inspect.
+
+🔹 Example with nil
+puts nil
+
+(blank line)
+
+p nil
+nil
+
+inspect makes debugging easier.
+
+🔹 Custom inspect (Very Important)
+
+You can override inspect in your own class.
+
+class User
+  def initialize(name, age)
+    @name = name
+    @age = age
+  end
+
+  def inspect
+    "User(name: #{@name}, age: #{@age})"
+  end
+end
+
+u = User.new("Shubham", 25)
+p u
+
+Output:
+
+User(name: Shubham, age: 25)
+
+Now debugging becomes clean.
+
+🔹 Where Ruby Automatically Uses inspect
+
+p
+
+IRB / Rails console
+
+When printing objects inside arrays or hashes
+
+String interpolation sometimes in debugging
+
+Example:
+
+u = User.new("Shubham", 25)
+[ u ]
+
+Ruby uses inspect to show it.
+
+🔥 Internally
+
+Every Ruby object inherits inspect from:
+
+Object
+
+Default version prints:
+
+#<ClassName:0x00007ff...>
+
+Example:
+
+class A; end
+p A.new
+
+Output:
+
+#<A:0x00007f...>
+
+That comes from default inspect.
+
+🎯 Simple Definition (Interview Style)
+
+inspect returns a string containing a detailed, developer-friendly representation of an object, mainly used for debugging.
+
+If you want next level explanation, I can explain:
+
+How inspect works with singleton methods
+
+Why IRB uses inspect
+
+Difference between inspect, to_s, and pretty_inspect
+
+How Rails overrides inspect for ActiveRecord models 🚀

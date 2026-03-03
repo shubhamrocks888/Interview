@@ -1,0 +1,101 @@
+🔐 What Is Inside the Configured Certificate?
+
+When ADFS gives you a certificate, it is an X.509 certificate.
+
+Inside it:
+
+Public Key ✅
+
+Issuer info
+
+Validity dates
+
+Signature algorithm info
+
+Certificate signature (signed by CA or self-signed)
+
+But the important part for SAML verification is:
+
+👉 The public key
+
+🧠 Why Public Key?
+
+Because cryptography works like this:
+
+Private Key → Used to SIGN
+Public Key  → Used to VERIFY
+
+So:
+
+ADFS uses its private key to sign the SAML assertion.
+
+Rails uses ADFS’s public key (from certificate) to verify that signature.
+
+🔁 Complete Flow Again (Now It Will Click)
+On ADFS:
+
+XML → Hash
+
+Hash → Encrypted with PRIVATE key
+
+Signature attached to XML
+
+On Rails:
+
+Extract SignatureValue
+
+Use configured certificate
+
+Extract public key from certificate
+
+Use public key to decrypt signature
+
+Compare hashes
+
+If match → valid.
+
+🏗 So Yes — This Is True
+
+The configured certificate contains the public key that is used to verify the SAML signature.
+
+Correct.
+
+🔐 Very Important Distinction
+
+Rails does NOT have:
+
+❌ ADFS private key
+❌ Ability to sign as ADFS
+
+Rails only has:
+
+✅ Public key
+✅ Ability to verify
+
+That’s secure design.
+
+🧠 Think of It Like Lock and Key
+
+Private key = stamp machine
+Public key = stamp verifier
+
+Only ADFS can stamp.
+Anyone with public key can verify stamp.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+What is stored in the IdP certificate configured in the SP?
+
+You say:
+
+The IdP certificate contains the public key used to verify the XML digital signature on the SAML assertion. The Identity Provider signs the assertion using its private key, and our Rails application verifies it using the corresponding public key from the configured X.509 certificate.
+
+🔥 That’s senior-level clarity.
+
+Now next important concept:
+
+Do you want to understand:
+
+👉 What happens if certificate expires?

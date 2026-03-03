@@ -1,0 +1,5 @@
+7️⃣ Find or Create User
+
+user = User.find_or_initialize_by(email: email)
+
+user.save!

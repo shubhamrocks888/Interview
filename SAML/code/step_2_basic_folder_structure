@@ -1,0 +1,9 @@
+We will create:
+
+app/
+  controllers/
+    saml_controller.rb
+
+config/
+  initializers/
+    saml_settings.rb

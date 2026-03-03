@@ -1,0 +1,99 @@
+🔐 What is an Identity Provider (IdP)?
+
+An Identity Provider (IdP) is a system that:
+
+Authenticates users (checks username/password, MFA, etc.)
+
+Issues authentication proof (like a SAML assertion)
+
+Tells other applications:
+👉 “This user is verified. You can trust them.”
+
+🏢 In Your Project Context
+
+Your Rails app = Service Provider (SP)
+ADFS / Okta / Azure AD = Identity Provider (IdP)
+
+The IdP handles login.
+Your Rails app trusts the IdP.
+
+🧩 What Are These Systems?
+1️⃣ Active Directory Federation Services (ADFS)
+
+Microsoft product
+
+Used mostly by enterprises
+
+Connected to Active Directory
+
+Common in internal corporate environments
+
+👉 Companies using Windows + AD often use ADFS.
+
+2️⃣ Okta
+
+Cloud-based identity provider
+
+Popular SaaS identity platform
+
+Supports SAML, OAuth, OpenID Connect
+
+Very common for modern startups & SaaS apps
+
+3️⃣ Microsoft Azure Active Directory (Azure AD)
+
+Cloud-based identity service by Microsoft
+
+Now called Microsoft Entra ID
+
+Used for Office 365, enterprise apps
+
+Supports SAML, OAuth, OpenID Connect
+
+🧠 Simple Analogy
+
+Think of it like this:
+
+Your Rails app = Hotel
+
+IdP (ADFS/Okta/Azure AD) = Passport office
+
+User = Traveler
+
+The hotel doesn’t verify passport itself.
+
+Instead:
+
+Hotel redirects traveler to passport office.
+
+Passport office verifies identity.
+
+Passport office sends stamped document.
+
+Hotel trusts it and gives room.
+
+🔁 Technical Flow in Simple Terms
+
+User opens Rails app
+
+Rails redirects to IdP
+
+IdP authenticates user
+
+IdP sends SAML response
+
+Rails verifies signature
+
+User logged in
+
+🎯 Interview Answer Version
+
+If interviewer asks:
+
+“What is an Identity Provider?”
+
+You say:
+
+An Identity Provider is a trusted system responsible for authenticating users and issuing identity assertions using protocols like SAML. In enterprise environments, this is commonly ADFS, Azure AD, or Okta. Our Rails application acts as the Service Provider and delegates authentication to the IdP.
+
+🔥 Clean. Senior. Confident.

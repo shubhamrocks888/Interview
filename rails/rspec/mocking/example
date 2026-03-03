@@ -1,0 +1,99 @@
+Yes ✅ — it will pass if send_email is actually called.
+
+But let’s understand exactly why, because this is important.
+
+Your code:
+expect(NotificationService).to receive(:send_email)
+
+PaymentProcessor.new.call(user)
+
+If inside PaymentProcessor#call you have:
+
+NotificationService.send_email(user)
+
+Then:
+
+✔ RSpec intercepts the method
+✔ Tracks whether it was called
+✔ Since it was called → test passes
+
+🧠 What Actually Happens Internally
+
+When you write:
+
+expect(NotificationService).to receive(:send_email)
+
+RSpec:
+
+Replaces the real send_email method temporarily
+
+Sets an expectation that it must be called once
+
+If it is not called → test fails
+
+So yes — your test passes because it was called.
+
+⚠️ Important Detail (Interview-Level)
+
+If send_email is NOT called:
+
+class PaymentProcessor
+  def call(user)
+    # forgot to call NotificationService
+  end
+end
+
+Then test fails with something like:
+
+expected NotificationService to receive :send_email but it did not
+⚠️ Another Important Detail
+
+If method is called MORE than once:
+
+It will also fail unless you specify:
+
+expect(NotificationService).to receive(:send_email).twice
+
+By default, RSpec expects it exactly once.
+
+🔥 One More Important Concept
+
+When you use:
+
+expect(NotificationService).to receive(:send_email)
+
+It automatically stubs the method too.
+
+That means:
+
+The real implementation will NOT run
+
+Unless you use .and_call_original
+
+Example:
+
+expect(NotificationService).to receive(:send_email).and_call_original
+
+Now it will both:
+
+Expect it
+
+Run real method
+
+🎯 Final Answer to Your Question
+
+“Above expect line will hit true because it’s called?”
+
+Yes ✅
+It passes because RSpec expected that method call and the method was indeed called.
+
+If you want next, we can test your understanding:
+
+What happens in this case?
+
+expect(NotificationService).to receive(:send_email)
+# no call happens
+
+Will it fail immediately or at the end of the example?
+
+That’s where deep understanding begins 🔥

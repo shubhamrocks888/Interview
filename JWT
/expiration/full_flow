@@ -1,0 +1,225 @@
+Let’s simulate the complete real-world JWT login flow step by step.
+
+I’ll explain like it’s happening live in production.
+
+We’ll simulate:
+
+Login request
+
+Token generation
+
+Accessing protected route
+
+Token expiration
+
+Refresh flow
+
+🟢 SCENARIO: User Logs In
+🔹 STEP 1: User Hits Login API
+
+Client (Frontend) sends:
+
+POST /login
+Content-Type: application/json
+
+{
+  "email": "user@gmail.com",
+  "password": "123456"
+}
+🔹 STEP 2: Server Receives Request
+
+Server does:
+
+Find user by email
+
+Compare password (bcrypt)
+
+If valid → continue
+
+If invalid → return 401
+
+If invalid:
+
+401 Unauthorized
+
+{
+  "error": "Invalid email or password"
+}
+🟢 Credentials Valid — Now JWT Creation
+🔹 STEP 3: Server Creates Access Token
+
+Server builds payload:
+
+access_payload = {
+  user_id: user.id,
+  exp: 15.minutes.from_now.to_i
+}
+
+Then signs it:
+
+access_token = JWT.encode(access_payload, secret_key, 'HS256')
+🔹 STEP 4: Server Creates Refresh Token
+
+Refresh token usually:
+
+Has longer expiry
+
+May be stored in DB
+
+Example:
+
+refresh_payload = {
+  user_id: user.id,
+  exp: 7.days.from_now.to_i
+}
+
+refresh_token = JWT.encode(refresh_payload, secret_key, 'HS256')
+
+Some systems:
+
+Store refresh token in DB
+
+Or store token ID (jti)
+
+🔹 STEP 5: Server Sends Response
+200 OK
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Login flow complete ✅
+
+🟢 Now User Calls Protected API
+🔹 STEP 6: Client Calls Protected Route
+GET /courses
+Authorization: Bearer ACCESS_TOKEN
+🔹 STEP 7: Server Validates Token
+
+Server does:
+
+Extract token from header
+
+Decode
+
+Verify signature
+
+Check expiration
+
+Extract user_id
+
+Set current_user
+
+If valid → return data
+
+200 OK
+[
+  { "id": 1, "name": "Ruby Course" }
+]
+🔴 Now Let’s Simulate Expiration
+
+15 minutes pass…
+
+User calls again:
+
+GET /courses
+Authorization: Bearer ACCESS_TOKEN
+
+Server checks:
+
+Time.now > payload["exp"]
+
+Yes → expired.
+
+Server responds:
+
+401 Unauthorized
+{
+  "error": "Token expired"
+}
+
+Access denied ❌
+
+🟢 Now Refresh Flow Starts
+
+Frontend automatically handles this.
+
+🔹 STEP 8: Client Calls Refresh Endpoint
+POST /refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "REFRESH_TOKEN"
+}
+🔹 STEP 9: Server Verifies Refresh Token
+
+Server checks:
+
+Signature valid?
+
+Expired?
+
+Exists in DB? (if storing)
+
+Not revoked?
+
+If valid:
+
+Create NEW access token:
+
+new_access_payload = {
+  user_id: user.id,
+  exp: 15.minutes.from_now.to_i
+}
+
+Encode and send:
+
+200 OK
+{
+  "access_token": "NEW_ACCESS_TOKEN"
+}
+
+User continues without login ✅
+
+🔴 If Refresh Token Also Expired
+
+Server returns:
+
+401 Unauthorized
+
+User must login again.
+
+🟢 Logout Flow (Final Step)
+
+User clicks logout:
+
+Client calls:
+
+POST /logout
+
+Server:
+
+Deletes refresh token from DB
+
+Access token will expire naturally
+
+Now user must login again.
+
+🎯 Full Flow Summary
+
+Login
+→ Server generates access + refresh token
+→ Client stores them
+→ Access token used for API calls
+→ If expired → refresh token generates new access token
+→ If refresh expired → login again
+
+🎯 Interview-Level Summary
+
+If interviewer says:
+
+"Explain complete JWT authentication flow"
+
+You say:
+
+When a user logs in, the server validates credentials and generates two tokens: a short-lived access token and a long-lived refresh token. The access token is sent in the Authorization header for protected routes. If it expires, the client uses the refresh token to obtain a new access token without requiring re-login. Since JWT is stateless, expiration is critical for security, and refresh tokens allow maintaining user sessions securely.

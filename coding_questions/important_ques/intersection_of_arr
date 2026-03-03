@@ -1,0 +1,74 @@
+arr1 = [1,2,3,4,5]
+arr2 = [3,4,5,6,7]
+
+Intersection → [3,4,5]
+
+for arr1 = [1,1,2,2,3,3,4,4,5,5]
+for arr2 = [3,3,4,4,5,5]
+o/p: [3,4,5]
+
+Case 1: Set Intersection (Unique Elements)
+
+def intersection(arr1, arr2)
+  hash = {}
+  result = []
+
+  arr1.each { |num| hash[num] = true }
+
+  arr2.each do |num|
+    result << num if hash[num]
+  end
+
+  result.uniq
+end
+
+Time: O(n + m)
+Space: O(n)
+
+✅ Case 2: Multiset Intersection (Count Matters)
+
+def intersection_with_duplicates(arr1, arr2)
+  freq = Hash.new(0)
+  result = []
+
+  arr1.each { |num| freq[num] += 1 }
+
+  arr2.each do |num|
+    if freq[num] > 0
+      result << num
+      freq[num] -= 1
+    end
+  end
+
+  result
+end
+
+p intersection_with_duplicates([1,1,1,1], [1,1,1,1])
+
+✅ Case 3: If Arrays Are Sorted (Two Pointer – Optimal)
+
+If both arrays are sorted:
+
+
+def intersection_sorted(arr1, arr2)
+  i = 0
+  j = 0
+  result = []
+
+  while i < arr1.length && j < arr2.length
+    if arr1[i] == arr2[j]
+      result << arr1[i]
+      i += 1
+      j += 1
+    elsif arr1[i] < arr2[j]
+      i += 1
+    else
+      j += 1
+    end
+  end
+
+  result
+end
+
+Time: O(n + m)
+Space: O(n)

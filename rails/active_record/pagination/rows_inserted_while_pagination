@@ -1,0 +1,189 @@
+Cursor-based pagination is more stable than offset-based pagination because it paginates based on actual data values instead of row positions, reducing duplication or missing records when inserts happen.
+
+##
+🧠 First Understand the Core Difference
+1️⃣ Offset Pagination
+
+Used by gems like will_paginate
+
+It says:
+
+Skip N rows, then give me next 10
+
+Example:
+
+SELECT * FROM users
+ORDER BY id ASC
+LIMIT 10 OFFSET 10;
+
+Meaning:
+
+Skip first 10 rows
+
+Return next 10 rows
+
+⚠️ Important: It depends on row position, not actual data values.
+
+2️⃣ Cursor Pagination
+
+It says:
+
+Give me records after this specific record value
+
+Example:
+
+SELECT * FROM users
+WHERE id > 10
+ORDER BY id ASC
+LIMIT 10;
+
+⚠️ Important: It depends on actual data value, not row number.
+
+🚨 Now Let’s See How Duplicate Happens (Offset)
+
+Assume users table:
+
+id
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+Page 1 (OFFSET 0)
+LIMIT 5 OFFSET 0;
+
+Returns:
+
+1,2,3,4,5
+🚨 Now Something Happens
+
+Before user clicks page 2, a new record is inserted:
+
+id = 0
+
+Now table becomes:
+
+0,1,2,3,4,5,6,7,8,9,10,11,12
+Page 2 (OFFSET 5)
+LIMIT 5 OFFSET 5;
+
+Database skips first 5 rows:
+
+0,1,2,3,4
+
+Returns:
+
+5,6,7,8,9
+
+🚨 Problem:
+
+User already saw 5 on page 1.
+
+So now:
+
+Record 5 appears again.
+
+Duplicate happens.
+
+Because OFFSET depends on position, and positions shifted.
+
+🔥 Now Let’s See Cursor Version
+
+Page 1:
+
+WHERE id > 0
+ORDER BY id ASC
+LIMIT 5;
+
+Returns:
+
+1,2,3,4,5
+
+Cursor = 5
+
+Now new record inserted:
+
+id = 0
+
+Table:
+
+0,1,2,3,4,5,6,7...
+
+Page 2:
+
+WHERE id > 5
+ORDER BY id ASC
+LIMIT 5;
+
+Returns:
+
+6,7,8,9,10
+
+✅ No duplicate.
+✅ No shifting problem.
+
+Because we are filtering based on actual value, not row number.
+
+🧠 Why This Happens (Core Reason)
+Offset Pagination
+
+Based on row index.
+
+Insertion/deletion shifts rows.
+
+Causes duplicates or missing records.
+
+Cursor Pagination
+
+Based on stable column value (id, created_at).
+
+Insertions don’t affect already paginated data.
+
+More consistent.
+
+🎯 Even More Clear Example (Deletion Case)
+
+Offset can also cause missing records.
+
+If a record gets deleted before page 2:
+
+Offset will skip wrong rows → one record may be skipped entirely.
+
+Cursor doesn’t have this issue.
+
+🎤 Interview-Ready Answer
+
+You can say:
+
+Offset-based pagination uses LIMIT and OFFSET, which depend on row positions. If a new record is inserted or deleted between page requests, row positions shift, causing duplicates or missing records. Cursor-based pagination instead filters using a stable, indexed column like id, so insertions or deletions do not affect already paginated results. That makes cursor pagination more consistent and reliable for large or frequently updated datasets.
+
+🔥 That is a strong backend answer.
+
+🚀 Advanced Follow-up (Very Important)
+
+Interviewer might ask:
+
+Is cursor pagination always safe from duplicates?
+
+Correct advanced answer:
+
+It’s safe only if the ordering column is unique and stable. If ordering by a non-unique column like created_at, we must use a composite cursor (created_at + id) to avoid duplicates.
+
+If you can say that — you’re operating at senior backend level.
+
+If you want next, I’ll show:
+
+🔥 How duplicates can STILL happen in cursor pagination (edge case)
+
+🔥 How to implement composite cursor properly in Rails
+
+🔥 How large companies like Instagram/Twitter solve this
+
+Your move 😎

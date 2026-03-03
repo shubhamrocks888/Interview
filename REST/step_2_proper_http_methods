@@ -1,0 +1,22 @@
+✅ 2. Use Proper HTTP Methods
+
+Each HTTP method has a meaning:
+
+| Method    | Purpose    |
+| --------- | ---------- |
+| GET       | Fetch data |
+| POST      | Create     |
+| PUT/PATCH | Update     |
+| DELETE    | Remove     |
+
+
+Example:
+
+POST /users
+
+→ Creates a user
+
+GET /users/5
+
+→ Fetch user with ID 5
+

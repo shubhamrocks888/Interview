@@ -1,0 +1,28 @@
+✅ 1. Resource-Based Design
+
+Everything is treated as a resource.
+
+Example in Rails:
+
+/users
+
+/courses
+
+/orders/1
+
+/enrollments/10
+
+Instead of:
+
+❌ /getUser
+❌ /createOrder
+
+We use nouns, not verbs.
+
+Correct REST style:
+
+GET /users
+POST /users
+GET /users/1
+PUT /users/1
+DELETE /users/1

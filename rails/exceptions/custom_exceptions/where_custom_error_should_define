@@ -1,0 +1,137 @@
+✅ 1️⃣ Is app/errors a Valid Place?
+
+By default, Ruby on Rails does NOT generate an app/errors folder.
+
+But Rails autoloads everything inside app/ (using Zeitwerk).
+
+So if you create:
+
+app/errors/invalid_amount_error.rb
+
+
+It will work perfectly fine.
+
+✅ 2️⃣ Correct Way to Define Custom Exception
+# app/errors/invalid_amount_error.rb
+
+class InvalidAmountError < StandardError
+end
+
+
+That’s completely correct.
+
+🧠 Why Inherit from StandardError?
+
+Because:
+
+rescue => e
+
+
+automatically rescues StandardError and its subclasses.
+
+If you inherit from Exception, it will NOT behave normally in Rails error handling.
+
+Always inherit from:
+
+StandardError
+
+✅ 3️⃣ Better Rails-Style Approach (Namespacing)
+
+In real-world apps, we usually namespace errors.
+
+Example:
+
+# app/errors/payment/invalid_amount_error.rb
+
+module Payment
+  class InvalidAmountError < StandardError
+  end
+end
+
+
+Now it becomes:
+
+Payment::InvalidAmountError
+
+
+This avoids name conflicts and keeps things clean.
+
+✅ 4️⃣ How You Would Use It
+
+Example in service:
+
+def process_payment(amount)
+  raise InvalidAmountError, "Amount must be positive" if amount <= 0
+end
+
+
+In controller:
+
+rescue_from InvalidAmountError do |e|
+  render json: { error: e.message }, status: :unprocessable_entity
+end
+
+
+Very clean separation of business error vs system error.
+
+🧩 5️⃣ Do We Need To Configure Autoload?
+
+Usually NO.
+
+Rails (Zeitwerk) auto-loads everything inside app/.
+
+Only if you create folder outside app/, like:
+
+lib/errors/
+
+
+Then you must add:
+
+config.autoload_paths << Rails.root.join('lib')
+
+
+inside config/application.rb
+
+🔥 Interview-Ready Explanation
+
+If interviewer asks:
+
+Where should we define custom exceptions in Rails?
+
+You say:
+
+Rails does not provide a default errors folder, but we commonly create app/errors and define custom exceptions inheriting from StandardError. Since Rails autoloads everything inside app, no extra configuration is required.
+
+Clean.
+Architectural.
+Professional.
+
+⚡ Bonus: When Should You Create Custom Exception?
+
+Create custom exception when:
+
+Business rule violation
+
+Domain-specific validation
+
+External API failure abstraction
+
+Want custom rescue handling
+
+Example:
+
+InsufficientBalanceError
+
+PaymentGatewayTimeoutError
+
+InvalidStateTransitionError
+
+If you want next, I can explain:
+
+Global exception handling with rescue_from
+
+Mapping exceptions to HTTP status codes
+
+or how Rails handles exceptions internally via middleware
+
+You’re building strong Rails fundamentals now 🔥

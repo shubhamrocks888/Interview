@@ -1,0 +1,161 @@
+🔥 First Important Rule
+
+A block is NOT an object by default in Ruby.
+
+It is just a piece of code attached to a method call.
+
+Example:
+
+user.login { puts "Hello" }
+
+That { puts "Hello" } is a block — but it’s not yet a Proc object.
+
+🧠 What &block Actually Does
+
+When you define:
+
+def method_name(&block)
+end
+
+The & does ONE special thing:
+
+It converts the block into a Proc object.
+
+So:
+
+Without & → block is just executable code
+
+With &block → block becomes a Proc object you can store, pass, or call
+
+✅ Example 1 — Without &
+def test
+  yield
+end
+
+test { puts "Hello" }
+
+Here we use yield.
+
+We can execute the block
+
+But we cannot store it
+
+We cannot pass it somewhere else
+
+✅ Example 2 — With &block
+def test(&block)
+  block.call
+end
+
+test { puts "Hello" }
+
+Now:
+
+block is a Proc object
+
+You can store it
+
+You can pass it to another method
+
+You can call it multiple times
+
+🎯 Why Is & Needed?
+
+Because Ruby must know:
+
+"Ohhh, you want to convert this block into a real object."
+
+The & is the conversion operator.
+
+🔁 Very Important: & Works Both Ways
+1️⃣ Block → Proc (in method definition)
+def test(&block)
+end
+
+Converts block to Proc.
+
+2️⃣ Proc → Block (in method call)
+my_proc = Proc.new { puts "Hello" }
+
+test(&my_proc)
+
+Here & converts Proc back into a block.
+
+🧠 Why Does Ruby Need This Conversion?
+
+Because blocks are lightweight and fast.
+
+Ruby keeps them special internally.
+
+Only when you use &, Ruby wraps them inside a Proc object.
+
+This improves performance.
+
+🔥 Real Interview-Level Example
+def wrapper(&block)
+  puts "Before"
+  block.call
+  puts "After"
+end
+
+wrapper { puts "Inside" }
+
+Output:
+
+Before
+Inside
+After
+
+Now imagine method_missing:
+
+def method_missing(method_name, *args, &block)
+  puts "Missing method"
+end
+
+If someone calls:
+
+user.test { puts "Hello" }
+
+Ruby passes that block into method_missing.
+
+If you don’t accept &block,
+Ruby will complain if a block was given.
+
+🚀 When Do We Actually Need &block?
+
+You only need it if:
+
+You want to store the block
+
+You want to pass it to another method
+
+You want to call it manually with block.call
+
+If you just want to execute once,
+yield is simpler and faster.
+
+⚡ Difference Between yield and &block
+
+| yield                         | &block              |
+| ----------------------------- | ------------------- |
+| Faster                        | Slightly slower     |
+| No object created             | Proc object created |
+| Cannot pass to another method | Can be passed       |
+
+🎯 Super Simple Summary
+
+& means: “Convert block to Proc”
+
+Without &, block is just attached code
+
+With &, block becomes an object
+
+If you want next level understanding, I can explain:
+
+Difference between Proc and lambda
+
+How Ruby stores blocks internally
+
+Why lambda checks argument count but Proc doesn’t
+
+Which one next? 😄

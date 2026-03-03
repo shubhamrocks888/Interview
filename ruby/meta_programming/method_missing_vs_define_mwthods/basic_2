@@ -1,0 +1,109 @@
+Now you’re thinking like an engineer.
+
+Short answer:
+
+❌ It’s NOT true that method_missing is not used.
+✅ But define_method is preferred in most predictable cases.
+
+Now I’ll explain clearly.
+
+First Understand The Real Difference
+🔹 method_missing
+
+Used when:
+
+👉 You do NOT know the method names in advance
+👉 You want to catch any unknown method dynamically
+
+It runs every time a missing method is called.
+
+🔹 define_method
+
+Used when:
+
+👉 You DO know the pattern of methods
+👉 You can generate them in advance
+
+It defines the method once, and Ruby finds it normally afterward.
+
+🚀 Why define_method Is Preferred Most of the Time
+
+Because:
+
+Faster (no fallback logic every time)
+
+Cleaner
+
+Works automatically with respond_to?
+
+Easier to debug
+
+More maintainable
+
+So in modern Ruby code:
+
+✔ Prefer define_method when possible
+✔ Use method_missing only when necessary
+
+🧠 When Is method_missing Still Used?
+
+It is still used in:
+
+DSLs (Domain Specific Languages)
+
+Highly dynamic APIs
+
+Proxy objects
+
+Delegators
+
+Some internal framework magic
+
+For example, Rails earlier versions used method_missing heavily for dynamic finders.
+
+In modern Rails, many things are now generated using dynamic method definition instead (better performance).
+
+🎯 What Interviewer Wants to Hear
+
+If interviewer asks:
+
+“Is method_missing still used?”
+
+Best answer:
+
+Yes, but carefully. When method names are predictable, I prefer define_method because it improves performance and maintainability. method_missing is useful for highly dynamic behavior or DSLs, but it should be used with caution and paired with respond_to_missing?.
+
+That answer shows:
+
+✔ You understand tradeoffs
+✔ You’re not blindly using magic
+✔ You care about performance
+
+🔥 Very Important
+
+Senior engineers don’t avoid method_missing.
+
+They avoid abusing it.
+
+🧠 Super Simple Rule To Remember
+
+If you can generate methods beforehand → use define_method
+If you must handle completely unknown method names → use method_missing
+
+Now small check question:
+
+If you need to dynamically create:
+
+find_by_name
+find_by_email
+find_by_age
+
+And you already know these fields exist in database…
+
+Which would you prefer?
+
+method_missing
+
+define_method
+
+Tell me 🙂

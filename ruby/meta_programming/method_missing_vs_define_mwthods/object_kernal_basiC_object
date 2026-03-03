@@ -1,0 +1,193 @@
+Yes — in the method lookup chain you almost always see:
+
+Object
+Kernel
+BasicObject
+
+Why are these always there?
+
+Let’s break it from absolute zero.
+
+🧱 1️⃣ Everything in Ruby is an Object
+
+In Ruby:
+
+5.class        # => Integer
+"hi".class     # => String
+[].class       # => Array
+
+All of these classes ultimately inherit from Object.
+
+So the inheritance hierarchy looks like this:
+
+BasicObject
+   ↑
+ Object
+   ↑
+ YourClass
+
+That’s why Object and BasicObject always appear.
+
+🧠 2️⃣ What is BasicObject?
+
+BasicObject is the most minimal class in Ruby.
+
+It has almost nothing.
+
+It exists so Ruby has a root parent.
+
+Example:
+
+BasicObject.instance_methods
+
+Very few methods.
+
+Why does it exist?
+
+👉 To provide the absolute minimum behavior.
+👉 Used when building proxy objects.
+👉 Used when you want a "blank slate" object.
+
+🧠 3️⃣ What is Object?
+
+Object is the default parent of all classes.
+
+When you write:
+
+class Dog
+end
+
+It is actually:
+
+class Dog < Object
+end
+
+So every normal class inherits from Object.
+
+Object gives you methods like:
+
+puts
+
+class
+
+is_a?
+
+nil?
+
+to_s
+
+That’s why you can call those methods everywhere.
+
+🧠 4️⃣ What is Kernel?
+
+Kernel is a module.
+
+It is included into Object.
+
+Meaning:
+
+Object.include Kernel
+
+So every class inherits methods from Kernel.
+
+Kernel gives methods like:
+
+puts
+
+print
+
+raise
+
+loop
+
+sleep
+
+require
+
+Example:
+
+puts "hello"
+
+Why can you call puts without a receiver?
+
+Because:
+
+puts is defined in Kernel
+
+Kernel is included in Object
+
+Your class inherits from Object
+
+So you automatically get Kernel methods.
+
+🔍 Why They Always Appear in Lookup Chain
+
+Let’s inspect:
+
+class Dog
+end
+
+Dog.ancestors
+
+You’ll see something like:
+
+[Dog, Object, Kernel, BasicObject]
+
+Why?
+
+Because:
+
+Dog inherits Object
+Object includes Kernel
+Object inherits BasicObject
+
+So Ruby searches in that order.
+
+🔥 Simple Visual Hierarchy
+BasicObject
+   ↑
+ Object  ← includes Kernel
+   ↑
+ Dog
+
+When you call:
+
+dog.some_method
+
+Ruby searches:
+
+Dog
+
+Object
+
+Kernel
+
+BasicObject
+
+method_missing
+
+That’s the lookup chain.
+
+🎯 Why Ruby Designed It This Way
+
+Ruby wanted:
+
+A minimal root (BasicObject)
+
+A default useful parent (Object)
+
+A place for global utility methods (Kernel)
+
+Clean separation of responsibilities.
+
+🧠 Interview-Level Explanation
+
+If interviewer asks:
+
+“Why do Object, Kernel, and BasicObject always appear in method lookup chain?”
+
+Strong answer:
+
+All classes in Ruby inherit from Object by default, and Object inherits from BasicObject. Additionally, the Kernel module is included into Object, which makes its methods available globally. That’s why they always appear in the method lookup chain.
+
+That answer shows deep understanding.

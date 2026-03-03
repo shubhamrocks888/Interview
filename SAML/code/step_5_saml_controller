@@ -1,0 +1,27 @@
+### app/controllers/saml_controller.rb
+
+🔹 Step 1: Login Action (Auth Request)
+
+class SamlController < ApplicationController
+
+    def login
+        request = OneLogin::RubySaml::Authrequest.new
+            redirect_to request.create(SAML_SETTINGS)
+    end
+end
+
+NOTE::
+
+    redirect_to request.create(SAML_SETTINGS)
+
+This:
+
+	Builds SAML XML request
+
+	Encodes it
+
+	Redirects user to ADFS login URL
+
+	Sends SAMLRequest parameter
+
+	User now sees ADFS login page. 

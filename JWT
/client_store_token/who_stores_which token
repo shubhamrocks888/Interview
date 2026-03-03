@@ -1,0 +1,114 @@
+Your question:
+
+When login API returns access token and refresh token…
+Who stores access token in memory and refresh token in HttpOnly cookie — client or server?
+
+Answer:
+
+👉 Both are involved, but in different ways.
+
+Let’s simulate exactly what happens.
+
+🟢 STEP 1 — User Hits Login API
+
+Client sends:
+
+POST /login
+
+Server validates credentials.
+
+Now server prepares response.
+
+🟢 STEP 2 — Server Sends Tokens
+
+Server does TWO different things:
+
+1️⃣ Sends access token in JSON body
+200 OK
+Content-Type: application/json
+{
+  "access_token": "abc123"
+}
+2️⃣ Sets refresh token as cookie in response header
+Set-Cookie: refresh_token=xyz789;
+HttpOnly;
+Secure;
+SameSite=Strict
+
+So the response contains:
+
+JSON → access token
+
+Header → refresh cookie
+
+🟢 STEP 3 — What Happens in Browser?
+
+Now comes the important part.
+
+🔹 Who stores refresh token?
+
+👉 Browser automatically stores it.
+
+Because server sent:
+
+Set-Cookie
+
+Browser handles it automatically.
+
+JavaScript does NOT manually store it.
+
+You don’t write any code for this.
+
+🔹 Who stores access token?
+
+👉 Frontend JavaScript stores it.
+
+Example in React:
+
+setAccessToken(response.access_token);
+
+That’s memory storage.
+
+So:
+
+| Token   | Who stores it? | How?                         |
+| ------- | -------------- | ---------------------------- |
+| Access  | Client JS      | In memory (state/variable)   |
+| Refresh | Browser        | Automatically via Set-Cookie |
+
+
+🧠 Important Understanding
+
+Server cannot store anything inside browser memory.
+
+Server can only:
+
+Send response
+
+Send cookies
+
+Send JSON
+
+Client decides what to do with JSON.
+
+Browser automatically handles cookies.
+
+🎯 So Final Answer
+
+If interviewer asks:
+
+Who stores access and refresh tokens?
+
+You say:
+
+The server issues both tokens during login. The refresh token is stored automatically by the browser because the server sets it using the Set-Cookie header with HttpOnly and Secure flags. The access token is returned in the response body, and the frontend stores it in memory, typically in application state.
+
+That is 100% correct and clear.
+
+🔥 Now Let Me Check Your Understanding
+
+If the frontend developer forgets to store the access token in memory…
+
+Will the system still work?
+
+Think carefully 👀

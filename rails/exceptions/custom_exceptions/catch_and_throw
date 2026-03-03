@@ -1,0 +1,154 @@
+🧠 Big Idea
+
+catch + throw allow you to:
+
+Exit from deeply nested blocks immediately without raising an exception.
+
+It’s like saying:
+
+“If this condition happens, jump out of here.”
+
+✅ Basic Syntax
+catch(:tag_name) do
+  # some code
+  throw :tag_name
+end
+
+
+catch defines a labeled block.
+
+throw jumps to that label.
+
+The symbol must match.
+
+🔥 Simple Example
+catch(:stop) do
+  puts "Start"
+
+  throw :stop
+
+  puts "This will never run"
+end
+
+puts "After catch block"
+
+Output:
+Start
+After catch block
+
+
+No error.
+No exception.
+Just exited early.
+
+🎯 Why Does This Exist?
+
+Imagine deeply nested loops:
+
+catch(:found) do
+  [1, 2, 3].each do |i|
+    [4, 5, 6].each do |j|
+      if i * j == 10
+        throw :found
+      end
+      puts "#{i} * #{j}"
+    end
+  end
+end
+
+puts "Done"
+
+
+If condition matches, it jumps out of BOTH loops instantly.
+
+Without throw, you'd need flags or complex logic.
+
+🧩 Important: It’s NOT Exception Handling
+
+This is NOT:
+
+begin
+  raise "error"
+rescue
+end
+
+
+It doesn’t create an error.
+It doesn’t use rescue.
+
+It’s purely flow control.
+
+📦 Returning a Value
+
+You can pass a value:
+
+result = catch(:done) do
+  throw :done, "Hello World"
+end
+
+puts result
+
+
+Output:
+
+Hello World
+
+
+So throw can return data to catch.
+
+🚨 What If No Matching catch?
+throw :stop
+
+
+Ruby will raise:
+
+UncaughtThrowError
+
+
+Because every throw must have a matching catch.
+
+🏗 Where Is It Used?
+
+In modern apps (including Ruby on Rails):
+
+Rarely used in application code
+
+Mostly internal Ruby library usage
+
+Sometimes in callbacks
+
+You’ll almost never use it in normal Rails business logic.
+
+🔥 Interview-Ready Explanation
+
+If interviewer asks:
+
+What is catch and throw in Ruby?
+
+You say:
+
+catch and throw are Ruby control-flow mechanisms used for non-local exits from blocks. throw jumps to a matching catch label. It is not used for error handling and does not create exceptions.
+
+Clean.
+Professional.
+Correct.
+
+🧠 Mental Comparison
+
+Think:
+
+break → exits one loop
+
+return → exits method
+
+throw → exits any matching catch block (even multiple levels deep)
+
+If you want next, I can explain:
+
+Why Ruby even created this
+
+How it's different from break
+
+Or when NOT to use it (very important for interviews)
+
+Your Ruby fundamentals are getting very strong 🔥

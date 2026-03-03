@@ -1,0 +1,170 @@
+When interviewer moves from:
+
+“What are exceptions?”
+
+to
+
+“What about custom exceptions?”
+
+They are checking:
+
+Do you understand Ruby error handling?
+
+Do you know how to structure domain errors?
+
+Can you design clean error handling?
+
+Let’s structure this properly for interview.
+
+✅ 1️⃣ What Is a Custom Exception?
+
+In Ruby, every exception is a class.
+
+Base class:
+
+StandardError
+
+
+A custom exception is simply:
+
+class MyCustomError < StandardError
+end
+
+
+That’s it.
+
+✅ 2️⃣ Why Do We Create Custom Exceptions?
+
+We create them when:
+
+We want domain-specific error handling
+
+We want to rescue specific failures
+
+We want clean business logic
+
+We want meaningful error names
+
+Instead of:
+
+raise "Something went wrong"
+
+
+We write:
+
+raise PaymentFailedError
+
+
+Much clearer.
+
+🎯 Real Rails Example
+
+Imagine you have a payment service:
+
+class PaymentFailedError < StandardError; end
+
+class PaymentService
+  def charge(user)
+    raise PaymentFailedError, "Insufficient funds" unless user.balance > 0
+  end
+end
+
+
+Then in controller:
+
+rescue_from PaymentFailedError do |e|
+  render json: { error: e.message }, status: :unprocessable_entity
+end
+
+
+Very clean separation.
+
+✅ 3️⃣ Why Inherit From StandardError?
+
+Important interview point.
+
+In Ruby:
+
+Exception
+  └── StandardError
+        └── YourCustomError
+
+
+We inherit from StandardError because:
+
+rescue without arguments rescues StandardError only
+
+Avoid rescuing system-level exceptions (Interrupt, SystemExit)
+
+If you inherit directly from Exception, it’s bad practice.
+
+Interview bonus point ⭐
+
+✅ 4️⃣ Custom Exception With Extra Data (Advanced)
+
+You can add attributes:
+
+class ApiRateLimitExceeded < StandardError
+  attr_reader :limit
+
+  def initialize(limit)
+    @limit = limit
+    super("Rate limit of #{limit} requests exceeded")
+  end
+end
+
+
+Now it carries metadata.
+
+That’s senior-level.
+
+✅ 5️⃣ Custom Exception in Middleware (Very Strong Answer)
+
+In middleware:
+
+class RateLimitExceeded < StandardError; end
+
+
+Then:
+
+raise RateLimitExceeded if count > LIMIT
+
+
+And globally handle it in ApplicationController:
+
+rescue_from RateLimitExceeded do
+  render json: { error: "Too many requests" }, status: 429
+end
+
+
+Or rescue inside middleware and return Rack response.
+
+🎯 Interview-Perfect Answer
+
+If interviewer asks:
+
+What are custom exceptions and why use them?
+
+You say:
+
+Custom exceptions are user-defined error classes that inherit from StandardError. They help represent domain-specific failures, make error handling more explicit, and allow rescuing specific error types instead of generic runtime errors. This improves code clarity and maintainability.
+
+Clean. Mature. Professional.
+
+🔥 If Interviewer Pushes Further
+
+They might ask:
+
+❓ Where should custom exceptions be defined?
+
+Best practice:
+
+app/errors/
+
+
+or
+
+app/lib/
+
+
+Autoloaded in Rails.

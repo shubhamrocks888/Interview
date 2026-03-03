@@ -1,0 +1,164 @@
+🔥 VERY GOOD QUESTION.
+
+Now you’re thinking like a performance engineer.
+
+Let’s slow down and think clearly.
+
+You’re asking:
+
+If we use define_method to create many predictable methods, but some of them are never called…
+Doesn’t that increase memory usage?
+
+Excellent doubt 👏
+
+🧠 First: Yes, It Uses Memory
+
+When you use:
+
+define_method(:find_by_name) { ... }
+
+Ruby creates a real method object and stores it in the class’s method table.
+
+So yes:
+
+👉 Each defined method consumes some memory.
+
+Even if never called.
+
+That part is true.
+
+🧠 But Now The Important Question
+
+Is that memory cost big?
+
+Answer: ❌ Very small.
+
+A method definition is tiny compared to:
+
+Objects created per request
+
+Arrays
+
+Strings
+
+ActiveRecord objects
+
+JSON parsing
+
+DB results
+
+The memory of a method definition is negligible in real apps.
+
+⚖️ Now Compare With method_missing
+
+If you don’t define methods in advance,
+and instead use method_missing:
+
+Every time method is called:
+
+Ruby fails lookup
+
+Ruby calls method_missing
+
+You parse method name
+
+You decide what to do
+
+That adds runtime overhead every call.
+
+So tradeoff is:
+
+define_method	method_missing
+Slight memory cost upfront	No upfront method creation
+Faster calls	Slower calls
+Better introspection	Needs respond_to_missing?
+Cleaner stack traces	Harder debugging
+
+In real systems:
+
+CPU cost > tiny memory cost.
+
+So define_method is usually better.
+
+🧠 Think Like Rails
+
+Imagine model has 50 columns.
+
+Rails generates 50 attribute methods.
+
+Will user call all 50?
+
+No.
+
+Does Rails care?
+
+No.
+
+Because:
+
+50 methods in memory is extremely cheap.
+
+But faster method calls matter a lot.
+
+🔬 Deep Insight
+
+Memory growth problem happens when:
+
+You dynamically create thousands/millions of methods repeatedly.
+
+Especially per request.
+
+Especially on singleton classes.
+
+That can cause memory bloat.
+
+But predictable, limited method generation at boot time?
+
+Totally safe.
+
+🎯 Interview-Level Answer
+
+If interviewer asks:
+
+“Does define_method increase memory usage?”
+
+Strong answer:
+
+Yes, it creates actual methods in memory, but the memory overhead is minimal. In most cases, the performance and maintainability benefits outweigh the small memory cost. It becomes a concern only if methods are generated excessively or repeatedly at runtime.
+
+That shows maturity.
+
+🚀 Even Deeper (Important)
+
+The real danger is not define_method.
+
+The real danger is:
+
+100000.times do
+  define_method("method_#{rand}") { }
+end
+
+That would blow memory.
+
+Because methods are never garbage collected easily.
+
+Classes keep their method tables.
+
+That’s where senior engineers become careful.
+
+🧠 Final Simple Conclusion
+
+✔ Yes, memory increases slightly
+✔ But cost is tiny
+✔ CPU cost saved is more valuable
+✔ Only dangerous if generating unbounded methods
+
+Now let me test your thinking:
+
+Which is worse in a high-traffic Rails app?
+
+50 extra defined methods
+
+Using method_missing for a method called 10 million times
+
+Think like a performance engineer 🙂

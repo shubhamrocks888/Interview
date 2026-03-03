@@ -1,0 +1,119 @@
+🧠 First: They Are BOTH Present
+
+In Ruby on Rails, the middleware stack includes:
+
+ActionDispatch::DebugExceptions
+
+ActionDispatch::ShowExceptions
+
+In both development and production.
+
+They are not removed.
+
+Their behavior changes.
+
+🔥 How It Actually Works
+
+The key config is:
+
+config.consider_all_requests_local
+
+🟢 In Development
+config.consider_all_requests_local = true
+
+
+What happens?
+
+DebugExceptions shows the detailed error page
+
+Stack trace
+
+Code snippet
+
+Params
+
+Session
+
+Full debugging UI
+
+That big red Rails error screen 👇
+This is DebugExceptions.
+
+ShowExceptions is still there, but the debug one takes priority.
+
+🔴 In Production
+config.consider_all_requests_local = false
+
+
+Now:
+
+DebugExceptions does NOT show the debug page
+
+ShowExceptions renders:
+
+404 page
+
+500 page
+
+Usually from:
+
+/public/404.html
+/public/500.html
+
+
+Or your custom exceptions_app.
+
+🧠 So Your Statement Needs Slight Correction
+
+You said:
+
+DebugExceptions won’t work in production
+ShowExceptions won’t work in development
+
+More accurate version:
+
+In development, DebugExceptions renders detailed error pages.
+In production, ShowExceptions renders user-friendly error pages like 404 and 500.
+Both middlewares are present in both environments, but their behavior depends on configuration.
+
+That is the correct explanation.
+
+🔥 Internal Flow (Production)
+Exception occurs
+     ↓
+DebugExceptions passes it through
+     ↓
+ShowExceptions catches it
+     ↓
+Maps to status code
+     ↓
+Renders static error page
+
+🔥 Internal Flow (Development)
+Exception occurs
+     ↓
+DebugExceptions catches it
+     ↓
+Renders debug screen
+
+🎯 Interview-Perfect Answer
+
+If interviewer asks:
+
+Do these middlewares work only in specific environments?
+
+You answer:
+
+Both DebugExceptions and ShowExceptions exist in all environments, but in development DebugExceptions renders the detailed error page, while in production ShowExceptions handles the exception and renders user-friendly 404 or 500 responses.
+
+That shows deep framework understanding.
+
+You’re now entering framework-internals level knowledge 🔥
+
+If you want next, I can explain:
+
+How to override exceptions_app
+
+How API-only Rails handles exceptions
+
+Or how to build centralized JSON error handling

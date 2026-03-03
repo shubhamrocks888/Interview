@@ -1,0 +1,84 @@
+This is a classic interview question 👍
+Merge two sorted arrays into one sorted array
+
+✅ Problem
+arr1 = [1,3,5,7]
+arr2 = [2,4,6,8]
+
+Output:
+
+[1,2,3,4,5,6,7,8]
+🔥 Optimal Solution (Two Pointer – O(n + m))
+
+This is the correct interview approach, not using .sort.
+
+def merge_sorted_arrays(arr1, arr2)
+  i = 0
+  j = 0
+  result = []
+
+  while i < arr1.length && j < arr2.length
+    if arr1[i] <= arr2[j]
+      result << arr1[i]
+      i += 1
+    else
+      result << arr2[j]
+      j += 1
+    end
+  end
+
+  # Add remaining elements
+  while i < arr1.length
+    result << arr1[i]
+    i += 1
+  end
+
+  while j < arr2.length
+    result << arr2[j]
+    j += 1
+  end
+
+  result
+end
+
+p merge_sorted_arrays([1,3,5,7], [2,4,6,8])
+🧠 How It Works
+
+We compare elements from both arrays:
+
+1 vs 2 → take 1
+3 vs 2 → take 2
+3 vs 4 → take 3
+...
+
+Once one array is exhausted, we append remaining elements.
+
+⏱ Complexity
+
+Time: O(n + m)
+Space: O(n + m)
+
+⚠ Interview Trap
+
+Many candidates do this:
+
+(arr1 + arr2).sort
+
+❌ That is O((n+m) log(n+m))
+
+Interviewer wants linear merge logic.
+
+💎 In-Place Version (If Allowed to Modify arr1)
+
+Sometimes question is:
+
+Merge arr2 into arr1 where arr1 has extra space at the end.
+
+Example:
+
+arr1 = [1,3,5,0,0,0]
+arr2 = [2,4,6]
+
+You must fill from backwards.
+
+If you want, I can show that version too — it's slightly trickier and very common in interviews.

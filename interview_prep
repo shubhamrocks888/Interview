@@ -519,3 +519,128 @@ But real backend engineering is about decisions under scale.
 
 ###
 Difference between Rack middleware and Rails middleware
+
+
+#####
+How custom exceptions work in middleware
+
+Or how Rails handles exceptions internally
+
+###
+
+👉 What exactly is inside a SAML Assertion (deep breakdown)
+or
+👉 What is XML Signature and how it secures SAML? (most important for this contract) 🔐
+
+If yes → next we go deep into:
+🔐 XML Signatures (How SAML is secured)
+That’s the most important part for this contract.
+
+####
+
+💥 Bonus: What If Certificate Expires?
+
+Then:
+
+ADFS rotates certificate
+
+Rails must update stored certificate
+
+Otherwise all logins fail with signature validation error
+
+This is called certificate rotation handling — very important in enterprise systems.
+
+Now next deep question for you:
+
+👉 What happens if someone modifies just ONE character in the signed XML?
+
+Will verification succeed or fail?
+
+##
+💥 Now Let Me Test You
+
+If ADFS rotates to a new certificate today, but Rails still has the old one configured…
+
+What will happen when a user tries to login?
+
+
+###
+
+ext level question I can simulate:
+
+What are common JWT security mistakes?
+
+How to store tokens securely in frontend?
+
+How to implement this cleanly in Rails API?
+
+What is jti and token rotation?
+
+##
+👉 What is token rotation?
+👉 What is jti claim?
+👉 How to revoke refresh tokens properly?
+👉 How to prevent refresh token replay attacks?
+
+##
+How to protect against XSS?
+How to prevent refresh token reuse (rotation)?
+What is token rotation?
+How to implement this properly in Rails API mode?
+
+
+### rate_limiting vs concurrency_limiting
+
+### design a real systemarchictectire (it was kind of LLD + HLD)
+
+users hits a request
+
+support 1M+ users
+real time
+
+retry on failure 
+send notifictaion to user
+
+admin broadcast msg to users
+
+### mongodb
+how we are using it , normaization and de-normalization
+
+## what is GIL,, whats the problem occuring with GIL
+
+### fibers ..what are they
+
+## concurrency primitive in ruby
+
+### method_missing in calls if method is not present define it
+  x.full_namee = "SHUB"
+
+  ### does redis can work as nosql?
+
+  ### ruby dup and clone
+  ## ruby freeze and deep_freeze
+
+  ### internally implementation of freeze and deep_freeze
+
+
+  ### works on resume like why cc avenue and security report??
+
+  ##
+  SELECT 
+    u.id AS user_id,
+    u.name,
+    o.id AS order_id,
+    o.created_at,
+    SUM(oi.quantity * oi.price) AS total_amount,
+    p.status AS payment_status
+FROM users u
+INNER JOIN orders o 
+    ON o.user_id = u.id
+INNER JOIN order_items oi 
+    ON oi.order_id = o.id
+LEFT JOIN payments p 
+    ON p.order_id = o.id
+WHERE o.created_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY u.id, u.name, o.id, o.created_at, p.status
+HAVING SUM(oi.quantity * oi.price) > 1000;
+

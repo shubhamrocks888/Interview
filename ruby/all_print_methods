@@ -1,0 +1,171 @@
+Perfect 👍 this is a very good Ruby fundamentals question.
+
+Let’s explain all four clearly and compare them:
+
+putc
+
+puts
+
+print
+
+p
+
+1️⃣ putc
+👉 Prints a single character
+putc "A"
+
+Output:
+
+A
+
+Does NOT add newline
+
+Prints only one character
+
+If string is longer → prints only first character
+
+putc "Hello"
+
+Output:
+
+H
+
+You can also pass ASCII integer:
+
+putc 65
+
+Output:
+
+A
+2️⃣ puts
+👉 "Put string" (most common)
+puts "hello"
+
+Output:
+
+hello
+Behavior:
+
+Calls to_s
+
+Adds newline automatically
+
+If array → prints each element on new line
+
+Example:
+
+puts [1,2,3]
+
+Output:
+
+1
+2
+3
+
+If value is nil:
+
+puts nil
+
+Prints just a blank line.
+
+3️⃣ print
+👉 Prints without newline
+print "hello"
+print "world"
+
+Output:
+
+helloworld
+Behavior:
+
+Calls to_s
+
+Does NOT add newline
+
+Does NOT break arrays
+
+Example:
+
+print [1,2,3]
+
+Output:
+
+[1, 2, 3]
+
+Unlike puts, it prints whole array in one line.
+
+4️⃣ p
+👉 Debugging method
+p "hello"
+
+Output:
+
+"hello"
+Behavior:
+
+Calls inspect
+
+Shows raw object representation
+
+Returns the object (important!)
+
+Example:
+
+p [1,2,3]
+
+Output:
+
+[1, 2, 3]
+
+With nil:
+
+p nil
+
+Output:
+
+nil
+
+Very useful for debugging.
+
+🔥 Internal Difference
+
+| Method  | Calls       | Adds newline? | Array Behavior          | Returns       |
+| ------- | ----------- | ------------- | ----------------------- | ------------- |
+| `putc`  | char output | ❌             | N/A                     | nil           |
+| `puts`  | `to_s`      | ✅             | each element new line   | nil           |
+| `print` | `to_s`      | ❌             | whole array in one line | nil           |
+| `p`     | `inspect`   | ✅             | full structure          | object itself |
+
+🔎 Quick Demonstration
+arr = [1,2,3]
+
+putc "Hello"
+# H
+
+puts arr
+# 1
+# 2
+# 3
+
+print arr
+# [1, 2, 3]
+
+p arr
+# [1, 2, 3]
+🎯 When to Use What?
+
+puts → Normal program output
+
+print → Inline output (no newline)
+
+p → Debugging
+
+putc → Rarely used (low-level character output)
+
+If you want, next I can explain:
+
+Difference between to_s and inspect
+
+Why puts prints arrays differently internally
+
+How Ruby implements these in Kernel (advanced level, good for interviews)

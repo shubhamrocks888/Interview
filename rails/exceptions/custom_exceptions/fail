@@ -1,0 +1,123 @@
+You’re asking:
+
+What is the difference between raise and fail in Ruby?
+
+Let’s make this very clear and simple.
+
+✅ Short Answer
+
+👉 There is NO functional difference.
+
+fail is just an alias for raise.
+
+Internally Ruby treats both the same.
+
+🧠 Example
+raise "Something went wrong"
+
+
+and
+
+fail "Something went wrong"
+
+
+Both behave exactly the same.
+
+They:
+
+Create an exception object
+
+Stop execution
+
+Bubble up until rescued
+
+🔍 Then Why Do We Have Two Keywords?
+
+It’s about intent and readability, not functionality.
+
+Ruby philosophy prefers expressive code.
+
+🎯 Convention (Important for Interview)
+
+Even though they work the same, conventionally:
+
+🔹 Use raise
+
+When you are raising a new exception intentionally
+
+raise ArgumentError, "Invalid input"
+
+🔹 Use fail
+
+When you are inside a rescue block and want to re-raise
+
+begin
+  some_method
+rescue => e
+  log_error(e)
+  fail   # re-raises the same exception
+end
+
+
+Here fail signals:
+
+“This operation failed, let it bubble up.”
+
+🧠 Practical Example
+def divide(a, b)
+  raise ArgumentError, "b cannot be zero" if b == 0
+  a / b
+end
+
+
+Inside rescue:
+
+begin
+  divide(10, 0)
+rescue ArgumentError => e
+  puts "Logging error"
+  fail
+end
+
+
+Both raise and fail here re-raise the exception.
+
+🚀 In Rails Context
+
+In Ruby on Rails, you mostly see:
+
+raise ActiveRecord::RecordNotFound
+
+
+You rarely see fail in Rails codebase — but it works the same.
+
+🧠 What Happens Internally?
+
+Ruby literally defines:
+
+alias fail raise
+
+
+So they are identical at interpreter level.
+
+🎯 Interview-Perfect Answer
+
+If interviewer asks:
+
+Difference between raise and fail?
+
+You say:
+
+There is no functional difference. fail is an alias for raise. However, by convention, raise is used to trigger an exception, while fail is often used inside a rescue block to re-raise an exception for clarity of intent.
+
+Clean. Correct. Professional.
+
+🔥 Bonus Knowledge
+
+Both can be used like:
+
+raise
+fail
+
+
+Without arguments inside rescue — it re-raises current exception.

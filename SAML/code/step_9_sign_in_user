@@ -1,0 +1,9 @@
+9️⃣ Sign In User
+
+If using Devise:
+
+    sign_in(user)
+    redirect_to dashboard_path
+
+  end
+end

@@ -1,0 +1,15 @@
+✅ 1️⃣ Set Union (Most Common Interview Meaning)
+
+Union means unique elements from both arrays.
+
+def union(arr1, arr2)
+  hash = {}
+
+  arr1.each { |num| hash[num] = true }
+  arr2.each { |num| hash[num] = true }
+
+  hash.keys
+end
+
+Time: O(n + m)
+Space: O(n + m)

@@ -1,0 +1,231 @@
+🔥 1️⃣ == vs eql? vs equal?
+🧠 == → Value equality (loose comparison)
+5 == 5.0   # => true
+
+Ruby checks logical equality.
+
+🧠 eql? → Hash equality (strict type + value)
+5.eql?(5.0)   # => false
+
+Used internally by Hash.
+
+{ 5 => "a" }[5.0]  # => nil
+
+Because Hash uses:
+
+hash
+
+eql?
+
+🧠 equal? → Object identity (same object?)
+a = "hello"
+b = a
+c = "hello"
+
+a.equal?(b)   # => true
+a.equal?(c)   # => false
+
+Because c is a different object in memory.
+
+🎯 Summary Table
+Method	Checks
+==	Value equality
+eql?	Value + type equality (used by Hash)
+equal?	Same object in memory
+🔥 2️⃣ Tricky: puts nil
+puts nil
+
+Output:
+
+(blank line)
+
+Why?
+
+Because:
+
+nil.to_s  # => ""
+
+And puts internally does:
+
+puts obj.to_s
+
+So it prints empty string + newline.
+
+🔥 Now Let’s Do Rapid-Fire Tricky Questions
+❓ What is output?
+p nil
+
+Answer:
+
+nil
+
+Because p uses inspect, not to_s.
+
+❓ What is output?
+puts false
+
+Output:
+
+false
+
+Because:
+
+false.to_s  # => "false"
+❓ What is output?
+puts 0
+
+Output:
+
+0
+
+And remember:
+
+👉 0 is truthy in Ruby.
+
+Only nil and false are falsey.
+
+🔥 Tricky Equality Questions
+❓ What is output?
+a = "hello"
+b = "hello"
+
+puts a == b
+puts a.eql?(b)
+puts a.equal?(b)
+
+Answer:
+
+true
+true
+false
+
+Because different objects.
+
+❓ What is output?
+a = :hello
+b = :hello
+
+puts a.equal?(b)
+
+Answer:
+
+true
+
+Because symbols are interned (only one object per symbol).
+
+🔥 More Mind-Bending Ones
+❓ What is output?
+puts 5 == 5.0
+puts 5.eql?(5.0)
+
+Answer:
+
+true
+false
+❓ What is output?
+puts [] == []
+puts [].equal?([])
+
+Answer:
+
+true
+false
+❓ What is output?
+puts nil == false
+
+Answer:
+
+false
+
+Important:
+nil is not equal to false.
+
+🔥 Super Tricky
+❓ What is output?
+a = [1,2]
+b = a
+b << 3
+
+p a
+
+Answer:
+
+[1,2,3]
+
+Because both reference same object.
+
+❓ What is output?
+a = [1,2]
+b = a.dup
+b << 3
+
+p a
+
+Answer:
+
+[1,2]
+
+Because dup creates shallow copy.
+
+🔥 Weird One
+❓ What is output?
+puts "hello" == "hello"
+puts "hello".object_id == "hello".object_id
+
+Answer:
+
+true
+false
+
+Two string literals create different objects (unless frozen string literal).
+
+🔥 Closure Trick
+❓ What is output?
+def test
+  return
+  "hello"
+end
+
+puts test
+
+Answer:
+
+(blank line)
+
+Because:
+
+return returns nil.
+
+🔥 Final Boss Type
+❓ What is output?
+puts !!nil
+puts !!false
+puts !!0
+
+Answer:
+
+false
+false
+true
+
+Because 0 is truthy.
+
+🚀 If You Like This Style
+
+I can give you:
+
+20 rapid-fire tricky Ruby outputs
+
+Only equality-related traps
+
+Only object identity traps
+
+Only block/Proc traps
+
+Senior-level GC + memory traps
+
+Say:
+
+“Give me 20 rapid-fire tricky Ruby questions”
+
+And I’ll switch to challenge mode 😄

@@ -1,0 +1,103 @@
+If Rails receives a SAML response signed with NEW certificate, but Rails still has only OLD certificate configured…
+
+Will Rails even attempt to verify using the certificate included in the response? Or will it reject immediately?
+
+Think carefully about trust model.
+
+###
+
+rails will trust old certificate for verify signature and in that verification will fail and authentication doesn't happen
+
+
+✅ Correct. That is exactly what will happen.
+
+Let’s refine it slightly so you understand the trust model perfectly.
+
+🔐 Scenario
+
+Active Directory Federation Services rotates to NEW certificate
+
+Rails still has only OLD certificate configured
+
+ADFS signs SAML response with NEW private key
+
+🔎 What Rails Does
+
+1️⃣ Extracts <SignatureValue>
+2️⃣ Uses configured OLD certificate
+3️⃣ Attempts verification
+4️⃣ Verification fails
+
+Result:
+
+❌ Signature validation error
+❌ Authentication rejected
+❌ User login fails
+
+🧠 Important Security Detail
+
+Rails will NOT:
+
+Trust the certificate included in the SAML response
+
+Dynamically switch to that certificate
+
+Attempt to auto-learn a new cert
+
+Because that would break the trust boundary.
+
+The Service Provider must only trust pre-configured certificates.
+
+🔐 Why This Is Secure
+
+Imagine if Rails did this instead:
+
+Extract cert from response
+
+Use that cert to verify
+
+An attacker could:
+
+Generate own key pair
+
+Sign fake SAML assertion
+
+Attach their own certificate
+
+Gain access
+
+That’s why Rails only uses pre-trusted certificates.
+
+🎯 Clean Interview Answer
+
+If interviewer asks:
+
+What happens if IdP rotates certificate but SP still trusts old one?
+
+You say:
+
+The Service Provider will attempt to verify the SAML signature using the configured trusted certificate. Since the Identity Provider is now signing with a different private key, signature verification will fail and authentication will be rejected until the new certificate is configured.
+
+🔥 That’s architect-level clarity.
+
+💎 You Now Understand:
+
+How SAML signatures work
+
+Why certificates matter
+
+How rotation works
+
+Why metadata is important
+
+Why trust boundaries must be strict
+
+That’s already strong enterprise SAML knowledge.
+
+Now next level question (real-world security thinking):
+
+👉 What if an attacker replays a previously valid signed SAML response?
+
+Even if the signature is valid — should Rails accept it again?
+
+This is where replay protection comes in.

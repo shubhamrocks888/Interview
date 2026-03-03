@@ -1,0 +1,162 @@
+✅ Cursor vs Offset Pagination (Interview-Ready Version)
+1️⃣ Offset is used when page numbering is required
+
+✔️ Correct.
+
+Offset-based pagination is ideal when UI needs:
+
+Page 1, 2, 3...
+
+Jump to page 79
+
+“Last page”
+
+Example (using will_paginate):
+
+User.paginate(page: params[:page], per_page: 10)
+2️⃣ Offset is useful when dataset is not huge
+
+✔️ Mostly correct.
+
+More precisely:
+
+Offset works fine for small to medium datasets.
+It becomes slow for very large tables because large OFFSET values require scanning many rows.
+
+Problem:
+
+LIMIT 10 OFFSET 500000;
+
+Database must scan 500k rows before returning 10.
+
+3️⃣ Offset may provide duplicate results
+
+✔️ Correct — but refine explanation.
+
+Duplicates or missing records can happen when:
+
+New rows are inserted
+
+Rows are deleted
+
+While user is navigating pages
+
+Because offset depends on row position, and row positions shift.
+
+4️⃣ Cursor is useful when dataset is large
+
+✔️ Correct.
+
+Because it avoids OFFSET scanning.
+
+Instead of:
+
+OFFSET 500000
+
+It uses:
+
+WHERE id > 500000
+
+Which uses index efficiently.
+
+5️⃣ Cursor is useful for sequential UI (Next / Previous)
+
+✔️ Correct.
+
+Cursor pagination is designed for:
+
+Next page
+
+Previous page
+
+Infinite scroll
+
+It is sequential by nature.
+
+6️⃣ Cursor is not useful for page number UI
+
+✔️ Correct.
+
+Cursor pagination cannot directly jump to:
+
+Page 50
+
+Last page
+
+Arbitrary page
+
+Because it does not understand row positions.
+
+7️⃣ Cursor may provide duplicate results if unique indexing of column is not there
+
+⚠️ Small correction:
+
+It’s not about indexing.
+
+It’s about non-unique ordering column.
+
+Better version:
+
+Cursor pagination can produce duplicates or missing records if the ORDER BY column is not unique. To fix this, we use a composite cursor (e.g., created_at + id) to ensure deterministic ordering.
+
+Index helps performance.
+Uniqueness ensures correctness.
+
+They are different concepts.
+
+8️⃣ Cursor is useful for scrolling UI
+
+✔️ Correct.
+
+Used in:
+
+Feeds
+
+Notifications
+
+APIs
+
+Mobile apps
+
+Examples:
+
+Instagram
+
+Twitter
+
+LinkedIn
+
+They don’t show page numbers — they use cursor.
+
+🎯 Clean Final Comparison (Perfect for Interview)
+Offset Pagination
+
+Supports page numbers
+
+Allows random page jump
+
+Simple to implement
+
+Slower for large datasets
+
+Can cause duplicates/missing records when data changes
+
+Cursor Pagination
+
+No page numbers
+
+Sequential navigation only
+
+Fast for large datasets
+
+More stable during inserts/deletes
+
+Requires unique, deterministic ordering
+
+🎤 30-Second Interview Summary
+
+You can say:
+
+Offset pagination uses LIMIT and OFFSET and is suitable for page-number-based UIs. However, it becomes slow for large datasets and can produce inconsistent results when data changes. Cursor pagination uses a reference value like id or created_at instead of row positions, making it more efficient and consistent for large or frequently updated datasets. It is ideal for APIs and infinite scrolling but does not support random page jumps.
+
+🔥 That answer sounds architect-level.

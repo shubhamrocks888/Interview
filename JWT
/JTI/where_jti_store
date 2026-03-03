@@ -1,0 +1,124 @@
+ood — now you're thinking at implementation level 👌
+
+Short answer:
+
+❌ No — jti is NOT saved separately in the cookie.
+✅ The entire refresh token (which contains the jti) is saved in the HttpOnly cookie.
+
+Let’s break this clearly.
+
+🧠 What You Actually Store in HttpOnly Cookie
+
+If you are using a refresh JWT, then:
+
+The cookie contains:
+
+refresh_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Inside that JWT payload is:
+
+{
+  "sub": "42",
+  "exp": 1700000000,
+  "jti": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+So:
+
+Cookie stores the full token string
+
+jti is inside the token payload
+
+It is not stored separately in the cookie
+
+🔥 What Happens on Refresh
+
+1️⃣ Browser automatically sends cookie:
+
+Cookie: refresh_token=eyJhbGciOi...
+
+2️⃣ Server decodes token
+3️⃣ Server extracts jti
+4️⃣ Server checks database:
+
+RefreshToken.find_by(jti: decoded_jti)
+
+5️⃣ If valid → issue new tokens
+6️⃣ If revoked → deny
+
+🧠 Important Architecture Detail
+
+You usually ALSO store the jti in database.
+
+Example DB table:
+
+refresh_tokens
+--------------
+user_id
+jti
+expires_at
+revoked_at
+
+Why?
+
+Because the JWT itself is stateless.
+
+You need DB record to:
+
+Support rotation
+
+Revoke tokens
+
+Detect reuse
+
+🔐 Very Important Security Practice
+
+Even if you store refresh token in HttpOnly cookie:
+
+⚠️ Do NOT store raw token in DB.
+
+Instead:
+
+Extract jti
+
+Store only jti
+
+Or store a hash of the token
+
+Why?
+
+If DB is compromised:
+
+Attacker cannot reuse refresh tokens directly.
+
+🎯 So Final Answer
+
+If I'm saving refresh token in HttpOnly cookie, will jti save in that cookie?
+
+No.
+
+The cookie stores the whole refresh token.
+
+The jti is:
+
+Inside the JWT payload
+
+Extracted by server
+
+Stored separately in database for tracking
+
+🏗 Clean Mental Model
+
+Cookie → Stores token
+Token → Contains jti
+DB → Stores jti for validation
+
+If you want, I can next explain:
+
+Why many systems use opaque refresh tokens instead of JWT
+
+Or how to design refresh token table properly in Rails
+
+Or what happens during refresh token reuse detection
+
+Tell me 🚀

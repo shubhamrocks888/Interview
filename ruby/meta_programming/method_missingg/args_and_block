@@ -1,0 +1,162 @@
+Very good question 👌 — this is where Ruby fundamentals become strong.
+
+You wrote:
+
+def method_missing(method_name, *args, &block)
+  puts "This #{method_name} is not present"
+end
+
+And you’re asking:
+
+Why *args?
+
+Why &block?
+
+What is their use?
+
+Let’s break it down properly.
+
+1️⃣ What Ruby Actually Sends to method_missing
+
+Whenever you call a method that doesn't exist:
+
+user.login("admin", "123") { puts "inside block" }
+
+Ruby internally converts it to:
+
+method_missing(:login, "admin", "123", &block)
+
+So Ruby passes:
+
+Method name (:login)
+
+All arguments
+
+The block (if given)
+
+That’s why the method signature must accept them.
+
+2️⃣ Why *args ?
+* = Splat Operator
+
+It collects all arguments into an array.
+
+Example:
+
+def test(*args)
+  p args
+end
+
+test(1,2,3)
+# => [1,2,3]
+
+Now in your case:
+
+user.login("admin", "123")
+
+Internally:
+
+method_missing(:login, "admin", "123")
+
+So:
+
+method_name = :login
+args = ["admin", "123"]
+
+If you don’t use *args, Ruby will raise an ArgumentError when extra parameters are passed.
+
+3️⃣ Why &block ?
+& converts block into a Proc object
+
+If someone calls:
+
+user.login do
+  puts "Hello"
+end
+
+Ruby passes the block to method_missing.
+
+If your method signature does NOT accept &block,
+Ruby will raise an error if a block was given.
+
+4️⃣ What Happens If You Remove Them?
+❌ Without *args
+def method_missing(method_name)
+end
+
+Now this will break:
+
+user.login("admin")
+
+Error:
+
+ArgumentError: wrong number of arguments
+❌ Without &block
+def method_missing(method_name, *args)
+end
+
+Now this will break:
+
+user.login { puts "hi" }
+
+Ruby expects you to accept the block.
+
+5️⃣ Even If You Don't Use Them…
+
+Even if you don’t use args and block,
+you MUST define them to match Ruby's internal call structure.
+
+It keeps your method signature compatible.
+
+6️⃣ Why This Matters in Real World
+
+In Rails, method_missing is heavily used in:
+
+ActiveRecord dynamic finders
+
+Association methods
+
+Delegation
+
+Proxy objects
+
+They often forward the call:
+
+def method_missing(method_name, *args, &block)
+  if target.respond_to?(method_name)
+    target.send(method_name, *args, &block)
+  else
+    super
+  end
+end
+
+Notice how *args and &block are forwarded.
+
+Without them, delegation breaks.
+
+7️⃣ Summary Table
+
+| Syntax      | Meaning                                       |
+| ----------- | --------------------------------------------- |
+| `*args`     | Collect all arguments into array              |
+| `&block`    | Convert block into Proc object                |
+| Why needed? | To match Ruby's dynamic method call structure |
+
+
+🎯 Simple Mental Model
+
+When Ruby can’t find a method:
+
+It says:
+
+"Okay fine… I’ll call method_missing and give you EVERYTHING the user passed."
+
+So your method must be ready to receive everything.
+
+If you want next, I can explain:
+
+What exactly happens internally in Ruby VM when method is missing
+
+Difference between yield and &block
+
+How super works inside method_missing

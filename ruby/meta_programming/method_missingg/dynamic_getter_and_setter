@@ -1,0 +1,172 @@
+Ahhh 👌🔥
+Now this is a real metaprogramming interview question.
+
+They want you to implement dynamic getter & setter methods using method_missing.
+
+Requirement:
+
+x.demo = "abc"   # => should return nil
+x.demo           # => "abc"
+
+So basically:
+
+If method ends with =, treat it like a setter
+
+Store the value somewhere
+
+Later, when getter is called, return stored value
+
+Let’s build this properly.
+
+🧠 Step 1 — Understand What Ruby Sends
+
+When you write:
+
+x.demo = "abc"
+
+Ruby internally calls:
+
+method_missing(:demo=, "abc")
+
+Notice:
+
+Method name becomes :demo=
+
+Argument is "abc"
+
+When you call:
+
+x.demo
+
+Ruby calls:
+
+method_missing(:demo)
+
+So we need to handle both cases.
+
+✅ Final Working Solution
+class User
+  def initialize(name)
+    @name = name
+    @dynamic_attributes = {}
+  end
+
+  def greet
+    puts "Hello #{@name}"
+  end
+
+  def method_missing(method_name, *args, &block)
+    method_name = method_name.to_s
+
+    if method_name.end_with?("=")
+      # Setter
+      attribute = method_name.chomp("=")
+      @dynamic_attributes[attribute] = args.first
+      nil
+    elsif @dynamic_attributes.key?(method_name)
+      # Getter
+      @dynamic_attributes[method_name]
+    else
+      puts "This #{method_name} is not present"
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    true
+  end
+end
+🔎 Test It
+x = User.new("Shubham")
+
+x.demo = "abc"
+# => nil
+
+x.demo
+# => "abc"
+
+x.age
+# => This age is not present
+
+Works exactly as interviewer asked.
+
+🧠 What We Did
+1️⃣ Stored dynamic attributes in a hash
+@dynamic_attributes = {}
+2️⃣ If method ends with =
+method_name.end_with?("=")
+
+We treat it as setter.
+
+3️⃣ Remove = using:
+method_name.chomp("=")
+4️⃣ Store value in hash
+@dynamic_attributes[attribute] = args.first
+5️⃣ Getter returns stored value
+🎯 Why Setter Returns nil?
+
+Because interviewer specifically asked:
+
+x.demo = "abc"  # => nil
+
+Normally Ruby setters return the assigned value:
+
+@var = 10  # returns 10
+
+But we explicitly return nil.
+
+🚀 Bonus (Interview Level Improvement)
+
+Instead of using method_missing forever,
+we can dynamically define the method after first call:
+
+define_singleton_method(attribute) do
+  @dynamic_attributes[attribute]
+end
+
+This improves performance.
+
+But usually interviewer is happy with first solution.
+
+🧠 What Interviewer Is Testing
+
+They are checking:
+
+Understanding of method_missing
+
+Dynamic method creation
+
+Setter naming convention (=)
+
+Symbols vs strings
+
+Ruby meta-programming thinking
+
+🎉 Clean Mental Model
+
+When Ruby sees:
+
+x.demo = "abc"
+
+It becomes:
+
+method_missing(:demo=, "abc")
+
+When Ruby sees:
+
+x.demo
+
+It becomes:
+
+method_missing(:demo)
+
+You just intercepted both.
+
+If you want next level, I can show:
+
+How ActiveRecord dynamically creates column methods
+
+How to auto-define methods instead of using method_missing repeatedly
+
+How to handle multiple arguments safely
+
+Tell me 😄

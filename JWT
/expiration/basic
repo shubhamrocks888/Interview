@@ -1,0 +1,167 @@
+Perfect 👍 Let’s go deep into JWT expiration from absolute scratch.
+
+You asked:
+
+For expired token, we need to send exp in payload?
+
+✅ Yes.
+Expiration in JWT is controlled using the exp claim inside the payload.
+
+Now let’s understand properly.
+
+1️⃣ What is exp in JWT?
+
+exp = Expiration Time claim
+
+It tells the server:
+
+"This token is valid only until this timestamp."
+
+It is a standard claim defined in the JWT specification (RFC 7519).
+
+2️⃣ How exp Looks Inside Payload
+
+Example payload:
+
+{
+  "user_id": 5,
+  "exp": 1708572000
+}
+
+Important:
+
+exp must be a UNIX timestamp
+
+It is in seconds
+
+Not milliseconds ❗
+
+3️⃣ How Expiration Actually Works (Step-by-Step)
+🔹 Step 1 – Server Creates Token
+
+When user logs in:
+
+Server generates token like:
+
+payload = {
+  user_id: user.id,
+  exp: 15.minutes.from_now.to_i
+}
+
+Then encodes it.
+
+🔹 Step 2 – Client Sends Token
+GET /courses
+Authorization: Bearer TOKEN
+🔹 Step 3 – Server Verifies Token
+
+When request comes:
+
+Decode token
+
+Verify signature
+
+Check expiration:
+
+if Time.now.to_i > payload["exp"]
+  raise "Token Expired"
+end
+
+If expired → return:
+
+401 Unauthorized
+4️⃣ What Happens If You Don’t Add exp?
+
+Very important.
+
+If you do NOT include exp:
+
+Token will NEVER expire
+
+If stolen → attacker can use forever
+
+No way to revoke (since JWT is stateless)
+
+⚠️ That’s a major security risk.
+
+In interview you can say:
+
+If expiration is not included, the token remains valid indefinitely, which is a serious security vulnerability in stateless systems.
+
+5️⃣ Is Expiration Automatically Checked?
+
+Depends on library.
+
+In Ruby (jwt gem):
+
+If you decode like this:
+
+JWT.decode(token, secret, true, { algorithm: 'HS256' })
+
+The library automatically validates exp.
+
+If expired → it raises:
+
+JWT::ExpiredSignature
+
+So you don’t need manual check.
+
+6️⃣ Common Interview Cross-Questions
+❓ Can client modify exp?
+
+No.
+
+Because:
+
+If client changes payload:
+
+Signature breaks
+
+Verification fails
+
+That’s the whole point of signature.
+
+❓ Can we change expiry after issuing token?
+
+No.
+
+JWT is immutable.
+
+You must issue a new token.
+
+❓ What status code for expired token?
+401 Unauthorized
+
+Because authentication failed.
+
+7️⃣ Best Practice for Expiration Time
+Token Type	Expiry
+Access Token	10–15 minutes
+Refresh Token	7–30 days
+
+Short expiry = better security.
+
+8️⃣ Why Expiration Is Critical in Stateless Systems
+
+Remember:
+
+JWT is stateless.
+Server does NOT store sessions.
+
+So expiration is the only built-in control to:
+
+Limit token lifetime
+
+Reduce risk if compromised
+
+Control user session duration
+
+🎯 Interview-Ready Explanation
+
+If interviewer says:
+
+How does JWT expiration work?
+
+You can say:
+
+JWT includes a standard claim called exp in the payload, which is a UNIX timestamp defining when the token expires. During verification, the server checks whether the current time exceeds the expiration time. If expired, the token is rejected with a 401 Unauthorized response. Since JWT is stateless and cannot be easily revoked, expiration is critical for security.

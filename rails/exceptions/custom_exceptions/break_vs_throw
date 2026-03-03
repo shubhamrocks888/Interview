@@ -1,0 +1,127 @@
+🧠 1️⃣ What break Does
+
+break is used to exit only the current loop or block.
+
+Example:
+
+[1, 2, 3, 4].each do |num|
+  break if num == 3
+  puts num
+end
+
+puts "Done"
+
+
+Output:
+
+1
+2
+Done
+
+
+👉 break exits only that .each block.
+
+It cannot jump outside multiple nested blocks.
+
+🧠 2️⃣ What catch/throw Does
+
+throw jumps to a matching catch, even if it’s many levels above.
+
+Example:
+
+catch(:stop) do
+  [1, 2, 3].each do |i|
+    [4, 5, 6].each do |j|
+      if i * j == 10
+        throw :stop
+      end
+      puts "#{i} * #{j}"
+    end
+  end
+end
+
+puts "Done"
+
+
+👉 throw exits BOTH loops instantly.
+
+break cannot do this.
+
+🔥 Key Difference
+
+| `break`                 | `catch/throw`                   |
+| ----------------------- | ------------------------------- |
+| Exits only current loop | Can exit multiple nested blocks |
+| Used inside loops       | Used for non-local jumps        |
+| No label required       | Requires matching label         |
+| Commonly used           | Rarely used                     |
+
+
+🎯 Example Where break Fails
+
+If you try:
+
+[1, 2, 3].each do |i|
+  [4, 5, 6].each do |j|
+    break if i * j == 10
+  end
+end
+
+
+👉 Only inner loop exits.
+Outer loop continues.
+
+But with throw, everything exits.
+
+🧩 Another Difference: Works Outside Loops
+
+break only works in loops/iterators.
+
+throw works in any block with catch.
+
+Example:
+
+catch(:exit_here) do
+  puts "Before"
+  throw :exit_here
+  puts "After"
+end
+
+
+No loop involved.
+
+🚨 Important Interview Point
+
+If interviewer asks:
+
+When would you use catch/throw over break?
+
+You answer:
+
+When I need to exit multiple nested blocks immediately. However, in modern Ruby and Rails code, I rarely use catch/throw because it reduces readability. I prefer extracting logic into methods and using return instead.
+
+That shows maturity.
+
+🏗 In Real Rails Apps?
+
+In Ruby on Rails:
+
+break is common (loops, iterators)
+
+catch/throw is rare
+
+Clean architecture prefers:
+
+early return
+
+small methods
+
+exceptions for real errors
+
+🧠 Mental Model
+
+Think of it like:
+
+break = exit one room 🚪
+
+throw = teleport back to building entrance 🏢

@@ -1,0 +1,134 @@
+🟢 First: In a Proper System, They Are Different
+
+Even though both are JWTs, they are not meant for the same purpose.
+
+Best practice is to differentiate them using a claim like:
+
+{
+  "user_id": 5,
+  "exp": 1700000000,
+  "type": "access"
+}
+
+And refresh token:
+
+{
+  "user_id": 5,
+  "exp": 1700600000,
+  "type": "refresh"
+}
+🔴 Case 1: If You DO NOT Check Token Type (Bad Design)
+
+If both tokens:
+
+Use same secret
+
+Have valid signature
+
+Are not expired
+
+Then server might accept refresh token as valid authentication.
+
+That is a security mistake ❌
+
+Because refresh token:
+
+Has longer expiry
+
+Should not be used for accessing APIs
+
+This is a common beginner mistake.
+
+🟢 Case 2: Proper Implementation (Correct Design)
+
+In a secure system, when request comes:
+
+Server should:
+
+Decode token
+
+Verify signature
+
+Check expiration
+
+Check token type
+
+Example:
+
+payload = JWT.decode(token, secret, true, algorithm: 'HS256')
+
+raise "Invalid token type" unless payload["type"] == "access"
+
+If someone sends refresh token:
+
+Server returns:
+
+401 Unauthorized
+Invalid token type
+
+Correct behavior ✅
+
+🔐 Why This Matters (Security Reason)
+
+Refresh token:
+
+Lives longer (7–30 days)
+
+If allowed for API access → attacker gets long-term access
+
+Access token:
+
+Short-lived (15 minutes)
+
+Designed for API authorization
+
+So they must be separated logically.
+
+🟢 Even More Secure Approach (Advanced)
+
+Some systems go further:
+
+Use different secrets for access and refresh tokens
+
+Or use different verification logic
+
+Or do NOT use JWT for refresh (use random string stored in DB)
+
+That way:
+
+Even if someone tries to use refresh token for API → verification fails immediately.
+
+🧠 Interview-Ready Answer
+
+If interviewer asks:
+
+What happens if someone uses refresh token instead of access token?
+
+You answer:
+
+In a properly implemented system, the server validates not only the signature and expiration but also the token type. If a refresh token is sent to access protected APIs, the server should reject it with a 401 Unauthorized response. If the system does not differentiate between token types, it becomes a security vulnerability because refresh tokens usually have longer lifetimes.
+
+That’s a strong answer.
+
+🔥 Bonus: Follow-up Question They Might Ask
+
+How do you differentiate access and refresh tokens?
+
+Answer:
+
+Add type claim in payload
+
+Use different secrets
+
+Or store refresh tokens in DB and validate against DB
+
+You’re now thinking like a backend engineer 👌
+
+Next question you should ask:
+
+👉 What is token rotation?
+👉 What is jti claim?
+👉 How to revoke refresh tokens properly?
+👉 How to prevent refresh token replay attacks?
+
+Pick one and we go deeper.

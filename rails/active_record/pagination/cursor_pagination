@@ -1,0 +1,187 @@
+Now we’re moving to cursor-based pagination — this is a strong senior-level topic.
+
+I’ll teach you:
+
+✅ What problem it solves
+
+✅ How to implement it from scratch (no gem)
+
+✅ API example
+
+✅ Interview-ready explanation
+
+🚨 Why Not OFFSET-Based Pagination?
+
+With will_paginate or any offset-based approach:
+
+LIMIT 10 OFFSET 500000;
+
+If user goes to page 50,000:
+
+Database must scan 500,000 rows
+
+Then discard them
+
+Then return next 10
+
+👉 That becomes slow for large tables
+
+💡 What is Cursor-Based Pagination?
+
+Instead of saying:
+
+Give me page 50
+
+We say:
+
+Give me 10 records after this record
+
+We use a unique, indexed column (usually id or created_at) as a cursor.
+
+🛠 Build Cursor Pagination From Scratch
+
+Let’s assume:
+
+We paginate User
+
+We use id as cursor
+
+We fetch 10 records at a time
+
+🎯 Step 1 — Basic Query
+
+First page:
+
+@users = User.order(:id).limit(10)
+
+This gives first 10 users.
+
+🎯 Step 2 — Next Page Using Cursor
+
+Frontend sends:
+
+/users?cursor=15
+
+Meaning:
+
+Give me records after id 15
+
+Controller:
+
+def index
+  if params[:cursor].present?
+    @users = User.where("id > ?", params[:cursor])
+                 .order(:id)
+                 .limit(10)
+  else
+    @users = User.order(:id).limit(10)
+  end
+end
+🧠 What SQL Looks Like
+SELECT * FROM users
+WHERE id > 15
+ORDER BY id ASC
+LIMIT 10;
+
+🔥 No OFFSET.
+🔥 No scanning large skipped rows.
+🔥 Uses index on id.
+
+This is fast even with millions of records.
+
+🎯 Step 3 — Returning Next Cursor (API Version)
+
+Important for APIs.
+
+def index
+  users = if params[:cursor]
+            User.where("id > ?", params[:cursor])
+                .order(:id)
+                .limit(10)
+          else
+            User.order(:id).limit(10)
+          end
+
+  next_cursor = users.last&.id
+
+  render json: {
+    users: users,
+    next_cursor: next_cursor,
+    has_more: users.size == 10
+  }
+end
+
+Frontend will then call:
+
+/users?cursor=LAST_ID
+🔁 Bidirectional Pagination (Previous Page?)
+
+More complex.
+
+To go backward:
+
+User.where("id < ?", params[:cursor])
+    .order(id: :desc)
+    .limit(10)
+
+Then reverse result in Ruby.
+
+🎯 Using created_at Instead of ID
+
+Better for time-based feeds:
+
+User.where("created_at < ?", params[:cursor])
+    .order(created_at: :desc)
+    .limit(10)
+
+Used in:
+
+Feeds
+
+Notifications
+
+Activity logs
+
+📊 Offset vs Cursor Comparison
+
+| Feature                  | Offset  | Cursor |
+| ------------------------ | ------- | ------ |
+| Performance large tables | ❌ Slow  | ✅ Fast |
+| Jump to page 50          | ✅ Yes   | ❌ No   |
+| Infinite scroll          | 😐 Okay | ✅ Best |
+| API friendly             | 😐      | ✅      |
+
+
+🎤 Interview 1-Minute Answer
+
+You can say:
+
+Offset-based pagination uses LIMIT and OFFSET, which becomes slow for large datasets because the database must scan skipped rows. Cursor-based pagination instead uses a unique indexed column like id or created_at as a reference point and fetches records after that value. This avoids OFFSET scanning and performs efficiently even with millions of records. It’s commonly used in APIs and infinite scroll implementations.
+
+🔥 That sounds senior-level backend.
+
+⚠️ Very Important Interview Question
+
+Interviewer may ask:
+
+What problem happens if new records are inserted while paginating?
+
+Correct answer:
+
+Cursor-based pagination is more stable than offset-based pagination because it paginates based on actual data values instead of row positions, reducing duplication or missing records when inserts happen.
+
+🚀 Next Level (Advanced)
+
+Real-world production systems encode cursor:
+
+Instead of:
+
+cursor=15
+
+They send:
+
+cursor=eyJpZCI6MTV9
+
+(Base64 encoded JSON)
+
+To prevent tampering.

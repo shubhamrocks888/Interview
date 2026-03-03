@@ -1,0 +1,20 @@
+def second_max(arr)
+  return nil if arr.uniq.length < 2
+
+  first = -Float::INFINITY
+  second = -Float::INFINITY
+
+  arr.each do |num|
+    if num > first
+      second = first
+      first = num
+    elsif num > second && num < first
+      second = num
+    end
+  end
+
+  second
+end
+
+arr = [10, 5, 20, 8, 20]
+p second_max(arr)

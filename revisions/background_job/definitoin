@@ -76,3 +76,125 @@ You can assign weights:
 bundle exec sidekiq -q critical -q mailers -q default -q low
 
 sidekiq -q critical,5 -q default,2 -q low,1
+
+
+### 2️⃣ Why idempotency is REQUIRED (not optional)
+Because Sidekiq guarantees:
+
+At-least-once execution
+
+This means a job can run more than once.
+
+Real reasons jobs run twice
+
+Sidekiq process crashes mid-job
+Redis goes down after DB commit
+Worker timeout
+Manual retry from UI
+Deploy restart
+Network failure
+Duplicate enqueue
+
+If a worker crashes after completing work but before acknowledging Redis, the job will be retried.
+
+### concurrency
+
+`concurrency`    | Number of jobs a **single Sidekiq process** can run in parallel.
+
+###
+Sidekiq sees no exception
+
+It thinks job succeeded
+
+### Can Sidekiq run without Rails server?
+
+✅ Yes
+
+Sidekiq only needs:
+
+Rails codebase
+
+Redis
+
+It doesn’t need rails s running
+
+###
+If Redis goes down, Sidekiq cannot enqueue, fetch, retry, or track jobs. Running jobs may finish but won’t be acknowledged, so they can be re-run after Redis recovers. Once Redis is back, Sidekiq reconnects automatically and resumes processing. Jobs attempted during the outage are lost unless the application handles retries.
+
+
+###
+Important: retries happen only on exceptions or worker crashes, not for normal returns.
+
+###
+Mapping: Job state → Redis data type
+
+| Job State         | Who decided? | Redis Data Type | Redis Key      |
+| ----------------- | ------------ | --------------- | -------------- |
+| Pending           | Sidekiq      | List            | `queue:<name>` |
+| Scheduled         | Sidekiq      | Sorted Set      | `schedule`     |
+| Retry             | Sidekiq      | Sorted Set      | `retry`        |
+| Dead              | Sidekiq      | Sorted Set      | `dead`         |
+| Running (monitor) | Sidekiq      | Hash            | `workers`      |
+| Processes         | Sidekiq      | Set             | `processes`    |
+
+###
+Redis does not decide job storage; Sidekiq explicitly chooses Redis data structures like lists and sorted sets based on job state. Redis simply stores whatever Sidekiq tells it to.
+
+###
+✅ Retry logic
+
+Exponential backoff
+
+###
+Sidekiq uses reliable fetch and Redis heartbeats. When a worker takes a job, it atomically moves it to an in-progress state and records the worker and process in Redis. If Sidekiq crashes, the heartbeat stops but the job remains unacknowledged. On restart, Sidekiq detects stale worker entries and re-queues those in-progress jobs back to their original queues, allowing them to run again.
+
+### perform(user) instead of user_id
+
+6️⃣ Why can objects become stale?
+
+Because:
+
+Job might run minutes or hours later
+
+Database row may have changed
+
+Or deleted
+
+Example:
+
+user.name = "Old Name"
+WelcomeEmailJob.perform_later(user)
+
+# later...
+user.update(name: "New Name")
+
+
+Job sees "New Name", not "Old Name".
+
+That’s what stale data means.
+
+7️⃣ Why passing full objects can still break
+a) Object deleted
+User.destroy(42)
+
+
+➡️ Job fails with ActiveRecord::RecordNotFound
+
+b) Object changed
+
+Business logic becomes inconsistent
+
+
+##### fair scheduling & JOb starvation
+
+🎯 Problem restated (in interviewer language)
+
+We have 10 Sidekiq threads.
+User-1 enqueues 10 jobs, User-2 enqueues 10 jobs, User-3 enqueues 10 jobs.
+We must ensure fair execution, so one user does not monopolize all workers.
+
+✅ High-confidence interview answer (say this first)
+
+Sidekiq by default is FIFO per queue, so a single user can starve others.
+To ensure fairness, I would isolate jobs per user (or per user group) into separate queues and configure weighted or round-robin queue processing.
+Alternatively, I would use rate limiting or concurrency limiting per user using Redis to ensure no single user consumes all worker threads.

@@ -1,0 +1,148 @@
+🔥 YES — and now we refine it to a senior-level explanation.
+
+You said:
+
+yes if it does not have unique index then it may contain duplicates
+
+That’s directionally correct ✅
+But let’s explain why, from scratch.
+
+🧠 The Real Problem Is Not “Index”
+
+It’s non-unique ordering.
+
+Even if the column has an index,
+if it is not unique, cursor pagination can still produce duplicates or missing records.
+
+Index ≠ uniqueness.
+
+🎯 Example: Sorting by created_at DESC
+
+Assume this data:
+
+id	created_at
+10	10:00:05
+9	10:00:05
+8	10:00:05
+7	10:00:04
+6	10:00:03
+
+We paginate 3 per page.
+
+Page 1 Query
+SELECT * FROM users
+ORDER BY created_at DESC
+LIMIT 3;
+
+Returns:
+
+10, 9, 8
+
+Cursor = created_at = 10:00:05
+
+Page 2 Query (Naive)
+WHERE created_at < '10:00:05'
+ORDER BY created_at DESC
+LIMIT 3;
+
+Returns:
+
+7, 6
+
+🚨 Problem:
+
+What if there were actually 5 records with timestamp 10:00:05?
+
+You would have skipped some.
+
+OR if using:
+
+WHERE created_at <= '10:00:05'
+
+Then:
+
+You may get duplicates (10, 9, 8 again).
+
+🎯 Why This Happens
+
+Because:
+
+created_at is not unique.
+
+Multiple rows share the same cursor value.
+
+So database doesn’t know which exact row boundary you meant.
+
+✅ The Correct Solution: Composite Cursor
+
+We use:
+
+(created_at, id)
+
+Why?
+
+Because:
+
+created_at may duplicate
+
+id is unique
+
+Together they create a stable ordering
+
+🛠 Correct Query (Composite Cursor)
+
+Page 1:
+
+ORDER BY created_at DESC, id DESC
+LIMIT 3;
+
+Cursor returned to frontend:
+
+{
+  created_at: "10:00:05",
+  id: 8
+}
+
+Page 2:
+
+WHERE (created_at, id) < ('10:00:05', 8)
+ORDER BY created_at DESC, id DESC
+LIMIT 3;
+
+Now database knows:
+
+If timestamp same → compare id
+
+If timestamp lower → include
+
+No duplicates.
+No skipping.
+
+🎯 Rails Version
+User
+  .where(
+    "(created_at < ?) OR (created_at = ? AND id < ?)",
+    cursor_time,
+    cursor_time,
+    cursor_id
+  )
+  .order(created_at: :desc, id: :desc)
+  .limit(10)
+
+This is production-grade cursor pagination.
+
+🎤 Interview-Ready Answer
+
+You can say:
+
+If we paginate using a non-unique column like created_at, cursor pagination can still cause duplicates or missing records because multiple rows can share the same value. To avoid this, we use a composite cursor such as created_at and id together, ensuring a stable and unique ordering.
+
+🔥 That answer is senior-level backend.
+
+🚀 Next-Level Insight (Very Impressive)
+
+You can add:
+
+Cursor pagination requires deterministic ordering. If the ORDER BY clause is not fully unique, pagination boundaries become ambiguous.
+
+That sentence alone signals strong DB understanding.

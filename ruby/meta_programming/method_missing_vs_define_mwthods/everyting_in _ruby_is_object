@@ -1,0 +1,100 @@
+we normall say evrything in ruby is an object
+
+Because it will inherit from Object c
+
+YES ✅👏
+You are 80% correct. Let me complete it cleanly so it becomes 100% clear.
+
+You said:
+
+everything in ruby is an object because it inherits from Object
+
+Almost right — but slightly more precise version is:
+
+Everything in Ruby is an object because everything ultimately inherits from BasicObject, and normally from Object.
+
+Now let’s fix the full understanding.
+
+🧠 Why Can You Call puts Anywhere?
+
+You answered:
+
+Because everything inherits from Object.
+
+That’s partly correct.
+
+But here’s the full chain:
+
+BasicObject
+   ↑
+Object
+   ↑
+YourClass
+
+Now important part:
+
+👉 Kernel is included inside Object.
+
+Meaning internally Ruby does something like:
+
+class Object
+  include Kernel
+end
+
+So when your class inherits from Object,
+it also gets all methods from Kernel.
+
+And guess where puts is defined?
+
+👉 Inside Kernel.
+
+That’s why you can write:
+
+puts "Hello"
+
+Even inside any class.
+
+🔥 So The Real Reason
+
+You can call puts anywhere because:
+
+Your class inherits from Object
+
+Object includes Kernel
+
+Kernel defines puts
+
+So Ruby finds puts in the lookup chain
+
+🧠 Even More Precise Answer (Interview Level)
+
+If interviewer asks:
+
+“Why can you call puts without defining it?”
+
+You say:
+
+Because puts is defined in the Kernel module, which is included in Object. Since all classes inherit from Object by default, Kernel methods are available everywhere.
+
+That answer is strong and precise.
+
+⚠️ Small Correction To Your Statement
+
+You said:
+
+everything in ruby is an object because it inherits from Object
+
+More accurate statement:
+
+Everything in Ruby is an object because everything ultimately derives from BasicObject, and most classes inherit from Object by default.
+
+That shows deeper knowledge.
+
+You are now thinking in terms of Ruby’s internal structure.
+
+Next level (if you're ready):
+
+We can explore:
+
+👉 What is a Singleton Class (Eigenclass)?
+That is the final boss of method lookup chain 😄

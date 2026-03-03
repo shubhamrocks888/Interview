@@ -1,0 +1,215 @@
+🧠 PART 1 — What Does “Store in Memory” Mean?
+
+When we say:
+
+Store access token in memory
+
+It simply means:
+
+👉 Store it in a JavaScript variable while the app is running
+
+That’s it.
+
+🔹 Example (Very Simple)
+let accessToken = "abc123";
+
+That variable exists:
+
+While the page is open
+
+While the app is running
+
+If you refresh the page:
+
+❌ It disappears.
+
+If you close the tab:
+
+❌ It disappears.
+
+That is what “memory” means.
+
+🔹 In React App Example
+const [accessToken, setAccessToken] = useState(null);
+
+When login succeeds:
+
+setAccessToken(response.access_token);
+
+Now it is stored in memory.
+
+When calling API:
+
+fetch("/courses", {
+  headers: {
+    Authorization: `Bearer ${accessToken}`
+  }
+});
+
+That’s memory storage.
+
+🔐 Why This Is Safer?
+
+Because:
+
+It is NOT saved to disk
+
+It is NOT accessible after refresh
+
+It reduces attack window
+
+Even if attacker injects JS:
+
+Token disappears when page reloads
+
+🍪 PART 2 — What is a Cookie?
+
+Before HttpOnly, first understand cookie.
+
+A cookie is:
+
+Small data stored by browser and automatically sent with requests to the server.
+
+Example:
+
+Server sends:
+
+Set-Cookie: refresh_token=xyz123
+
+Browser stores it.
+
+After that, whenever you call:
+
+POST /refresh
+
+Browser automatically attaches:
+
+Cookie: refresh_token=xyz123
+
+You do NOT manually attach it.
+
+🔐 What is HttpOnly Cookie?
+
+Normal cookie:
+
+JavaScript CAN read it:
+
+document.cookie
+
+HttpOnly cookie:
+
+JavaScript CANNOT read it.
+
+Even if attacker injects script:
+
+document.cookie
+
+Refresh token will NOT be visible.
+
+That is why it is secure.
+
+🔒 What Does Secure Mean?
+
+If cookie is marked:
+
+Secure
+
+It will only be sent over:
+
+HTTPS
+
+Not HTTP.
+
+🛡 What Does SameSite Mean?
+
+Prevents CSRF attacks.
+
+Options:
+
+Strict → safest
+
+Lax → moderate
+
+None → least secure
+
+🟢 So Final Secure Setup Looks Like This
+
+When user logs in:
+
+Server sends:
+
+Set-Cookie: refresh_token=xyz;
+HttpOnly;
+Secure;
+SameSite=Strict
+
+And JSON:
+
+{
+  "access_token": "abc"
+}
+🔄 Full Flow With Storage
+Login:
+
+Access token → stored in memory
+
+Refresh token → stored in HttpOnly cookie
+
+Access API:
+
+Frontend sends:
+
+Authorization: Bearer access_token
+Access token expires:
+
+Frontend calls:
+
+POST /refresh
+
+Browser automatically sends refresh cookie.
+
+Server returns new access token.
+
+Frontend updates memory.
+
+🎯 Why This Architecture Is Used
+
+Because:
+
+| Storage         | XSS Risk | Persistent | Safe? |
+| --------------- | -------- | ---------- | ----- |
+| localStorage    | High     | Yes        | ❌     |
+| memory          | Low      | No         | ✅     |
+| HttpOnly cookie | Very Low | Yes        | ✅     |
+
+🧠 Interview-Ready Explanation
+
+If interviewer asks:
+
+What does storing in memory mean?
+
+You say:
+
+Storing in memory means keeping the access token in a JavaScript variable or application state while the app is running. It is not persisted to localStorage or cookies, so it disappears on refresh, reducing exposure to XSS attacks.
+
+If they ask:
+
+What is HttpOnly cookie?
+
+You say:
+
+An HttpOnly cookie is a cookie that cannot be accessed via JavaScript. It is automatically sent by the browser with HTTP requests, which makes it ideal for storing refresh tokens securely.
+
+🔥 Important Understanding Check
+
+Tell me:
+
+If attacker injects malicious JS in browser,
+
+Can they read:
+
+Access token in memory?
+
+Refresh token in HttpOnly cookie?
+
+Answer these and I’ll correct you if needed 👌
