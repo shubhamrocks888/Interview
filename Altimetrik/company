@@ -1,0 +1,231 @@
+Overview
+
+Type: Digital engineering & technology services company
+
+Founded: 2012
+
+Headquarters: Southfield, Michigan, USA
+
+Employees: ~6,000+ globally
+
+Offices: 16+ countries and 24+ cities including India (Pune, Bangalore, Chennai).
+
+What the company does
+
+Altimetrik mainly helps large enterprises with digital transformation and product engineering. Their services include:
+
+AI & Machine Learning solutions
+
+Data engineering & analytics
+
+Cloud modernization
+
+Digital product development
+
+Automation and platform modernization
+
+They work with industries like:
+
+Banking & financial services
+
+Retail & consumer goods
+
+Automotive
+
+Healthcare & life sciences
+
+Manufacturing
+
+Interesting recent news
+
+The company is backed by TPG (private equity firm).
+
+It acquired SLK Software in 2025 to expand its AI and digital engineering capabilities and grow toward $1B revenue.
+
+In India
+
+Altimetrik has strong delivery centers in:
+
+Bangalore
+
+Chennai
+
+Pune
+
+Most roles are service-based consulting projects for international clients.
+
+✅ Short summary:
+Altimetrik is a mid-to-large IT services / digital engineering company, somewhat similar to companies like Cognizant, Capgemini, or Persistent, but focused more on AI, data, and product engineering.
+
+💡 Since you’re a Ruby on Rails developer (5.2 yrs), tell me:
+
+Are you interviewing with Altimetrik or planning to apply?
+
+I can also tell you:
+
+their Rails interview process
+
+salary range
+
+work culture / red flags (important) for developers.
+
+I have cleared all the techinal ruby on rails round with Altimetrik and only round left are hiring manager and hr round
+
+Congrats! 🎉 Clearing all the technical Ruby on Rails rounds at Altimetrik is a very good sign. Usually when only Hiring Manager (HM) and HR rounds are left, the company is mostly checking team fit, communication, and salary alignment, not deep technical skills.
+
+Let me explain what usually happens in these two rounds and how you should prepare.
+
+1️⃣ Hiring Manager Round (Most Important Now)
+
+This round is usually 30–45 minutes. The manager wants to check:
+
+Can you own features independently
+
+How you think about system design
+
+How you work with teams
+
+Whether you can communicate with clients
+
+Common questions they may ask
+
+1. Tell me about yourself.
+Structure it like this:
+
+Experience: “I have 5.2 years of experience in Ruby on Rails development.”
+
+Skills: Rails, APIs, PostgreSQL, Redis, Sidekiq, AWS, etc.
+
+Projects: Payment integration (Razorpay), background services, email notifications.
+
+Current role responsibilities.
+
+Example structure:
+
+I have around 5.2 years of experience in Ruby on Rails, mainly working on backend APIs and scalable web applications.
+In my current role I work with Rails 7, PostgreSQL, Redis and Sidekiq, building features like payment integrations (Razorpay), background services, and transactional email systems.
+I also focus on performance optimization, writing clean code, and collaborating with frontend and product teams.
+
+2. Explain one challenging feature you built.
+
+You can talk about Razorpay integration.
+
+Explain:
+
+Problem
+
+Implementation
+
+Security
+
+Edge cases
+
+Example points:
+
+Created payment service layer
+
+Handled webhook verification
+
+Managed retries & failures
+
+Ensured idempotency
+
+Managers like hearing architecture thinking.
+
+3. How do you handle performance issues in Rails?
+
+Good points to mention:
+
+Avoid N+1 queries (includes, eager loading)
+
+Database indexing
+
+Caching (Redis / fragment caching)
+
+Background jobs using Sidekiq
+
+Pagination
+
+Query optimization
+
+4. How do you ensure code quality?
+
+Mention:
+
+RSpec tests
+
+Code reviews
+
+Rubocop
+
+Service objects / clean architecture
+
+Logging & monitoring
+
+5. Have you worked with clients or cross teams?
+
+Just say yes if you interacted with:
+
+Product team
+
+QA
+
+Frontend team
+
+DevOps
+
+2️⃣ HR Round
+
+This round is easier. They mostly discuss:
+
+Salary expectation
+
+Notice period
+
+Current salary
+
+Location / remote work
+
+Documents
+
+Typical questions:
+
+Why do you want to join Altimetrik?
+
+Good answer:
+
+I’m looking for opportunities where I can work on large scale systems and modern engineering practices. Altimetrik works with global clients on digital product engineering, which aligns well with my experience in backend development.
+
+Expected salary
+
+Usually for 5+ years Rails developer in India:
+
+Typical range:
+
+18–28 LPA depending on current salary and negotiation.
+
+Notice period
+
+They may ask if you can negotiate notice period.
+
+✅ Important tip
+
+If they ask:
+
+Do you have any questions for us?
+
+Ask something like:
+
+What kind of projects will I work on?
+
+How big is the engineering team?
+
+What technologies does the team use?
+
+Managers like this.
+
+💡 Since you already cleared technical rounds, your offer probability is actually high (around 70–80%) if the HM round goes well.
+
+If you want, I can also tell you 5 tricky Hiring Manager questions Altimetrik often asks senior Rails developers (these are not typical interview questions and can surprise candidates).
+
+if they ask why are you  joining Altimetrik

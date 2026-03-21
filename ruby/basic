@@ -1,0 +1,219 @@
+Excellent 👌 this is a very important Ruby object model concept.
+
+Let’s understand from absolute scratch.
+
+1️⃣ What is respond_to?
+
+Every Ruby object has:
+
+object.respond_to?(:method_name)
+
+It returns:
+
+true → if object can respond to that method
+
+false → if it cannot
+
+Example
+class User
+  def greet
+    "Hello"
+  end
+end
+
+u = User.new
+
+u.respond_to?(:greet)   # => true
+u.respond_to?(:age)     # => false
+
+Simple.
+
+Ruby checks if method exists in:
+
+Object
+
+Its class
+
+Included modules
+
+Superclasses
+
+2️⃣ Now Problem Comes With method_missing
+
+Suppose we do this:
+
+class User
+  def method_missing(name, *args)
+    "Handled dynamically"
+  end
+end
+
+u = User.new
+u.age        # => "Handled dynamically"
+
+It works!
+
+But now:
+
+u.respond_to?(:age)
+# => false ❌
+
+Why false???
+
+Because Ruby checks actual defined methods only.
+It does NOT assume method_missing will handle it.
+
+This creates inconsistency.
+
+3️⃣ Enter respond_to_missing?
+
+Ruby provides a hook:
+
+respond_to_missing?(method_name, include_private)
+
+It is automatically used inside respond_to?.
+
+So if you override method_missing,
+you should also override respond_to_missing?.
+
+4️⃣ Proper Implementation Example
+class User
+  def method_missing(name, *args)
+    if name.to_s.start_with?("find_")
+      "Finding #{name}"
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(name, include_private = false)
+    name.to_s.start_with?("find_") || super
+  end
+end
+
+Now:
+
+u = User.new
+
+u.find_user       # => "Finding find_user"
+u.respond_to?(:find_user)  # => true ✅
+
+Now it behaves correctly.
+
+5️⃣ How respond_to? Works Internally
+
+When you call:
+
+u.respond_to?(:age)
+
+Ruby does roughly:
+
+Check method table
+
+If not found → call respond_to_missing?
+
+Return its result
+
+So:
+
+respond_to? → may call respond_to_missing?
+
+But it NEVER calls method_missing.
+
+Important difference.
+
+6️⃣ Why This Matters (Real World)
+
+Frameworks rely heavily on respond_to?:
+
+Rails JSON serialization
+
+Delegators
+
+ActiveRecord dynamic methods
+
+Form builders
+
+API generators
+
+If you override method_missing but NOT respond_to_missing?,
+your object behaves incorrectly in meta-programming contexts.
+
+That’s considered bad Ruby practice.
+
+7️⃣ Clean Rule (Interview Gold)
+
+If you override:
+
+method_missing
+
+You MUST override:
+
+respond_to_missing?
+
+That’s the golden rule.
+
+8️⃣ Visual Mental Model
+
+When calling method:
+
+object.some_method
+   ↓
+Ruby searches method table
+   ↓
+If not found → method_missing
+
+When calling:
+
+object.respond_to?(:some_method)
+   ↓
+Ruby checks method table
+   ↓
+If not found → respond_to_missing?
+
+Two separate flows.
+
+9️⃣ Important: Always Call super
+
+Correct way:
+
+def respond_to_missing?(name, include_private = false)
+  condition || super
+end
+
+Why?
+
+Because super lets Ruby handle normal cases.
+
+🔟 Final Interview-Level Summary
+
+respond_to? checks if object can handle a method.
+
+method_missing handles undefined method calls.
+
+respond_to_missing? tells Ruby whether method_missing will handle it.
+
+Always override both together.
+
+Always call super.
+
+🎯 Super Simple Explanation
+
+Think like this:
+
+method_missing → actually handles the method call
+
+respond_to_missing? → tells Ruby "Yes, I can handle this"
+
+One does execution.
+One does reporting.
+
+If you want next, I can explain:
+
+Full Ruby method lookup chain step-by-step
+
+How BasicObject fits into this
+
+How Rails uses this in ActiveRecord internally
+
+Which direction do you want? 😄

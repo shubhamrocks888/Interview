@@ -644,3 +644,5 @@ WHERE o.created_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY u.id, u.name, o.id, o.created_at, p.status
 HAVING SUM(oi.quantity * oi.price) > 1000;
 
+### if in production there is a memory issue, how will you fix it in rails
+### if in production, there is a db issue how you solve it

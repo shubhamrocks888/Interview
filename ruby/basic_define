@@ -1,0 +1,261 @@
+Perfect 👌 this is where Ruby becomes powerful.
+
+Let’s understand define_method from absolute scratch — slowly and clearly.
+
+1️⃣ First: What Is define_method?
+
+Normally in Ruby we define methods like this:
+
+class User
+  def greet
+    "Hello"
+  end
+end
+
+Here, method name is fixed at coding time.
+
+But sometimes we want to create methods dynamically at runtime.
+
+That is where define_method comes in.
+
+2️⃣ What Is define_method Actually?
+
+define_method is a method defined in the Module class.
+
+That means:
+
+Classes can use it (because Class < Module)
+
+Modules can use it
+
+It allows you to define a method by passing the method name as a variable.
+
+3️⃣ Basic Syntax
+define_method(:method_name) do |params|
+  # method body
+end
+4️⃣ Simple Example
+class User
+  define_method(:greet) do
+    "Hello"
+  end
+end
+
+u = User.new
+puts u.greet
+
+Output:
+
+Hello
+
+Same as normal def, but created dynamically.
+
+5️⃣ Why Do We Need It?
+
+Because sometimes method names are dynamic.
+
+Example:
+
+fields = [:name, :email, :age]
+
+Now instead of writing:
+
+def name; end
+def email; end
+def age; end
+
+We can loop:
+
+class User
+  [:name, :email, :age].each do |field|
+    define_method(field) do
+      instance_variable_get("@#{field}")
+    end
+
+    define_method("#{field}=") do |value|
+      instance_variable_set("@#{field}", value)
+    end
+  end
+end
+
+Now:
+
+u = User.new
+u.name = "Shubham"
+puts u.name
+
+Works perfectly.
+
+6️⃣ How It Works Internally
+
+When Ruby sees:
+
+define_method(:greet) do
+  "Hello"
+end
+
+It:
+
+Takes the symbol :greet
+
+Takes the block
+
+Converts the block into a method body
+
+Attaches it to the class
+
+So it’s like writing:
+
+def greet
+  "Hello"
+end
+
+But done dynamically.
+
+7️⃣ Important Difference: def vs define_method
+🔹 1. def is static
+
+Defined at parse time.
+
+🔹 2. define_method is dynamic
+
+Defined at runtime.
+
+8️⃣ Very Important Concept — Closure
+
+define_method captures surrounding variables.
+
+Example:
+
+class Test
+  value = 10
+
+  define_method(:show) do
+    value
+  end
+end
+
+t = Test.new
+puts t.show
+
+Output:
+
+10
+
+define_method remembers outer variable value.
+
+Normal def cannot do this.
+
+❌ This does NOT work:
+class Test
+  value = 10
+
+  def show
+    value
+  end
+end
+
+It gives error because def does not capture outer scope.
+
+9️⃣ Real World Usage
+
+Rails uses this heavily in:
+
+ActiveRecord attribute methods
+
+Associations
+
+Delegation
+
+Validations
+
+Scopes
+
+Example idea:
+
+If database column is email,
+Rails dynamically defines:
+
+def email
+  read_attribute(:email)
+end
+
+using define_method.
+
+🔟 Using It In Custom Class (Clean Example)
+
+Let’s build something practical.
+
+Example: Dynamic Math Methods
+class Calculator
+  [:add, :subtract, :multiply].each do |operation|
+    define_method(operation) do |a, b|
+      case operation
+      when :add
+        a + b
+      when :subtract
+        a - b
+      when :multiply
+        a * b
+      end
+    end
+  end
+end
+
+Usage:
+
+c = Calculator.new
+puts c.add(5, 3)        # 8
+puts c.subtract(5, 3)   # 2
+puts c.multiply(5, 3)   # 15
+1️⃣1️⃣ When Should You Use define_method?
+
+Use it when:
+
+Method name is dynamic
+
+Creating many similar methods
+
+Building DSLs
+
+Meta-programming
+
+Framework-like code
+
+Do NOT use it for normal simple methods.
+
+1️⃣2️⃣ Interview Summary Answer
+
+If interviewer asks:
+
+"What is define_method?"
+
+You say:
+
+define_method is a Ruby metaprogramming method that allows defining instance methods dynamically at runtime. Unlike def, it accepts a method name as a variable and a block as the method body, and it supports closures.
+
+That sounds senior-level.
+
+🎯 Final Mental Model
+
+def → static method definition
+
+define_method → dynamic method definition
+
+Uses block as method body
+
+Supports closures
+
+Used heavily in Rails internals
+
+If you want next, I can explain:
+
+Difference between define_method and class_eval
+
+How method lookup works after define_method
+
+How to define class methods dynamically
+
+How to build your own mini attr_accessor
+
+Which one next? 😄

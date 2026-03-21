@@ -1,0 +1,168 @@
+For a 5+ year developer, it’s very helpful to prepare a few reusable stories. With these 6 stories, you can answer 70–80% of behavioral questions in Hiring Manager rounds.
+
+Try to prepare each story in STAR format (Situation → Task → Action → Result).
+
+1️⃣ Challenging Feature Story
+
+This is the most important story.
+
+Questions it answers:
+
+Tell me about a challenging problem you solved
+
+Tell me about a complex feature you built
+
+Example topic you can use:
+
+Razorpay payment integration
+
+Handling webhooks
+
+Designing secure payment flow
+
+Key points to mention:
+
+Problem complexity
+
+Your approach
+
+Result
+
+2️⃣ Production Issue Story
+
+Questions it answers:
+
+Tell me about a production issue you handled
+
+Tell me about a time you solved a critical bug
+
+Example:
+
+Payment failure
+
+API timeout
+
+Database performance issue
+
+Explain:
+
+How you debugged
+
+How you fixed it
+
+How you prevented it later
+
+3️⃣ Performance Improvement Story
+
+Questions it answers:
+
+Tell me about a time you improved an existing system
+
+Tell me about performance optimization
+
+Example:
+
+Fixing N+1 query
+
+Adding database indexes
+
+Using background jobs
+
+Result example:
+
+API response time improved significantly.
+
+4️⃣ Mistake & Learning Story
+
+Questions it answers:
+
+Tell me about a mistake you made
+
+Tell me about something you learned from failure
+
+Example:
+
+Missing edge case
+
+Inefficient query
+
+Incorrect assumption
+
+Focus on:
+
+Learning
+
+Improvement
+
+5️⃣ Team Collaboration Story
+
+Questions it answers:
+
+Tell me about a conflict with a teammate
+
+Tell me about a time you worked in a team
+
+Example:
+
+Code review disagreement
+
+Design discussion
+
+Show:
+
+Respectful communication
+
+Collaboration
+
+6️⃣ Quick Learning Story
+
+Questions it answers:
+
+Tell me about a time you learned something quickly
+
+How do you adapt to new technology?
+
+Example:
+
+Learning a new gem
+
+Understanding a new business domain
+
+Implementing a new API integration
+
+Show:
+
+Curiosity
+
+Fast learning ability
+
+Example Mapping (Very Useful)
+
+| Interview Question     | Which Story to Use   |
+| ---------------------- | -------------------- |
+| Challenging problem    | Challenging Feature  |
+| Production issue       | Production Story     |
+| Mistake you made       | Mistake Story        |
+| Conflict with teammate | Collaboration Story  |
+| Improved system        | Performance Story    |
+| Learn new technology   | Quick Learning Story |
+
+One Important Tip
+
+Hiring managers prefer answers that include real technical examples, like:
+
+API design
+
+Database optimization
+
+Payment integration
+
+Background jobs
+
+Debugging production issues
+
+This shows real engineering experience.
+
+✅ Since you already cleared the technical Rails rounds, your Hiring Manager round is mostly about communication and ownership.
+
+If you want, I can also show you the 5 most impressive questions YOU can ask the Hiring Manager at the end of the interview (these questions make candidates look much more senior).

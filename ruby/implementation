@@ -1,0 +1,154 @@
+Ahh good 👍
+This is a classic Ruby interview question.
+
+They are testing your understanding of:
+
+method_missing
+
+respond_to_missing?
+
+Ruby object model
+
+Let’s build it properly from scratch.
+
+🎯 Requirement
+
+Create a User class
+If someone calls a method that does NOT exist
+It should print: "This method is not present"
+
+✅ Basic Solution — Using method_missing
+
+In Ruby, whenever you call a method that doesn’t exist, Ruby internally calls:
+
+method_missing(method_name, *args, &block)
+
+So we override it.
+
+🧠 Implementation
+class User
+  def initialize(name)
+    @name = name
+  end
+
+  def greet
+    "Hello #{@name}"
+  end
+
+  def method_missing(method_name, *args, &block)
+    puts "This method is not present"
+  end
+end
+🔎 Test It
+user = User.new("Shubham")
+
+user.greet
+# => "Hello Shubham"
+
+user.age
+# => This method is not present
+
+When age is not found:
+Ruby calls method_missing.
+
+🚨 But Interviewers Want More
+
+Good Ruby practice says:
+
+If you override method_missing,
+you should also override:
+
+respond_to_missing?
+
+Otherwise this breaks:
+
+user.respond_to?(:age)  # should return false
+✅ Proper Interview-Level Answer
+class User
+  def initialize(name)
+    @name = name
+  end
+
+  def greet
+    "Hello #{@name}"
+  end
+
+  def method_missing(method_name, *args, &block)
+    puts "This method is not present"
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    false
+  end
+end
+🧠 Why respond_to_missing??
+
+Ruby uses it internally when:
+
+Calling respond_to?
+
+Using reflection
+
+Rails meta-programming
+
+JSON serialization
+
+ActiveRecord dynamic methods
+
+If you skip it, your object behaves incorrectly.
+
+🔥 Bonus — Slightly Better Version
+
+Sometimes interviewer wants to still allow super.
+
+Better version:
+
+class User
+  def method_missing(method_name, *args, &block)
+    if respond_to?(method_name)
+      super
+    else
+      puts "This method is not present"
+    end
+  end
+
+  def respond_to_missing?(method_name, include_private = false)
+    false
+  end
+end
+🎯 Interview Tip
+
+After writing this, say:
+
+"In real production code, I would call super inside method_missing unless I intentionally want to swallow the error."
+
+That shows maturity.
+
+💡 Even Better (Production Safe Version)
+def method_missing(method_name, *args, &block)
+  puts "This method '#{method_name}' is not present"
+end
+
+Shows the missing method name.
+
+🚀 What Interviewer Is Testing
+
+They want to see if you understand:
+
+Ruby dynamic dispatch
+
+How method lookup works
+
+Meta-programming basics
+
+Object inheritance chain
+
+If you want, next I can explain:
+
+How Ruby internally searches for a method
+
+Method lookup chain step-by-step
+
+How Rails uses method_missing in ActiveRecord
+
+Tell me 👍

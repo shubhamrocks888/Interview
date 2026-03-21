@@ -1,0 +1,66 @@
+A good way to explain a database query with an indexing problem in an interview is to show:
+
+The problem query
+
+Why it was slow
+
+How you identified the issue
+
+How indexing fixed it
+
+Here’s a clear story you can tell in a Hiring Manager round.
+
+Example: Database Query Indexing Problem
+
+In one of my previous projects, we had an API that fetched user orders. As the data grew, the API started becoming slow and sometimes took several seconds to respond.
+
+I started investigating by analyzing the database query logs and noticed that the query filtering orders by user_id and created_at was taking a long time because the database was scanning a large number of rows. The issue was that the column being used in the WHERE clause did not have a proper index.
+
+After identifying the problem, I added an index on the relevant column, specifically on user_id. In another case where the query filtered by both user_id and created_at, I added a composite index on (user_id, created_at).
+
+Once the index was added, the database was able to quickly locate the relevant records instead of scanning the entire table, and the API response time improved significantly.
+
+Example Query (Before Index)
+SELECT * 
+FROM orders 
+WHERE user_id = 123 
+ORDER BY created_at DESC;
+
+If user_id is not indexed, the database must scan the entire table.
+
+This is called a full table scan.
+
+Solution: Add Index
+CREATE INDEX index_orders_on_user_id ON orders(user_id);
+
+Or better for sorting/filtering:
+
+CREATE INDEX index_orders_on_user_id_created_at 
+ON orders(user_id, created_at);
+Result After Index
+
+Benefits:
+
+Faster query execution
+
+No full table scan
+
+Better performance for large datasets
+
+How You Can Explain in Interview (Short Version)
+
+We had a slow API due to a query filtering on a non-indexed column. The database was performing a full table scan, which caused performance issues as the data grew. After analyzing the query, I added an index on the frequently filtered column, which significantly improved the query performance.
+
+Extra Tip (Good for Rails Developers)
+
+You can also mention:
+
+I usually check slow queries using logs or EXPLAIN to understand whether the database is using indexes efficiently.
+
+Example:
+
+EXPLAIN SELECT * FROM orders WHERE user_id = 123;
+
+✅ Mentioning EXPLAIN, indexes, and query optimization shows strong backend knowledge.
+
+If you want, I can also show you 3 Rails-specific database optimization examples that impress hiring managers (N+1 query, indexing, and pagination).

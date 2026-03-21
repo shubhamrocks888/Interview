@@ -1,0 +1,156 @@
+1️⃣ Tell me about yourself
+
+Usually the first question.
+
+They check:
+
+Communication
+
+Experience summary
+
+Confidence
+
+Tip: Keep it 1–2 minutes.
+
+2️⃣ Tell me about a challenging problem you solved
+
+They want to understand:
+
+Problem-solving ability
+
+Technical thinking
+
+Example you can use:
+
+Razorpay payment integration
+
+Debugging a production issue
+
+Fixing a performance problem
+
+3️⃣ Tell me about a time you made a mistake
+
+This checks:
+
+Accountability
+
+Learning mindset
+
+Safe approach:
+
+Explain the mistake → how you fixed it → what you learned.
+
+4️⃣ Tell me about a time you received critical feedback
+
+They want to see if you are open to feedback.
+
+Example:
+
+Code review suggestion
+
+Performance improvement suggestion
+
+5️⃣ Tell me about a conflict with a teammate
+
+They check:
+
+Professional behavior
+
+Communication skills
+
+Best approach:
+
+Explain how you discussed and resolved the issue respectfully.
+
+6️⃣ Tell me about a time you handled a tight deadline
+
+They want to know if you can work under pressure.
+
+Mention:
+
+Prioritizing tasks
+
+Coordinating with team
+
+Delivering the feature
+
+7️⃣ Tell me about a time you improved an existing system
+
+This shows initiative.
+
+Examples:
+
+Optimizing database queries
+
+Reducing API response time
+
+Refactoring messy code
+
+8️⃣ Tell me about a time you helped a teammate
+
+They check team collaboration.
+
+Example:
+
+Helping debug an issue
+
+Explaining a solution
+
+Reviewing code
+
+9️⃣ Tell me about a time you had to learn something quickly
+
+This shows adaptability.
+
+Example:
+
+Learning a new gem
+
+Learning a new tool
+
+Understanding a new business domain
+
+🔟 Tell me about a production issue you handled
+
+Managers love this question.
+
+Explain:
+
+What happened
+
+How you debugged
+
+How you fixed it
+
+How you prevented it again
+
+⭐ Tip for answering behavioral questions
+
+Use the STAR method:
+
+S → Situation
+
+T → Task
+
+A → Action
+
+R → Result
+
+Example:
+
+Situation: We had a performance issue in one API
+Task: I needed to identify the cause
+Action: I analyzed logs and found an N+1 query
+Result: After fixing it with eager loading, response time improved significantly
+
+✅ Since you are a 5.2-year Ruby on Rails developer, most of your questions will revolve around:
+
+backend architecture
+
+performance optimization
+
+team collaboration
+
+ownership of features
+
+💡 If you want, I can also show you 7 behavioral stories you should prepare before your interview (these are reusable answers that can cover almost every behavioral question).

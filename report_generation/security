@@ -1,0 +1,156 @@
+🔐 How Is /tmp Related to Security?
+
+When we say:
+
+“Don’t serve files from /tmp because app servers are ephemeral”
+
+It’s not just about reliability — it’s also about security risks.
+
+1️⃣ Unauthorized File Access Risk
+
+If you store files in:
+
+/tmp/invoice_123.pdf
+
+And your app serves it like:
+
+https://app.com/files/invoice_123.pdf
+
+Problems:
+
+Anyone who guesses the file path may access it
+
+No authentication check
+
+No signed expiry
+
+Direct file exposure
+
+But with something like:
+
+Amazon S3
+
+You can:
+
+Keep bucket private
+
+Generate signed URLs
+
+Add expiration
+
+Enforce IAM policies
+
+👉 Much more controlled.
+
+2️⃣ Multi-Tenant Risk (Shared Servers)
+
+If multiple apps run on same machine (common in cloud or containers):
+
+/tmp is globally accessible inside that machine
+
+A compromised app/container could read other temporary files
+
+Sensitive uploads (PDFs, CSVs, exports) may leak
+
+This becomes a lateral movement risk in security terms.
+
+3️⃣ Path Traversal Attacks
+
+If your app does something like:
+
+send_file "/tmp/#{params[:filename]}"
+
+An attacker could try:
+
+../../../etc/passwd
+
+Boom 💥
+Now you are leaking system files.
+
+This is a classic path traversal vulnerability.
+
+Object storage systems like S3 reduce this risk because:
+
+You don’t expose raw filesystem paths
+
+You control access via keys + permissions
+
+4️⃣ No Access Logging / Audit Trail
+
+With local /tmp:
+
+No detailed access logs
+
+No object-level tracking
+
+With S3:
+
+Access logs
+
+CloudTrail integration
+
+Versioning
+
+Encryption at rest
+
+Bucket policies
+
+Much better for compliance.
+
+5️⃣ Data Persistence After Compromise
+
+Even though servers are ephemeral:
+
+If attacker gains SSH access
+
+They can scan /tmp
+
+Extract uploaded documents
+
+Download sensitive exports
+
+Temporary files often contain:
+
+Bank statements
+
+User reports
+
+CSV exports
+
+KYC documents
+
+That’s dangerous.
+
+🧠 So What’s the Core Security Principle?
+
+Modern apps follow:
+
+❝ App servers should be stateless and not store sensitive data locally ❞
+
+Because:
+
+Local disk = harder to secure
+
+Harder to audit
+
+Harder to control access
+
+Easier to misconfigure
+
+🚀 Interview-Ready Answer
+
+You can say:
+
+Storing files in /tmp is a security risk because local filesystem access can lead to unauthorized exposure, path traversal attacks, lack of proper access control, and no centralized audit logging. Using object storage like S3 allows private buckets, signed URLs, encryption, and fine-grained IAM policies.
+
+Since you're working with Docker and containers — this is very important in production architecture.
+
+If you want, I can explain:
+
+How Rails ActiveStorage solves this
+
+How signed URLs actually work
+
+Or how to securely handle file uploads in a Rails API
+
+Just tell me 👍

@@ -1,0 +1,60 @@
+This is a very common behavioral question. The hiring manager wants to see:
+
+Do you accept mistakes
+
+Do you take responsibility
+
+Do you learn from them
+
+Never say “I never made a mistake.”
+Instead show learning and improvement.
+
+Use this structure:
+
+Situation → Mistake → Fix → Learning
+
+Example Answer (Good for a Developer)
+
+In one of my previous projects, I was working on a feature that involved updating some database records through an API. While implementing it, I missed handling a particular edge case where a null value could be passed in the request.
+
+This caused an issue in the staging environment during testing. Once the issue was identified, I quickly analyzed the logs, reproduced the problem locally, and fixed the validation logic. I also added additional test cases to ensure the scenario was properly covered.
+
+That experience taught me the importance of considering edge cases and writing more comprehensive validations and tests when implementing APIs.
+
+Another Good Example (Code Review Scenario)
+
+Early in my career, I implemented a feature where my database queries were not optimized, which caused an N+1 query problem. During code review, a senior developer pointed it out and explained how it could impact performance when the dataset grows.
+
+I refactored the code using eager loading to fix the issue and learned more about query optimization in Rails. Since then, I’ve been more careful about analyzing database queries and performance when implementing features.
+
+Why These Answers Work
+
+They show:
+
+✅ Responsibility
+✅ Problem-solving
+✅ Learning mindset
+
+Managers like candidates who learn from mistakes.
+
+💡 Small interview trick:
+Say a mistake that is not critical to your ability.
+
+Good mistakes:
+
+Missing edge cases
+
+Performance issue
+
+Learning from code review
+
+Avoid mistakes like:
+
+Deleting production data
+
+Breaking production repeatedly
+
+Missing deadlines frequently
+
+If you want, I can also give you 5 ready-made behavioral stories you can use in interviews.
+With just these 5 stories, you can answer almost 80% of behavioral questions in hiring manager rounds.

@@ -1,0 +1,225 @@
+Very powerful Ruby topic 👌🔥
+This is pure meta-programming.
+
+Let’s understand class_eval vs instance_eval from absolute scratch.
+
+🧠 Step 1 — What is eval in general?
+
+eval means:
+
+"Execute this block of code in a different context."
+
+Ruby allows you to change what self is while executing code.
+
+That’s what these methods do.
+
+🎯 Core Difference (High-Level)
+Method	Changes self to	Used to define
+class_eval	The class	Instance methods
+instance_eval	A specific object	Singleton methods
+
+Now let’s break this slowly.
+
+1️⃣ What is self?
+
+Inside any Ruby code, there is a current object called:
+
+self
+
+When you change self, method definitions behave differently.
+
+2️⃣ class_eval
+
+class_eval evaluates code inside the class context.
+
+It changes self to the class.
+
+Example 1 — Add Instance Method Dynamically
+class User
+end
+
+User.class_eval do
+  def greet
+    "Hello"
+  end
+end
+
+u = User.new
+puts u.greet
+What happened?
+
+Inside class_eval:
+
+self becomes User
+
+def greet defines an instance method
+
+So all objects of User get it.
+
+3️⃣ instance_eval
+
+instance_eval evaluates code inside a specific object.
+
+It changes self to that object.
+
+Example 2 — Add Singleton Method
+class User
+end
+
+u = User.new
+
+u.instance_eval do
+  def greet
+    "Hello"
+  end
+end
+
+puts u.greet
+
+Works!
+
+But:
+
+User.new.greet
+
+❌ Error
+
+Because method was added only to that specific object.
+
+That is called a singleton method.
+
+🧠 Visual Difference
+class_eval
+User.class_eval
+
+Adds method to:
+
+User class → all instances
+instance_eval
+u.instance_eval
+
+Adds method to:
+
+Only object u
+🔥 Very Important: self Difference
+In class_eval
+User.class_eval do
+  puts self
+end
+
+Output:
+
+User
+In instance_eval
+u.instance_eval do
+  puts self
+end
+
+Output:
+
+#<User:0x000...>
+
+So self becomes the object itself.
+
+🧠 Real Interview Explanation
+class_eval
+
+Opens class context
+
+Adds instance methods
+
+Used to modify classes dynamically
+
+instance_eval
+
+Opens object context
+
+Adds singleton methods
+
+Used to modify specific object
+
+🚀 Practical Comparison
+Case 1 — Modify Whole Class
+class Product
+end
+
+Product.class_eval do
+  def price_with_tax
+    100 * 1.18
+  end
+end
+
+All products now have price_with_tax.
+
+Case 2 — Modify Only One Object
+p1 = Product.new
+p2 = Product.new
+
+p1.instance_eval do
+  def special_price
+    50
+  end
+end
+
+Now:
+
+p1.special_price  # works
+p2.special_price  # error
+🔥 How Rails Uses This
+
+Rails uses:
+
+class_eval to dynamically add attribute methods
+
+instance_eval in DSLs (like routes, validations, scopes)
+
+Example style:
+
+class MyDSL
+  def initialize(&block)
+    instance_eval(&block)
+  end
+end
+
+This allows:
+
+MyDSL.new do
+  some_method
+end
+
+Because inside block, self becomes DSL object.
+
+🧠 Simple Mental Model
+class_eval
+
+👉 "Open the class and add behavior to all objects."
+
+instance_eval
+
+👉 "Open this specific object and add behavior only to it."
+
+🎯 One-Line Interview Answer
+
+class_eval evaluates code in the context of a class and defines instance methods, while instance_eval evaluates code in the context of a specific object and defines singleton methods.
+
+⚡ Bonus: Small Technical Detail
+
+Both are defined in:
+
+Module
+
+Object
+
+And both change self temporarily.
+
+If you want next level, I can explain:
+
+module_eval vs class_eval
+
+define_method vs class_eval
+
+How singleton class actually works internally
+
+Eigenclass concept (very important)
+
+Which one next? 😄

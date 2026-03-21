@@ -1,0 +1,54 @@
+This question checks whether you accept feedback professionally and improve from it. The best answers usually come from code review or design feedback, since that’s common for developers.
+
+Use the STAR structure:
+
+Situation
+
+Feedback
+
+Action
+
+Result
+
+Example Answer (Very Good for Developers)
+
+In one of my previous projects, I implemented a feature that involved fetching related data from multiple tables. During the code review, a senior developer pointed out that my implementation could lead to an N+1 query problem, which could affect performance when the dataset grows.
+
+Initially, I wasn’t fully aware of the performance impact, so he explained how eager loading could improve the query efficiency. I refactored the code using the appropriate Rails methods to avoid multiple database calls.
+
+That feedback helped me understand the importance of analyzing database queries more carefully. Since then, I’ve been more mindful about query optimization and performance when designing backend logic.
+
+Another Example (Team Collaboration)
+
+In a previous project, during a code review my lead suggested that my method was doing too many responsibilities and recommended splitting the logic into smaller service methods.
+
+I took that feedback positively and refactored the code to follow a cleaner structure. It improved readability and made the code easier to maintain. Since then, I try to design code with better separation of responsibilities from the beginning.
+
+Why This Works
+
+This answer shows:
+
+✅ You accept feedback
+✅ You improve technically
+✅ You collaborate well with the team
+
+What NOT to Say ❌
+
+Avoid answers like:
+
+“I usually don’t receive critical feedback.”
+
+“My manager was wrong.”
+
+“I argued with the reviewer.”
+
+That gives a negative impression.
+
+💡 Small trick:
+After answering, you can add one line:
+
+I actually appreciate constructive feedback because it helps improve both the code quality and my own learning.
+
+Managers like this mindset.
+
+If you want, I can also give you the 6 best behavioral stories a 5+ year Rails developer should prepare before a Hiring Manager round — these stories can answer almost every behavioral question.
